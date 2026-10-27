@@ -14,7 +14,7 @@
 - Workspace source boundary audit passes. Both approved dependency tracked checkouts unchanged.
 
 Headless frames: `apps/desktop/build/reports/screenshots/`. Own rendered captures are copied under `captures/` for review. These are smoke/regression captures, not Apple comparison goldens.
-Linux graphical runtime launched under Xvfb and captured in `captures/linux-desktop.png`. Skiko reported GL-context failure and successfully fell back to software rendering. This does not verify hardware acceleration or performance. Xvfb was downloaded/extracted outside the repository; no system package mutation was required.
+Linux graphical runtime launched under Xvfb and captured in `captures/linux-desktop.png`. Skiko reported GL-context failure. Initial automatic fallback rendered, but a repeat default launch produced a black window. Explicit `-Dskiko.renderApi=SOFTWARE` was then launch-tested successfully; the retained capture shows that final packaged build. This does not verify hardware acceleration or performance. Xvfb was downloaded/extracted outside the repository; no system package mutation was required.
 
 ## Explicitly not verified
 No audible output device test, background media integration, long playback, gapless/crossfade, native platform runtime beyond Linux, provider streaming, download/offline, Spotify, advanced DSP, backend, Apple screenshot similarity score, glass, gesture/motion trajectories, reduced-motion equivalence or performance benchmarks. No public CI run has occurred; the workflow is configured only.

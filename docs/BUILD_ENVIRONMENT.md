@@ -14,4 +14,4 @@ JAVA_HOME=/workspace/scratch/jdk21 /workspace/scratch/gradle-9.8.2/bin/gradle \
 
 Ordinary development environments with a full JDK and direct network access should use the committed wrapper. No proxy settings, private CA files or downloaded JDKs are committed.
 
-Graphical Linux launch was verified on extracted Xvfb under display :99 using the packaged JAR and the downloaded JDK. The virtual display has no GL context; Skiko falls back to software. This is a launch/render check, not a physical audio-device test. No Android SDK or Windows/macOS host is provisioned. Native packageDeb failed because fakeroot is missing.
+Graphical Linux launch was verified on extracted Xvfb under display :99 using the packaged JAR and the downloaded JDK. The virtual display has no GL context. Automatic renderer fallback was unreliable on repeat launch; pass `-Dskiko.renderApi=SOFTWARE` before `-jar` for the verified virtual-display launch. This is a launch/render check, not a physical audio-device test. No Android SDK or Windows/macOS host is provisioned. Native packageDeb failed because fakeroot is missing.

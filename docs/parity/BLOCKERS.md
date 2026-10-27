@@ -11,3 +11,5 @@
 These are prerequisites, not claims that the remaining implementation has been completed. Advanced DSP, backend, providers, AI and other scope are still unimplemented.
 
 B-007: Debian native installer packaging requires fakeroot, absent from this environment. packageDeb failed; development JAR build succeeds.
+
+B-008: Default Skiko GL fallback was unreliable in Xvfb on repeat launch; explicit SOFTWARE renderer works. Real GPU runtime/performance remains unverified.

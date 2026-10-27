@@ -1,0 +1,6 @@
+[submodule "dependencies/vyonex-clean"]
+	path = dependencies/vyonex-clean
+	url = https://github.com/bxanedot/vyonex-clean
+[submodule "dependencies/GlyphStudio"]
+	path = dependencies/GlyphStudio
+	url = https://github.com/bxanedot/GlyphStudio

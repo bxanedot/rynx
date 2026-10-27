@@ -1,0 +1,34 @@
+name: Verify independent Rynx foundation
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Audit source boundary
+        shell: bash
+        run: python3 tools/audit_workspace.py
+      - name: Test and package desktop baseline
+        shell: bash
+        run: ./gradlew check :apps:desktop:packageUberJarForCurrentOS --console=plain
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-${{ matrix.os }}
+          path: |
+            apps/desktop/build/compose/jars/*.jar
+            apps/desktop/build/reports/
+            shared/playback/build/reports/

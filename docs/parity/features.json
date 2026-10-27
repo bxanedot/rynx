@@ -1,0 +1,1480 @@
+[
+  {
+    "id": "DISC-001",
+    "name": "Home",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe home; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-002",
+    "name": "Explore",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe explore; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-003",
+    "name": "Search",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe search; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "DISC-004",
+    "name": "Charts",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe charts; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-005",
+    "name": "Genres",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe genres; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-006",
+    "name": "Moods",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe moods; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-007",
+    "name": "Recommendations",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe recommendations; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-008",
+    "name": "New releases",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe new releases; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-009",
+    "name": "Radios",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe radios; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-010",
+    "name": "Artists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe artists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-011",
+    "name": "Albums",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe albums; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-012",
+    "name": "Playlists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playlists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-013",
+    "name": "Videos",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe videos; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-014",
+    "name": "Regional discovery",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe regional discovery; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-015",
+    "name": "Suggestions",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe suggestions; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DISC-016",
+    "name": "Personalized shelves",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe personalized shelves; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-001",
+    "name": "Background playback",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe background playback; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-002",
+    "name": "Mini-player",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe mini-player; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "PLAY-003",
+    "name": "Expanded player",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe expanded player; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "PLAY-004",
+    "name": "Player variants",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe player variants; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-005",
+    "name": "Queue",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe queue; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "PLAY-006",
+    "name": "Shuffle",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe shuffle; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-007",
+    "name": "Repeat",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe repeat; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "PLAY-008",
+    "name": "Seeking",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe seeking; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "PLAY-009",
+    "name": "Playback speed",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playback speed; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-010",
+    "name": "Sleep timer",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe sleep timer; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-011",
+    "name": "Quality selection",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe quality selection; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-012",
+    "name": "Video playback",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe video playback; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-013",
+    "name": "Media controls",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe media controls; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-014",
+    "name": "Notifications",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe notifications; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PLAY-015",
+    "name": "Playback recovery",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe playback recovery; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "LIB-001",
+    "name": "Favorites",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe favorites; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-002",
+    "name": "Playlists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playlists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-003",
+    "name": "History",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe history; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-004",
+    "name": "Recent tracks",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe recent tracks; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-005",
+    "name": "Local songs",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe local songs; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "LIB-006",
+    "name": "Local folders",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe local folders; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-007",
+    "name": "Albums",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe albums; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-008",
+    "name": "Artists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe artists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-009",
+    "name": "Downloads",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe downloads; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-010",
+    "name": "Network libraries",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe network libraries; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-011",
+    "name": "Cached content",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe cached content; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-012",
+    "name": "Automatic playlists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe automatic playlists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-013",
+    "name": "Import",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe import; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "LIB-014",
+    "name": "Export",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe export; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-015",
+    "name": "Sorting",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe sorting; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LIB-016",
+    "name": "Filtering",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe filtering; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-001",
+    "name": "Synchronized lyrics",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe synchronized lyrics; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-002",
+    "name": "Word timing",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe word timing; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-003",
+    "name": "Karaoke",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe karaoke; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-004",
+    "name": "Translation",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe translation; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-005",
+    "name": "Romanization",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe romanization; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-006",
+    "name": "Lyrics sources",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe lyrics sources; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-007",
+    "name": "Font customization",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe font customization; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "LYR-008",
+    "name": "Lyrics motion",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe lyrics motion; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-001",
+    "name": "Graphic EQ",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe graphic eq; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-002",
+    "name": "Parametric EQ",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe parametric eq; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-003",
+    "name": "AutoEQ",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe autoeq; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-004",
+    "name": "Presets",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe presets; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-005",
+    "name": "Crossfade",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe crossfade; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-006",
+    "name": "Automix",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe automix; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-007",
+    "name": "Loudness handling",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe loudness handling; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-008",
+    "name": "Lossless output",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe lossless output; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-009",
+    "name": "Spatial audio",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe spatial audio; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-010",
+    "name": "Vocal suppression",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe vocal suppression; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-011",
+    "name": "Output configuration",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe output configuration; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-012",
+    "name": "Gapless playback",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe gapless playback; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-013",
+    "name": "High resolution output",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe high resolution output; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AUD-014",
+    "name": "Audio telemetry",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe audio telemetry; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-001",
+    "name": "Beat detection",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe beat detection; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-002",
+    "name": "BPM",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe bpm; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-003",
+    "name": "Musical key",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe musical key; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-004",
+    "name": "Energy profiling",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe energy profiling; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-005",
+    "name": "Stems",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe stems; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-006",
+    "name": "Transition planning",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe transition planning; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-007",
+    "name": "DJ effects",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe dj effects; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-008",
+    "name": "Smart mixing",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe smart mixing; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DJ-009",
+    "name": "Automated sets",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe automated sets; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "REC-001",
+    "name": "Microphone recognition",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe microphone recognition; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "REC-002",
+    "name": "Fingerprint handling",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe fingerprint handling; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "REC-003",
+    "name": "Recognition history",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe recognition history; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "REC-004",
+    "name": "Recognition results",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe recognition results; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-001",
+    "name": "Track download",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe track download; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-002",
+    "name": "Batch download",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe batch download; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-003",
+    "name": "Caching",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe caching; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-004",
+    "name": "Offline playback",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe offline playback; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-005",
+    "name": "Transfer status",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe transfer status; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-006",
+    "name": "Retry",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe retry; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-007",
+    "name": "Cancellation",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe cancellation; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-008",
+    "name": "Integrity checking",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe integrity checking; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-009",
+    "name": "Local export",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe local export; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "DOWN-010",
+    "name": "Resume",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe resume; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-001",
+    "name": "Listen Together",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe listen together; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-002",
+    "name": "Synchronized rooms",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe synchronized rooms; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-003",
+    "name": "Jam",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe jam; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-004",
+    "name": "Presence",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe presence; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-005",
+    "name": "Participant controls",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe participant controls; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-006",
+    "name": "Discord Rich Presence",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe discord rich presence; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-007",
+    "name": "Last.fm",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe last.fm; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-008",
+    "name": "ListenBrainz",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe listenbrainz; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-009",
+    "name": "Clock correction",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe clock correction; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-010",
+    "name": "Reconnection",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe reconnection; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-011",
+    "name": "Room expiry",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe room expiry; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SOC-012",
+    "name": "Abuse prevention",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe abuse prevention; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AI-001",
+    "name": "AI DJ",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe ai dj; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AI-002",
+    "name": "AI music tools",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe ai music tools; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AI-003",
+    "name": "AI playlist editing",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe ai playlist editing; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "AI-004",
+    "name": "AI configuration",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe ai configuration; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "STAT-001",
+    "name": "Listening history",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe listening history; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "STAT-002",
+    "name": "Statistics",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe statistics; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "STAT-003",
+    "name": "Song insights",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe song insights; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "STAT-004",
+    "name": "Replay presentations",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe replay presentations; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "STAT-005",
+    "name": "Replay motion",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe replay motion; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-001",
+    "name": "Themes",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe themes; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "CUSTOM-002",
+    "name": "Colors",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe colors; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-003",
+    "name": "Fonts",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe fonts; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-004",
+    "name": "App icons",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe app icons; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-005",
+    "name": "Player selector",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe player selector; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-006",
+    "name": "DIY player editor",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe diy player editor; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-007",
+    "name": "Glass settings",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe glass settings; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-008",
+    "name": "Backgrounds",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe backgrounds; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-009",
+    "name": "Home customization",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe home customization; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-010",
+    "name": "Advanced appearance",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe advanced appearance; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "CUSTOM-011",
+    "name": "Reduced motion",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe reduced motion; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-001",
+    "name": "Accounts",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe accounts; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-002",
+    "name": "Privacy",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe privacy; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-003",
+    "name": "Onboarding",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe onboarding; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-004",
+    "name": "Backup",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe backup; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-005",
+    "name": "Restore",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe restore; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-006",
+    "name": "Settings search",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe settings search; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-007",
+    "name": "Downloads management",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe downloads management; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-008",
+    "name": "Error logs",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe error logs; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-009",
+    "name": "Updates",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe updates; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "UTIL-010",
+    "name": "Diagnostics",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe diagnostics; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PROV-001",
+    "name": "VyonEx",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe vyonex; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PROV-002",
+    "name": "Spotify",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe spotify; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PROV-003",
+    "name": "Local files",
+    "status": "partial",
+    "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
+    "acceptance": "Observe local files; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": [
+      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+    ]
+  },
+  {
+    "id": "PROV-004",
+    "name": "SMB",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe smb; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PROV-005",
+    "name": "WebDAV",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe webdav; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "PROV-006",
+    "name": "External modules",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe external modules; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-001",
+    "name": "Login",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe login; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-002",
+    "name": "Account linking",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe account linking; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-003",
+    "name": "Token persistence",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe token persistence; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-004",
+    "name": "Token refresh",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe token refresh; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-005",
+    "name": "Catalog",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe catalog; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-006",
+    "name": "Home feed",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe home feed; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-007",
+    "name": "Artists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe artists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-008",
+    "name": "Albums",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe albums; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-009",
+    "name": "Tracks",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe tracks; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-010",
+    "name": "Playlists",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playlists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-011",
+    "name": "Library",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe library; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-012",
+    "name": "Liked songs",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe liked songs; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-013",
+    "name": "Playlist import",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playlist import; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-014",
+    "name": "Playlist management",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playlist management; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-015",
+    "name": "Artwork",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe artwork; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-016",
+    "name": "Canvas-style visuals",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe canvas-style visuals; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-017",
+    "name": "Playback",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe playback; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-018",
+    "name": "Play pause",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe play pause; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-019",
+    "name": "Seek",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe seek; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-020",
+    "name": "Skip previous",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe skip previous; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-021",
+    "name": "Queue",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe queue; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-022",
+    "name": "Shuffle repeat",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe shuffle repeat; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-023",
+    "name": "Remote playback",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe remote playback; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-024",
+    "name": "Connect",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe connect; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-025",
+    "name": "Authorized offline",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe authorized offline; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-026",
+    "name": "DJ",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe dj; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-027",
+    "name": "Reconnection",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe reconnection; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "SPOT-028",
+    "name": "Errors",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe errors; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-001",
+    "name": "Discovery",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe discovery; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-002",
+    "name": "Manifests",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe manifests; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-003",
+    "name": "Installation",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe installation; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-004",
+    "name": "Settings",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe settings; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-005",
+    "name": "Source priorities",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe source priorities; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-006",
+    "name": "Search capabilities",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe search capabilities; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-007",
+    "name": "Stream capabilities",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe stream capabilities; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-008",
+    "name": "Errors",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe errors; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-009",
+    "name": "Timeouts",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe timeouts; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-010",
+    "name": "Cancellation",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe cancellation; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-011",
+    "name": "Permissions",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe permissions; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-012",
+    "name": "Sandbox",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe sandbox; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-013",
+    "name": "Health",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe health; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  },
+  {
+    "id": "MOD-014",
+    "name": "Format compatibility",
+    "status": "unverified",
+    "reference": "REQ-001; not observed",
+    "acceptance": "Observe format compatibility; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "tests": []
+  }
+]

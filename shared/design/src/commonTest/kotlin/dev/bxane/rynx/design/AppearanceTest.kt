@@ -29,4 +29,9 @@ class AppearanceTest {
         assertTrue(glass.policy(renderingPressure=true).backdrop)
         assertEquals(RynxMaterialMode.LiquidGlass,glass.material)
     }
+    @Test fun brandAppearanceOffersTenVectorPalettesAndTenNeutralLiquidFinishes() {
+        assertEquals(RynxBrandVariant.RubyRed,RynxAppearance().brandVariant)
+        assertEquals(10,RynxBrandVariant.entries.count {it.liquidTextureIndex==null})
+        assertEquals((1..10).toList(),RynxBrandVariant.entries.mapNotNull {it.liquidTextureIndex})
+    }
 }

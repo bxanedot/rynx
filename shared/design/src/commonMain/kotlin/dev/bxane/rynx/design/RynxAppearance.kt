@@ -17,6 +17,7 @@ data class RynxAppearance(
     val dynamicColor: Boolean = true,
     val motionIntensity: Float = 1f,
     val motion: RynxMotionPreference = RynxMotionPreference.FollowSystem,
+    val brandVariant: RynxBrandVariant = RynxBrandVariant.RubyRed,
 ) {
     fun normalized(): RynxAppearance {
         fun Float.unit(fallback: Float) = if (isFinite()) coerceIn(0f, 1f) else fallback

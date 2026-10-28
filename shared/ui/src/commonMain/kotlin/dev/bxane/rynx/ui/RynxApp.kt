@@ -83,7 +83,7 @@ private val LocalPalette = staticCompositionLocalOf { Palette(Color.White,Color(
             val center=Offset(this.size.width/2f,this.size.height/2f)
             drawCircle(Brush.radialGradient(listOf(Accent.copy(alpha=.58f),Color.Transparent),center,this.size.minDimension*.72f),this.size.minDimension*.72f,center)
         }
-        RynxGlyph(Glyph.Brand,Color(0xFFFF536A),Modifier.size(size*.52f))
+        RynxBrandMark(Modifier.size(size*.52f))
         artworkUrl?.takeIf(String::isNotBlank)?.let { url ->
             AsyncImage(model=url,contentDescription=null,modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
         }
@@ -323,7 +323,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val libraryTracks=(state.tracks+state.favoriteTracks+listOfNotNull(state.current)).distinctBy { it.id }
     val favorites=libraryTracks.filter { it.id in state.favoriteIds }
     if(libraryTracks.isEmpty()) Column(modifier.fillMaxSize().padding(32.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
-        RynxGlyph(Glyph.Brand,Accent,Modifier.size(54.dp))
+        RynxBrandMark(Modifier.size(54.dp))
         Spacer(Modifier.height(18.dp))
         Label("Your music, right here",24,bold=true)
         Spacer(Modifier.height(10.dp))

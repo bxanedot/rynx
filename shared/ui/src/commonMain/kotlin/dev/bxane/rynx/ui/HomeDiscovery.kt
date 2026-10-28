@@ -70,7 +70,7 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
         Column(Modifier.clip(RoundedCornerShape(12.dp)).discoveryPress("Play discovery ${track.title}"){actions.playDiscovery(track)}) {
             Box(Modifier.size(152.dp).clip(RoundedCornerShape(12.dp)).background(Brush.linearGradient(listOf(Color(0xFF60304E),Color(0xFF20243F)))) ,contentAlignment=Alignment.Center) {
                 if(track.artworkUrl!=null)AsyncImage(track.artworkUrl,null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
-                else RynxGlyph(Glyph.Brand,Color.White.copy(alpha=.55f),Modifier.size(65.dp))
+                else RynxBrandMark(Modifier.size(65.dp),tint=Color.White.copy(alpha=.55f))
                 if(ranked)track.chartRank?.let {rank->BasicText(rank.toString(),Modifier.align(Alignment.BottomStart).padding(10.dp),style=TextStyle(color=Color.White,fontSize=28.sp,fontWeight=FontWeight.Bold))}
             }
             Text(track.title,14,true,modifier=Modifier.padding(top=8.dp),maxLines=1);Text(track.artist,12,muted=true,maxLines=1)

@@ -1,6 +1,8 @@
 package dev.bxane.rynx.ui.material
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -38,6 +40,21 @@ import dev.bxane.rynx.ui.*
                         RynxSegments(RynxMaterialMode.entries.map {it.label to it.label},RynxMaterialMode.entries.indexOf(appearance.material),
                             {onChange(appearance.copy(material=RynxMaterialMode.entries[it]))})
                         MaterialPreview()
+                        BasicText("Rynx logo",style=TextStyle(color=ink,fontSize=19.sp,fontWeight=FontWeight.SemiBold))
+                        LazyRow(horizontalArrangement=Arrangement.spacedBy(10.dp),contentPadding=PaddingValues(vertical=4.dp)) {
+                            items(RynxBrandVariant.entries) { variant ->
+                                val selected=appearance.brandVariant==variant
+                                val interaction=remember(variant) {androidx.compose.foundation.interaction.MutableInteractionSource()}
+                                Box(Modifier.size(62.dp).rynxPressFeedback(interaction)
+                                    .rynxMaterial(18.dp,selected,interaction)
+                                    .clickable(role=Role.RadioButton,interactionSource=interaction,indication=null,
+                                        onClick={onChange(appearance.copy(brandVariant=variant))})
+                                    .semantics { contentDescription="Rynx logo: ${variant.label}";this.selected=selected },
+                                    contentAlignment=Alignment.Center) {
+                                    RynxBrandMark(Modifier.size(46.dp),variant=variant)
+                                }
+                            }
+                        }
                         BasicText("Motion",style=TextStyle(color=ink,fontSize=19.sp,fontWeight=FontWeight.SemiBold))
                         RynxSegments(listOf("System" to "Follow system motion","Full" to "Full motion","Reduced" to "Reduced motion"),
                             RynxMotionPreference.entries.indexOf(appearance.motion),{onChange(appearance.copy(motion=RynxMotionPreference.entries[it]))})
@@ -102,7 +119,7 @@ import dev.bxane.rynx.ui.*
         Box(Modifier.fillMaxSize().rynxBackdropSource(level+.5f).background(previewBackground))
         CompositionLocalProvider(LocalRynxMaterialDepth provides 0,LocalRynxMaterialLayer provides level+1f) {
             RynxSurface(Modifier.align(Alignment.Center).size(210.dp,64.dp),24.dp) {
-                BasicText("rynx",Modifier.align(Alignment.Center),style=TextStyle(color=if(LocalRynxAppearance.current.material==RynxMaterialMode.Amoled || LocalRynxAppearance.current.darkTheme)Color.White else Color(0xFF151722),fontSize=24.sp,fontWeight=FontWeight.SemiBold))
+                RynxBrandMark(Modifier.align(Alignment.Center).size(40.dp),variant=LocalRynxAppearance.current.brandVariant)
             }
         }
     }

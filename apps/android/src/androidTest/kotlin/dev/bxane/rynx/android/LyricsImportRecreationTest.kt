@@ -72,6 +72,9 @@ class LyricsImportRecreationTest {
                             .setMediaMetadata(MediaMetadata.Builder().setTitle("Lyrics import test").build()).build())
                     }
                     click("Open Now Playing");click("Show lyrics");click("Add timed lyrics")
+                    val stoppedDeadline=SystemClock.elapsedRealtime()+10_000
+                    while(scenario.state!=androidx.lifecycle.Lifecycle.State.CREATED && SystemClock.elapsedRealtime()<stoppedDeadline)SystemClock.sleep(50)
+                    assertEquals("The system picker must stop the host before recreation",androidx.lifecycle.Lifecycle.State.CREATED,scenario.state)
                     scenario.recreate()
                     click(filename)
                     waitFor("Seek to lyric Persisted through rotation")

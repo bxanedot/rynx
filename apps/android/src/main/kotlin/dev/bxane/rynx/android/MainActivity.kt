@@ -1,0 +1,428 @@
+package dev.bxane.rynx.android
+
+import android.content.ComponentName
+import android.content.Intent
+import android.os.Bundle
+import android.os.Build
+import android.media.AudioManager
+import android.provider.Settings
+import android.provider.OpenableColumns
+import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.core.view.WindowCompat
+import kotlin.math.roundToInt
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import dev.bxane.rynx.playback.catalog.CatalogItem
+import dev.bxane.rynx.playback.catalog.CatalogItemType
+import dev.bxane.rynx.playback.catalog.CatalogProvider
+import dev.bxane.rynx.playback.toggleFavoriteId
+import dev.bxane.rynx.ui.*
+import dev.bxane.rynx.vyonex.VyonExMusicCatalog
+import dev.bxane.rynx.vyonex.createLoggedOutVyonExMusicCatalog
+import dev.bxane.rynx.vyonex.ResolvedAudioStream
+import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/** Phone host for the shared Compose UI; the service owns all audio resources. */
+class MainActivity : ComponentActivity() {
+    private val state = MutableStateFlow(PlayerUiState(catalogSearchEnabled=true,catalogPlaybackEnabled=true,
+        volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true))
+    private var controller: MediaController? = null
+    private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
+    private lateinit var catalog: VyonExMusicCatalog
+    private lateinit var audioResolver: AudioResolutionChain<ResolvedAudioStream>
+    private lateinit var catalogReady: Deferred<Boolean>
+    private var searchJob: Job? = null
+    private val playbackRequests by lazy {LatestPlaybackRequest(lifecycleScope){pending->
+        state.update {it.copy(busy=pending || controller?.playbackState==Player.STATE_BUFFERING)}
+    }}
+    private val appearanceStore by lazy {AndroidAppearanceStore(applicationContext)}
+    private var renderingMonitor:AndroidRenderingMonitor?=null
+    private val preferences by lazy { getSharedPreferences("library", MODE_PRIVATE) }
+    private val audioManager by lazy { getSystemService(AudioManager::class.java) }
+    private val lyricsStore by lazy { AndroidTimedLyricsStore(applicationContext) }
+    private var pendingLyricsTrackId:String?=null
+    private var loadedLyricsTrackId:String?=null
+    private var lyricsJob:Job?=null
+    private val lyricsPicker=registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val trackId=pendingLyricsTrackId;pendingLyricsTrackId=null
+        if(uri!=null && trackId!=null) lifecycleScope.launch {
+            try {
+                val lines=lyricsStore.import(trackId,uri)
+                state.update { if(it.currentId==trackId) it.copy(lyrics=lines,lyricsTrackId=trackId,error=null) else it }
+            } catch(cancelled:CancellationException) { throw cancelled }
+            catch(_:Exception) { state.update { it.copy(error="Choose a timed lyrics (.lrc) file smaller than 256K characters.") } }
+        }
+    }
+    private val picker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        val saved = preferences.getStringSet("uris", emptySet()).orEmpty().toMutableSet()
+        uris.forEach { uri ->
+            try {
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                saved += uri.toString()
+            } catch (_: SecurityException) {
+                state.update { it.copy(error="Access to this audio file could not be retained. Choose it again.") }
+            }
+        }
+        preferences.edit { putStringSet("uris", saved) }
+        restoreLibrary()
+    }
+    private val listener = object : Player.Listener {
+        override fun onEvents(player: Player, events: Player.Events) = publish()
+        override fun onPlayerError(error: PlaybackException) {
+            state.update { it.copy(error="Playback failed. Check the file and your audio output, then try again.",playing=false,busy=false) }
+        }
+    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        pendingLyricsTrackId=savedInstanceState?.getString("pending-lyrics-track")
+        enableEdgeToEdge()
+        title = "rynx"
+        state.update {it.copy(appearance=appearanceStore.load())}
+        renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
+        catalog = createLoggedOutVyonExMusicCatalog()
+        audioResolver = AudioResolutionChain(
+            primary = catalog::resolveAudio,
+            fallback = NewPipeFallbackAudioResolver::resolveAudio,
+        )
+        catalogReady = lifecycleScope.async(Dispatchers.IO) {
+            try {
+                catalog.initialize()
+                true
+            } catch(cancelled: CancellationException) {
+                throw cancelled
+            } catch(_: Exception) {
+                false
+            }
+        }
+        val favoriteTracks=TrackMetadataStorage.decode(preferences.getString("favorite-tracks",null))
+        val favoriteIds=preferences.getStringSet("favorites",emptySet()).orEmpty().toSet()+favoriteTracks.map(TrackItem::id)
+        val recentTracks=TrackMetadataStorage.decode(preferences.getString("recent-tracks",null))
+        state.update { it.copy(favoriteIds=favoriteIds,favoriteTracks=favoriteTracks,recentTracks=recentTracks) }
+        restoreLibrary()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while(true) { publish(); delay(250) }
+            }
+        }
+        val actions = object : PlayerActions {
+            override fun importFiles() = picker.launch(arrayOf("audio/*"))
+            override fun play(id: String) {
+                playbackRequests.cancel()
+                val output = controller ?: return
+                val index = (0 until output.mediaItemCount).firstOrNull { output.getMediaItemAt(it).mediaId == id }
+                if(index != null) output.seekToDefaultPosition(index) else {
+                    val tracks = state.value.tracks
+                    val selected = tracks.indexOfFirst { it.id == id }
+                    if(selected < 0) {
+                        val saved=(state.value.favoriteTracks+state.value.recentTracks).firstOrNull { it.id==id }
+                        if(saved!=null && id.startsWith("yt:")) {
+                            playCatalogItem(CatalogItem(
+                                provider=CatalogProvider.YouTubeMusic,
+                                type=CatalogItemType.Track,
+                                mediaId=id.removePrefix("yt:"),
+                                title=saved.title,
+                                artist=saved.subtitle,
+                                artworkUrl=saved.artworkUrl,
+                            ))
+                        }
+                        return
+                    }
+                    output.setMediaItems(tracks.map { track ->
+                        MediaItem.Builder().setMediaId(track.id).setUri(track.id)
+                            .setMediaMetadata(MediaMetadata.Builder().setTitle(track.title).setArtist(track.subtitle)
+                                .apply { track.artworkUrl?.let { setArtworkUri(it.toUri()) } }.build()).build()
+                    },selected,0)
+                }
+                output.prepare(); output.play()
+            }
+            override fun toggle() { playbackRequests.cancel();controller?.let { if(it.isPlaying) it.pause() else { it.prepare(); it.play() } } }
+            override fun previous() { playbackRequests.cancel();controller?.seekToPrevious() }
+            override fun next() { playbackRequests.cancel();controller?.seekToNextMediaItem() }
+            override fun seek(fraction: Float) {
+                if(fraction.isFinite()) controller?.let { if(it.duration>0) it.seekTo((it.duration*fraction.coerceIn(0f,1f)).toLong()) }
+            }
+            override fun cycleRepeat() { controller?.let { it.repeatMode=when(it.repeatMode){Player.REPEAT_MODE_OFF->Player.REPEAT_MODE_ALL;Player.REPEAT_MODE_ALL->Player.REPEAT_MODE_ONE;else->Player.REPEAT_MODE_OFF} } }
+            override fun toggleShuffle() { controller?.let { it.shuffleModeEnabled=!it.shuffleModeEnabled } }
+            override fun setVolume(fraction:Float) {
+                if(!fraction.isFinite())return
+                val maximum=audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,(maximum*fraction.coerceIn(0f,1f)).roundToInt(),0)
+                publish()
+            }
+            override fun showAudioOutput() {
+                val action=if(Build.VERSION.SDK_INT>=29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS
+                startActivity(Intent(action))
+            }
+            override fun moveInQueue(id:String,toIndex:Int) {
+                controller?.let { output ->
+                    val destination=state.value.queue.getOrNull(toIndex)?.id ?: return
+                    val result=output.sendCustomCommand(QueueSessionCommands.Move,Bundle().apply {
+                        putString(QueueSessionCommands.Source,id)
+                        putString(QueueSessionCommands.Destination,destination)
+                    })
+                    result.addListener({
+                        try {
+                            if(result.get().resultCode!=androidx.media3.session.SessionResult.RESULT_SUCCESS)
+                                state.update { it.copy(error="The queue changed. Try moving this song again.") }
+                        } catch(_:Exception) { state.update { it.copy(error="The queue could not be updated. Try again.") } }
+                    },ContextCompat.getMainExecutor(this@MainActivity))
+                }
+            }
+            override fun updateAppearance(appearance:dev.bxane.rynx.design.RynxAppearance) {
+                val safe=appearance.normalized();appearanceStore.save(safe)
+                state.update {it.copy(appearance=safe)}
+            }
+            override fun clearUpcomingQueue() {
+                controller?.sendCustomCommand(QueueSessionCommands.Clear,Bundle.EMPTY)
+            }
+            override fun importLyrics() {
+                pendingLyricsTrackId=state.value.currentId ?: return
+                lyricsPicker.launch(arrayOf("text/*","application/x-lrc","application/octet-stream"))
+            }
+            override fun removeFromQueue(id: String) { controller?.let { output -> (0 until output.mediaItemCount).firstOrNull { output.getMediaItemAt(it).mediaId==id }?.let(output::removeMediaItem) } }
+            override fun dismissError() { state.update { it.copy(error=null) } }
+            override fun searchYouTubeMusic(query: String) = searchCatalog(query)
+            override fun loadMoreYouTubeMusic() = loadMoreCatalog()
+            override fun playCatalog(item: CatalogItem) = playCatalogItem(item)
+            override fun toggleFavorite(id: String) {
+                val before=state.value
+                val removing=id in before.favoriteIds
+                val favorites=toggleFavoriteId(before.favoriteIds,id)
+                val track=before.favoriteTracks.firstOrNull { it.id==id }
+                    ?: before.current?.takeIf { it.id==id }
+                    ?: before.tracks.firstOrNull { it.id==id }
+                    ?: before.recentTracks.firstOrNull { it.id==id }
+                val favoriteTracks=if(removing) before.favoriteTracks.filterNot { it.id==id }
+                    else track?.let { (before.favoriteTracks.filterNot { saved -> saved.id==id }+it).takeLast(500) }
+                        ?: before.favoriteTracks
+                preferences.edit {
+                    putStringSet("favorites",favorites)
+                    putString("favorite-tracks",TrackMetadataStorage.encode(favoriteTracks))
+                }
+                state.update { it.copy(favoriteIds=favorites,favoriteTracks=favoriteTracks) }
+            }
+        }
+        setContent {
+            val current by state.collectAsStateWithLifecycle()
+            var immersivePlayer by remember { mutableStateOf(false) }
+            SideEffect {
+                WindowCompat.getInsetsController(window,window.decorView).apply {
+                    val dark=current.appearance.darkTheme || current.appearance.material==dev.bxane.rynx.design.RynxMaterialMode.Amoled || immersivePlayer
+                    isAppearanceLightStatusBars=!dark
+                    isAppearanceLightNavigationBars=!dark
+                }
+            }
+            Box(Modifier.fillMaxSize().background(if(immersivePlayer && current.appearance.material!=dev.bxane.rynx.design.RynxMaterialMode.Amoled)Color(0xFF142430) else Color(current.appearance.policy().backgroundArgb)).safeDrawingPadding()) {
+                RynxApp(current,actions,onPlayerVisibleChanged={immersivePlayer=it})
+            }
+        }
+    }
+    override fun onSaveInstanceState(outState:Bundle) {
+        outState.putString("pending-lyrics-track",pendingLyricsTrackId)
+        super.onSaveInstanceState(outState)
+    }
+    override fun onStart() {
+        super.onStart()
+        renderingMonitor?.start()
+        val future = MediaController.Builder(this,SessionToken(this,ComponentName(this,PlaybackService::class.java))).buildAsync()
+        connection = future
+        future.addListener({
+            if(connection !== future) return@addListener
+            try { controller=future.get(); controller?.addListener(listener); publish() }
+            catch(_: Exception) { state.update { it.copy(error="The playback service could not be connected. Reopen rynx to retry.") } }
+        },ContextCompat.getMainExecutor(this))
+    }
+    override fun onStop() {
+        renderingMonitor?.stop()
+        controller?.removeListener(listener)
+        controller=null
+        connection?.let(MediaController::releaseFuture)
+        connection=null
+        super.onStop()
+    }
+    override fun onDestroy() {
+        searchJob?.cancel()
+        playbackRequests.cancel()
+        lyricsJob?.cancel()
+        if(::catalog.isInitialized) catalog.close()
+        super.onDestroy()
+    }
+
+    private fun searchCatalog(query: String) {
+        val normalized=query.trim()
+        searchJob?.cancel()
+        if(normalized.isEmpty()) {
+            state.update { it.copy(catalogSearch=CatalogSearchState()) }
+            return
+        }
+        state.update { it.copy(catalogSearch=CatalogSearchState(query=normalized,loading=true),error=null) }
+        searchJob=lifecycleScope.launch {
+            try {
+                if(!catalogReady.await()) error("YouTube Music is unavailable")
+                val page=withContext(Dispatchers.IO) { catalog.searchMusic(normalized) }
+                state.update { it.copy(catalogSearch=CatalogSearchState(
+                    query=normalized,
+                    items=page.items.distinctBy { item -> item.provider to item.mediaId },
+                    continuation=page.continuation,
+                )) }
+            } catch(cancelled: CancellationException) {
+                throw cancelled
+            } catch(_: Exception) {
+                state.update { it.copy(catalogSearch=CatalogSearchState(
+                    query=normalized,
+                    error="YouTube Music search failed. Check your connection and try again.",
+                )) }
+            }
+        }
+    }
+
+    private fun loadMoreCatalog() {
+        val before=state.value.catalogSearch
+        val continuation=before.continuation ?: return
+        if(before.loading||before.loadingMore) return
+        searchJob?.cancel()
+        state.update { it.copy(catalogSearch=it.catalogSearch.copy(loadingMore=true,error=null)) }
+        searchJob=lifecycleScope.launch {
+            try {
+                if(!catalogReady.await()) error("YouTube Music is unavailable")
+                val page=withContext(Dispatchers.IO) { catalog.searchMore(continuation) }
+                state.update { current ->
+                    val active=current.catalogSearch
+                    if(active.query!=before.query) current else current.copy(catalogSearch=active.copy(
+                        items=(active.items+page.items).distinctBy { item -> item.provider to item.mediaId },
+                        continuation=page.continuation,
+                        loadingMore=false,
+                    ))
+                }
+            } catch(cancelled: CancellationException) {
+                throw cancelled
+            } catch(_: Exception) {
+                state.update { it.copy(catalogSearch=it.catalogSearch.copy(
+                    loadingMore=false,
+                    error="More YouTube Music results could not be loaded. Check your connection and try again.",
+                )) }
+            }
+        }
+    }
+
+    private fun playCatalogItem(item: CatalogItem) {
+        if(item.type!=CatalogItemType.Track)return
+        state.update {it.copy(error=null)}
+        playbackRequests.start(
+            load={catalogReady.await();withContext(Dispatchers.IO){audioResolver.resolve(item.mediaId)}},
+            commit={stream->
+                if(stream==null)state.update {it.copy(error="This track could not be played right now.")}
+                else {
+                    val output=controller
+                    if(output==null)state.update {it.copy(error="The player is reconnecting. Try this track again shortly.")}
+                    else {
+                        StreamRequestHeaderStore.register(stream.url,stream.headers)
+                        val metadata=MediaMetadata.Builder().setTitle(item.title).setArtist(item.artist ?: "YouTube Music")
+                            .apply {item.artworkUrl?.let {setArtworkUri(it.toUri())}}.build()
+                        val media=MediaItem.Builder().setMediaId("yt:${item.mediaId}").setUri(stream.url)
+                            .setMimeType(stream.mimeType).setMediaMetadata(metadata).build()
+                        output.setMediaItem(media);output.prepare();output.play();publish()
+                    }
+                }
+            },
+            onFailure={state.update {it.copy(error="The selected track could not be prepared. Try another result.")}},
+        )
+    }
+    private fun restoreLibrary() {
+        lifecycleScope.launch(Dispatchers.IO) {
+        val metadata=LocalAudioMetadata(applicationContext)
+        val tracks=preferences.getStringSet("uris",emptySet()).orEmpty().sorted().mapNotNull { raw ->
+            val uri=raw.toUri()
+            try {
+                val title=contentResolver.query(uri,arrayOf(OpenableColumns.DISPLAY_NAME),null,null,null)?.use { cursor ->
+                    if(cursor.moveToFirst()) cursor.getString(0) else null
+                } ?: return@mapNotNull null
+                metadata.read(uri,title)
+            } catch(_: Exception) { null }
+        }
+        state.update { it.copy(tracks=tracks) }
+        }
+    }
+    private fun publish() {
+        val output=controller ?: return
+        val previous=state.value
+        val currentItem=output.currentMediaItem
+        val currentTrack=currentItem?.let { trackFor(it,previous.tracks) }
+        val recentTracks=if(output.isPlaying && currentTrack!=null && previous.recentTracks.firstOrNull()?.id!=currentTrack.id) {
+            (listOf(currentTrack)+previous.recentTracks.filterNot { it.id==currentTrack.id }).take(50)
+        } else previous.recentTracks
+        if(recentTracks!=previous.recentTracks) {
+            preferences.edit { putString("recent-tracks",TrackMetadataStorage.encode(recentTracks)) }
+        }
+        state.update { current -> current.copy(
+            currentId=currentItem?.mediaId,
+            currentTrack=currentTrack,
+            recentTracks=recentTracks,
+            queue=(0 until output.mediaItemCount).map { index ->
+                val item=output.getMediaItemAt(index)
+                trackFor(item,current.tracks)
+            },
+            playing=output.isPlaying,
+            busy=output.playbackState==Player.STATE_BUFFERING || playbackRequests.isPending,
+            positionMillis=output.currentPosition.coerceAtLeast(0),
+            durationMillis=output.duration.coerceAtLeast(0),
+            repeatLabel=when(output.repeatMode){Player.REPEAT_MODE_ALL->"All";Player.REPEAT_MODE_ONE->"One";else->"Off"},
+            shuffleEnabled=output.shuffleModeEnabled,
+            queueOrder=playbackOrder(output.currentTimeline,output.shuffleModeEnabled),
+            queueEditingAvailable=output.availableSessionCommands.contains(QueueSessionCommands.Move),
+            volume=audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()/audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1),
+            reduceMotion=Settings.Global.getFloat(contentResolver,Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f,
+        ) }
+        val trackId=currentItem?.mediaId
+        if(trackId!=loadedLyricsTrackId) {
+            loadedLyricsTrackId=trackId;lyricsJob?.cancel()
+            state.update { it.copy(lyrics=emptyList(),lyricsTrackId=trackId) }
+            if(trackId!=null) lyricsJob=lifecycleScope.launch {
+                val lines=lyricsStore.load(trackId)
+                state.update { if(it.currentId==trackId) it.copy(lyrics=lines,lyricsTrackId=trackId) else it }
+            }
+        }
+    }
+    private fun trackFor(item: MediaItem, tracks: List<TrackItem>): TrackItem =
+        tracks.firstOrNull { it.id==item.mediaId } ?: TrackItem(
+            id=item.mediaId,
+            title=item.mediaMetadata.title?.toString()?.takeIf(String::isNotBlank) ?: "Unknown track",
+            subtitle=item.mediaMetadata.artist?.toString()?.takeIf(String::isNotBlank) ?: "Unknown artist",
+            artworkUrl=item.mediaMetadata.artworkUri?.toString(),
+        )
+}

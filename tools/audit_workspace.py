@@ -6,7 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 APPROVED = {
-    "dependencies/vyonex-clean": ("https://github.com/bxanedot/vyonex-clean", "239a8d056c90b2101bf04de27a639d591acc69a3"),
+    "dependencies/vyonex-clean": ("https://github.com/bxanedot/vyonex-clean", "4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1"),
     "dependencies/GlyphStudio": ("https://github.com/bxanedot/GlyphStudio", "7db5de2e81c6687f9e3b483eeaac43a145e9704c"),
 }
 

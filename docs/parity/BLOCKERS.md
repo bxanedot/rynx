@@ -1,15 +1,14 @@
-# Blockers
-| ID | Blocker | Affected work | Required resolution |
-|---|---|---|---|
-| B-001 | Vyon references unavailable; Apple Music authorized instead | Original Vyon parity cannot be established | Resolved direction change; Apple public UI guides now usable. Platform captures/motion measurements still absent |
-| B-002 | No Android SDK, emulator or adb in initial environment | Android/TV/Wear runtime verification | Provision target SDKs and devices |
-| B-003 | GlyphStudio implementation license not found; artwork terms unaudited | Shipping glyph library/artwork | Explicit implementation license and separate applicable Apple terms review |
-| B-004 | Spotify configuration/entitlements and observed behavior absent | Auth/native playback and feature parity | Registered client/callback, supported SDK/API and authorized test account |
-| B-005 | VyonEx requires JDK 27/JVM 26 and Android API 37 upstream | Runtime dependency integration | Compatible build environment or approved independently published artifacts |
-| B-006 | No macOS/Windows target environments | Native runtime/package validation | Actual target environments |
+# Android-first blockers
 
-These are prerequisites, not claims that the remaining implementation has been completed. Advanced DSP, backend, providers, AI and other scope are still unimplemented.
+| ID | Blocker | Impact |
+|---|---|---|
+| AND-B001 | Platform-specific Apple Music measurements and motion recordings incomplete | Apple Music is now the authorized direct reference; lack of Vyon media does not block UI work |
+| AND-B002 | No attached physical Android phone and no /dev/kvm | Actual-device validation absent; unaccelerated emulator booted then host QEMU crashed before app installation; hosted instrumentation pending |
+| AND-B003 | Spotify registered client/callback, entitlements and authorized test account unavailable | Authentication and supported native playback validation |
+| AND-B004 | GlyphStudio implementation Apache license confirmed by user; Apple artwork eligibility not resolved | Original vectors remain in runtime until artwork review |
+| AND-B005 | Resolved for source licensing: Rynx selects GPL-3.0-or-later and includes corresponding source, dependency pins and retained notices | Full release audit and tested release identity remain separate gates |
+| AND-B006 | VyonEx search and both stream-resolution adapters compile, but live provider and audible device tests have not run | Search-to-playback remains runtime-unverified |
 
-B-007: Debian native installer packaging requires fakeroot, absent from this environment. packageDeb failed; development JAR build succeeds.
+Android SDK tooling was provisioned outside the repository. API 37 is available through AGP's newer package resolver, despite standalone sdkmanager initially failing to locate it. This is no longer an SDK blocker. Compile API 37 is needed by Compose 1.12.1. Other required features remain incomplete; documentation does not satisfy acceptance.
 
-B-008: Default Skiko GL fallback was unreliable in Xvfb on repeat launch; explicit SOFTWARE renderer works. Real GPU runtime/performance remains unverified.
+Historical desktop packaging/renderer limitations remain recorded in REGRESSION_RESULTS.md; desktop development is paused.

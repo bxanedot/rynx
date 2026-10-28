@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title">
+  <title id="title">Rynx artwork placeholder</title>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#25202d"/>
+      <stop offset="1" stop-color="#653041"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.6">
+      <stop offset="0" stop-color="#fa2d48" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fa2d48" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="320" height="320" fill="url(#background)"/>
+  <circle cx="160" cy="160" r="160" fill="url(#glow)"/>
+  <path fill="#fa2d48" fill-rule="evenodd" d="M91 75h73c47 0 76 26 76 70 0 32-20 53-52 64l56 51h-55l-46-47h-3v47H91zm49 44v46h24c20 0 31-6 31-22 0-15-11-24-31-24z"/>
+</svg>

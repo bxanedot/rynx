@@ -1,6 +1,7 @@
-plugins { kotlin("multiplatform") }
+plugins { kotlin("multiplatform"); id("com.android.kotlin.multiplatform.library") }
 kotlin {
-    jvmToolchain(21)
-    jvm()
+    jvmToolchain(27)
+    android { namespace = "dev.bxane.rynx.playback"; compileSdk = 37; minSdk = 26; compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
+    jvm { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21 } }
     sourceSets { commonTest.dependencies { implementation(kotlin("test")) } }
 }

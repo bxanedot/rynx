@@ -1,0 +1,14 @@
+rynx
+Copyright (C) 2026 bxane
+
+Rynx application-specific code and original vector artwork are licensed under the
+GNU General Public License, version 3 or (at your option) any later version.
+See LICENSE. Third-party dependencies and retained tooling keep their own licenses.
+
+The complete application source, dependency pins and build instructions accompany
+this repository. NewPipeExtractor is GPL-3.0-or-later. VyonEx, Haze, Kotlin,
+Compose and AndroidX retain their Apache-2.0 notices. See third_party_licenses/
+and docs/cleanroom/DEPENDENCY_AUDIT.md for the dependency inventory.
+
+Rynx does not bundle Apple SF Symbols artwork, proprietary fonts or reference
+screenshots. Its Android semantic icons, logo and placeholder artwork are original.

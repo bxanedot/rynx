@@ -20,9 +20,9 @@
     "name": "Search",
     "status": "partial",
     "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
-    "acceptance": "Observe search; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
+    "acceptance": "Desktop local filtering plus VyonEx YouTube Music search/pagination; UI, query trimming, paging and provider-error handling tested. Live network, visual parity and other platforms unverified.",
     "tests": [
-      "See REGRESSION_RESULTS.md; native audible output and full parity not verified"
+      "YouTubeSearchUiTest and DesktopCatalogSearchTest pass; live network, visual parity and other platforms unverified"
     ]
   },
   {
@@ -264,10 +264,12 @@
   {
     "id": "LIB-001",
     "name": "Favorites",
-    "status": "unverified",
-    "reference": "REQ-001; not observed",
-    "acceptance": "Observe favorites; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
-    "tests": []
+    "status": "incomplete",
+    "reference": "Apple Music is the authorized UI reference; exact feature behavior and parity remain unverified",
+    "acceptance": "Toggle a track in the player or library, persist its identity and metadata, restore it after restart, and resume supported sources.",
+    "tests": [
+      "Compose favorite action and Library shelf tests pass; Android metadata round-trip test is compiled but not run without a device."
+    ]
   },
   {
     "id": "LIB-002",
@@ -288,10 +290,12 @@
   {
     "id": "LIB-004",
     "name": "Recent tracks",
-    "status": "unverified",
-    "reference": "REQ-001; not observed",
-    "acceptance": "Observe recent tracks; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
-    "tests": []
+    "status": "incomplete",
+    "reference": "Apple Music Android Play Store screenshots show Home recent shelves; exact feed behavior unverified",
+    "acceptance": "Record actually playing tracks in order, persist a bounded history, restore it to Home, and play an item again.",
+    "tests": [
+      "Home shelf Compose test; Android history persistence and replay have not run on device."
+    ]
   },
   {
     "id": "LIB-005",
@@ -1094,10 +1098,12 @@
   {
     "id": "PROV-001",
     "name": "VyonEx",
-    "status": "unverified",
-    "reference": "REQ-001; not observed",
-    "acceptance": "Observe vyonex; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms.",
-    "tests": []
+    "status": "partial",
+    "reference": "Approved public API; no live provider observation",
+    "acceptance": "JVM adapter maps search and playlist pages, holds resolved audio URLs in memory with redacted string rendering, forwards refusal/session changes, and classifies failures. Desktop search uses the composite-linked engine. Live search/stream/download and native playback remain unverified.",
+    "tests": [
+      "VyonExMapperTest passes; live provider network and extraction are not verified"
+    ]
   },
   {
     "id": "PROV-002",

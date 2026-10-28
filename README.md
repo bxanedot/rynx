@@ -1,23 +1,27 @@
 # rynx
-Author: **bxane**.
 
-Independent Kotlin Multiplatform + Compose Multiplatform music application. Apple Music is the visual reference, per the user's follow-up replacing the unavailable Vyon reference. No prohibited Vyon, BitChord or Convx implementation was consulted.
+An independently authored Kotlin Multiplatform music application by **bxane**. Android phones are the active target; the existing desktop target also provides the headless Compose test harness.
 
-**Early desktop vertical slice, not the complete requested rewrite.** Present: local WAV/AIFF/AU import, persisted file library, local search, native Java Sound playback code, play/pause/seek/next/previous/repeat, editable queue, adaptive library/player/queue views, light/dark themes and original vector controls. Real audible playback, Apple visual/motion parity and other platform runtimes remain unverified.
+The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through VyonEx, an independently obtained NewPipe fallback, favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
+
+This is a development build. Spotify, downloads/offline management, advanced DSP/DJ, recognition, social/backend features and complete reference screen/motion parity are not finished. No production readiness, audible audio quality, benchmark or 95% visual-parity result is claimed. See [current blockers](docs/parity/BLOCKERS.md) and the [Android feature inventory](docs/parity/ANDROID_FEATURE_MATRIX.md).
+
+## Build and test
+
+Use JDK 27, Android SDK 37/build tools, and the approved dependency submodules. Set `ANDROID_HOME` or `sdk.dir` in untracked `local.properties`.
 
 ```sh
 git submodule update --init
-python3 tools/audit_workspace.py
-./gradlew check :apps:desktop:packageUberJarForCurrentOS
-./gradlew :apps:desktop:run
+./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:vyonex:jvmTest :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
+./gradlew :apps:android:connectedDebugAndroidTest
 ```
 
-Requires a full JDK 21 (including javac), a graphical desktop and a Java Sound-compatible output device for playback. On Linux the development JAR can be run with `java -jar apps/desktop/build/compose/jars/rynx-linux-x64-0.1.0.jar`.
+The debug APK is installable with a development signing key. The release APK remains unsigned until an owner-controlled release signing configuration is supplied. CI packages both variants and runs actual Android instrumentation on a hardware-accelerated emulator.
 
-On a virtual/headless Linux display without a GL context, launch with `java -Dskiko.renderApi=SOFTWARE -jar apps/desktop/build/compose/jars/rynx-linux-x64-0.1.0.jar`. Automatic renderer fallback produced a black window on a repeat launch in this environment; explicit software rendering was verified.
+Liquid Glass uses the Apache-2.0 Haze renderer through an original shared Rynx material/interaction layer. Solid and AMOLED bypass backdrop effects. Preferences update live and persist on Android; the quality fallback retains the selected material. [Material behavior and limits](docs/parity/INTERFACE_MATERIALS.md).
 
-The baseline decoder accepts formats supported by Java Sound, converts to 16-bit PCM and limits source files to 64 MiB/decoded data to 128 MiB. It is not a lossless/bit-perfect or streaming engine. File references persist under `~/.rynx/library-v1.txt`; source media is never copied or modified. If the saved index cannot be restored, imports remain session-only and the original index is preserved for recovery. Queue, position and appearance are currently session-only.
+VyonEx is primary and remains independently versioned. The hourly workflow fetches stable main, checks the candidate, then adopts a passing pin. A failed candidate leaves the default pin intact and opens a compatibility proposal. Runtime provider availability is a separate check.
 
-VyonEx and GlyphStudio are pinned approved submodules, **not runtime-linked yet**. No YouTube replacement extractor exists. Spotify, Android/TV/Wear, network providers, lyrics, advanced DSP, social/backend and the rest of the master scope are unimplemented. iOS remains a later expansion. Narrow desktop renders do not establish Android support.
+Rynx application code and original vectors use **GPL-3.0-or-later**, compatible with the requested NewPipeExtractor fallback. Retained dependency licenses and notices ship in the Android assets. GlyphStudio's implementation is Apache licensed per its owner; Apple artwork terms are separate, so Android uses original Rynx glyphs. Original SVG masters are in [assets/brand](assets/brand).
 
-See [current results](docs/parity/REGRESSION_RESULTS.md), [reference decisions](docs/parity/APPLE_MUSIC_REFERENCE.md), [feature inventory](docs/parity/FEATURE_MATRIX.md), [blockers](docs/parity/BLOCKERS.md), and [source isolation](docs/cleanroom/SOURCE_ISOLATION.md).
+No Vyon, Convx, BitChord or Vivi Music implementation source is a reference. The user authorizes public Apple Music screenshots and guides for visual/interaction reconstruction. Those images and Apple's fonts/symbol artwork are not bundled.

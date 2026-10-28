@@ -6,11 +6,11 @@ For every screen capture light/dark, accents, empty/populated, loading/error/off
 |---|---|---|---|---|
 | SCR-001 | Home | Missing | Not available | unverified |
 | SCR-002 | Explore | Missing | Not available | unverified |
-| SCR-003 | Search | Missing | Not available | unverified |
+| SCR-003 | Search | APPLE-003 (limited desktop search/library reference) | Compose local and VyonEx search; no screenshot comparison | partial |
 | SCR-004 | Artist | Missing | Not available | unverified |
 | SCR-005 | Album | Missing | Not available | unverified |
 | SCR-006 | Playlist | Missing | Not available | unverified |
-| SCR-007 | Local library | Missing | Not available | unverified |
+| SCR-007 | Local library | APPLE-001/003 | Compose library; no screenshot comparison | partial |
 | SCR-008 | Mini-player | Missing | Not available | unverified |
 | SCR-009 | Expanded player | Missing | Not available | unverified |
 | SCR-010 | Alternative players | Missing | Not available | unverified |

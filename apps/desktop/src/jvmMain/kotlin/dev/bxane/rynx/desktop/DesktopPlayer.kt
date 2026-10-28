@@ -1,6 +1,7 @@
 package dev.bxane.rynx.desktop
 
 import dev.bxane.rynx.playback.*
+import dev.bxane.rynx.playback.catalog.CatalogSearchRepository
 import dev.bxane.rynx.ui.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -9,11 +10,13 @@ import kotlinx.coroutines.sync.withLock
 import java.io.File
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.Clip
+import java.util.concurrent.atomic.AtomicLong
 
 /** Serialized native audio ownership. Decoder/file work never runs on the Compose thread. */
 internal class DesktopPlayer(
     private val library: LocalLibraryStore = LocalLibraryStore(File(System.getProperty("user.home"), ".rynx/library-v1.txt")),
     private val createClip: () -> Clip = AudioSystem::getClip,
+    private val catalogSearch: CatalogSearchRepository? = null,
 ) : AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
@@ -24,6 +27,11 @@ internal class DesktopPlayer(
     private var clip: Clip? = null
     private var active = false
     private var libraryRestored = false
+    private val catalogRequest = AtomicLong()
+    private var catalogJob: Job? = null
+    private val catalogReady: Deferred<Unit>? = catalogSearch?.let { repository ->
+        scope.async(Dispatchers.IO) { repository.initialize() }
+    }
 
     init {
         command { addFiles(library.load());libraryRestored=true }
@@ -114,6 +122,66 @@ internal class DesktopPlayer(
     }
     fun dismissError() { mutableState.update{it.copy(error=null)} }
 
+    fun searchYouTubeMusic(query: String) {
+        val normalized = query.trim()
+        val request = catalogRequest.incrementAndGet()
+        catalogJob?.cancel()
+        if(normalized.isEmpty()) {
+            mutableState.update { it.copy(catalogSearch=CatalogSearchState(error="Enter a search term.")) }
+            return
+        }
+        val repository = catalogSearch
+        if(repository == null) {
+            mutableState.update { it.copy(catalogSearch=CatalogSearchState(query=normalized,error="YouTube Music search is unavailable on this build.")) }
+            return
+        }
+        mutableState.update { it.copy(catalogSearch=CatalogSearchState(query=normalized,loading=true)) }
+        catalogJob = scope.launch {
+            try {
+                catalogReady?.await()
+                val page = repository.searchMusic(normalized)
+                if(catalogRequest.get()==request) mutableState.update {
+                    it.copy(catalogSearch=CatalogSearchState(query=normalized,items=page.items.distinctBy { item -> item.provider to item.mediaId },continuation=page.continuation))
+                }
+            } catch(cancelled: CancellationException) { throw cancelled }
+            catch(_: Exception) {
+                if(catalogRequest.get()==request) mutableState.update {
+                    it.copy(catalogSearch=CatalogSearchState(query=normalized,error="YouTube Music search failed. Check your connection and try again."))
+                }
+            }
+        }
+    }
+
+    fun loadMoreYouTubeMusic() {
+        val state = mutableState.value.catalogSearch
+        val continuation = state.continuation?.takeIf { it.isNotBlank() } ?: return
+        if(state.loading || state.loadingMore) return
+        val repository = catalogSearch ?: return
+        val query = state.query
+        val request = catalogRequest.incrementAndGet()
+        catalogJob?.cancel()
+        mutableState.update { it.copy(catalogSearch=it.catalogSearch.copy(loadingMore=true,error=null)) }
+        catalogJob = scope.launch {
+            try {
+                catalogReady?.await()
+                val page = repository.searchMore(continuation)
+                if(catalogRequest.get()==request) mutableState.update { current ->
+                    val currentCatalog = current.catalogSearch
+                    if(currentCatalog.query != query) current else current.copy(catalogSearch=currentCatalog.copy(
+                        items=(currentCatalog.items+page.items).distinctBy { item -> item.provider to item.mediaId },
+                        continuation=page.continuation,
+                        loadingMore=false,
+                    ))
+                }
+            } catch(cancelled: CancellationException) { throw cancelled }
+            catch(_: Exception) {
+                if(catalogRequest.get()==request) mutableState.update { current ->
+                    current.copy(catalogSearch=current.catalogSearch.copy(loadingMore=false,error="More YouTube Music results could not be loaded. Try again."))
+                }
+            }
+        }
+    }
+
     private suspend fun openCurrent() {
         clip?.close();clip=null;active=false
         publishQueue()
@@ -142,6 +210,7 @@ internal class DesktopPlayer(
     }
     override fun close() {
         scope.cancel()
+        runCatching { catalogSearch?.close() }
         // Complete cleanup after any in-flight decoder has released the mutex.
         runBlocking(Dispatchers.IO) { mutex.withLock { clip?.close();clip=null;active=false } }
     }

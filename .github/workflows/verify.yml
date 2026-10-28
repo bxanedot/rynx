@@ -1,14 +1,11 @@
-name: Verify independent Rynx foundation
+name: Verify Android-first Rynx
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
-  desktop:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -16,19 +13,31 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '27'
+      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
       - name: Audit source boundary
-        shell: bash
         run: python3 tools/audit_workspace.py
-      - name: Test and package desktop baseline
-        shell: bash
-        run: ./gradlew check :apps:desktop:packageUberJarForCurrentOS --console=plain
+      - name: Build Android variants and run shared/provider checks
+        run: ./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:vyonex:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --console=plain
+      - name: Run phone instrumentation tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash tools/android-connected-check.sh --console=plain
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: desktop-${{ matrix.os }}
+          name: android-development
           path: |
-            apps/desktop/build/compose/jars/*.jar
-            apps/desktop/build/reports/
+            apps/android/build/outputs/apk/
+            apps/android/build/reports/
+            apps/android/build/test-results/
             shared/playback/build/reports/
+            shared/design/build/reports/
+            shared/ui/build/reports/
+            apps/desktop/build/reports/screenshots/

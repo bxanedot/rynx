@@ -5,24 +5,56 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.*
+import coil3.compose.AsyncImage
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import dev.bxane.rynx.design.*
+import dev.bxane.rynx.ui.material.*
+import dev.chrisbanes.haze.rememberHazeState
 
 private data class Palette(val bg: Color, val surface: Color, val text: Color, val secondary: Color, val line: Color)
+private enum class AppTab(val title: String, val glyph: Glyph) {
+    ListenNow("Home", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
+    Library("Library", Glyph.Library), Search("Search", Glyph.Search),
+}
 private val Accent = Color(0xFFFA2D48)
 private val LocalPalette = staticCompositionLocalOf { Palette(Color.White,Color(0xFFF5F5F7),Color(0xFF18181A),Color(0xFF747478),Color(0xFFE5E5E8)) }
 
@@ -31,161 +63,351 @@ private val LocalPalette = staticCompositionLocalOf { Palette(Color.White,Color(
 }
 
 @Composable private fun IconButton(glyph: Glyph, description: String, enabled: Boolean = true, tint: Color = LocalPalette.current.text, onClick: () -> Unit) {
-    Box(Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).clickable(enabled=enabled,role=Role.Button,onClick=onClick).semantics{contentDescription=description},contentAlignment=Alignment.Center) {
+    val interaction=remember {MutableInteractionSource()}
+    Box(Modifier.size(44.dp).rynxPressFeedback(interaction,enabled).rynxMaterial(16.dp,interaction=interaction)
+        .clickable(enabled=enabled,role=Role.Button,interactionSource=interaction,indication=null,onClick=onClick)
+        .semantics{contentDescription=description;if(!enabled)disabled()},contentAlignment=Alignment.Center) {
         RynxGlyph(glyph,if(enabled) tint else tint.copy(alpha=.28f))
     }
 }
 
-@Composable private fun Action(text: String, action: () -> Unit) {
-    Box(Modifier.clip(RoundedCornerShape(9.dp)).background(Accent).clickable(role=Role.Button,onClick=action).padding(horizontal=18.dp,vertical=11.dp)) { Label(text,color=Color.White,bold=true) }
+@Composable private fun Action(text: String, action: () -> Unit, enabled: Boolean = true) {
+    RynxButton(text,action,enabled=enabled,selected=true)
 }
 
-@Composable private fun Artwork(size: Dp, modifier: Modifier = Modifier) {
-    Box(modifier.size(size).clip(RoundedCornerShape(size*.09f)).background(LocalPalette.current.line),contentAlignment=Alignment.Center) {
-        RynxGlyph(Glyph.Note,LocalPalette.current.secondary,Modifier.size(size*.38f))
+@Composable internal fun Artwork(size: Dp, modifier: Modifier = Modifier, artworkUrl:String?=null) {
+    Box(modifier.size(size).clip(RoundedCornerShape(size*.09f)).background(
+        Brush.linearGradient(listOf(Color(0xFF25202D),Color(0xFF653041))),
+    ),contentAlignment=Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val center=Offset(this.size.width/2f,this.size.height/2f)
+            drawCircle(Brush.radialGradient(listOf(Accent.copy(alpha=.58f),Color.Transparent),center,this.size.minDimension*.72f),this.size.minDimension*.72f,center)
+        }
+        RynxGlyph(Glyph.Brand,Color(0xFFFF536A),Modifier.size(size*.52f))
+        artworkUrl?.takeIf(String::isNotBlank)?.let { url ->
+            AsyncImage(model=url,contentDescription=null,modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
+        }
     }
 }
 
 /** Apple Music reference patterns; dimensions are independently selected, not measured parity. */
 @Composable
-fun RynxApp(state: PlayerUiState, actions: PlayerActions) {
-    var dark by remember { mutableStateOf(false) }
-    var query by remember { mutableStateOf("") }
-    var searching by remember { mutableStateOf(false) }
-    var expanded by remember { mutableStateOf(false) }
-    var showQueue by remember { mutableStateOf(false) }
-    val palette = if(dark) Palette(Color(0xFF171719),Color(0xFF222225),Color(0xFFF5F5F7),Color(0xFFA4A4AA),Color(0xFF353538)) else LocalPalette.current
-    CompositionLocalProvider(LocalPalette provides palette) {
-        BoxWithConstraints(Modifier.fillMaxSize().background(palette.bg)) {
-            val wide = maxWidth >= 760.dp
-            Row(Modifier.fillMaxSize()) {
+fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged:(Boolean)->Unit={}) {
+    var appearance by remember {mutableStateOf(state.appearance.normalized())}
+    LaunchedEffect(state.appearance) {appearance=state.appearance.normalized()}
+    fun updateAppearance(value:RynxAppearance) {appearance=value.normalized();actions.updateAppearance(appearance)}
+    val dark=appearance.darkTheme || appearance.material==RynxMaterialMode.Amoled
+    val effectiveState=state.copy(appearance=appearance,reduceMotion=appearance.reducedMotion(state.reduceMotion))
+    var appearanceOpen by rememberSaveable {mutableStateOf(false)}
+    val backdrop=rememberHazeState()
+    var query by rememberSaveable { mutableStateOf("") }
+    var activeTab by rememberSaveable { mutableStateOf(AppTab.ListenNow) }
+    val player=rememberPlayerPresentation()
+    val playerVisible by remember {derivedStateOf {player.visible}}
+    LaunchedEffect(playerVisible) {onPlayerVisibleChanged(playerVisible)}
+    var previousTrackId by remember {mutableStateOf(state.currentId)}
+    LaunchedEffect(state.currentId) {
+        if(previousTrackId!=null && state.current==null)player.close(true)
+        previousTrackId=state.currentId
+    }
+    val policy=appearance.policy(state.renderingPressure)
+    val palette=if(dark) Palette(Color(policy.backgroundArgb),Color(policy.surfaceArgb),Color(0xFFF5F5F7),Color(0xFFA4A4AA),Color(0xFF353538))
+        else Palette(Color(policy.backgroundArgb),Color(policy.surfaceArgb),Color(0xFF18181A),Color(0xFF747478),Color(0xFFE5E5E8))
+    CompositionLocalProvider(LocalPalette provides palette,LocalRynxAppearance provides appearance,
+        LocalRynxBackdrop provides backdrop,LocalRynxReducedMotion provides effectiveState.reduceMotion,
+        LocalRynxRenderingPressure provides state.renderingPressure) {
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize().rynxBackdropSource(0f).background(palette.bg))
+            val wide = maxWidth >= 760.dp && maxHeight>=600.dp
+            val searching = activeTab == AppTab.Search
+            Row(Modifier.fillMaxSize().rynxBackdropSource(1f).graphicsLayer { scaleX=1f-.025f*player.progress;scaleY=scaleX }
+                .semantics { if(playerVisible || appearanceOpen) hideFromAccessibility() }) {
                 if(wide) Column(Modifier.width(216.dp).fillMaxHeight().background(palette.surface).padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                     Label("rynx",28,bold=true,modifier=Modifier.padding(bottom=30.dp))
-                    NavItem("Search",Glyph.Search,searching){searching=true}
-                    Label("LIBRARY",11,palette.secondary,bold=true,modifier=Modifier.padding(top=28.dp,bottom=4.dp))
-                    NavItem("Songs",Glyph.Library,!searching){searching=false;query=""}
+                    AppTab.entries.forEach { tab -> NavItem(tab.title,tab.glyph,activeTab==tab){activeTab=tab} }
                     Spacer(Modifier.weight(1f))
                     Label("by bxane",12,palette.secondary)
                 }
                 Column(Modifier.weight(1f).fillMaxHeight()) {
-                    if(wide && state.current!=null) CompactPlayer(state,actions,{expanded=true},{showQueue=!showQueue})
                     Row(Modifier.fillMaxWidth().padding(horizontal=if(wide)32.dp else 24.dp,vertical=20.dp),verticalAlignment=Alignment.CenterVertically) {
-                        Label(if(searching) "Search" else "Library",32,bold=true,modifier=Modifier.weight(1f))
-                        IconButton(if(dark) Glyph.Sun else Glyph.Moon,"Switch to ${if(dark) "light" else "dark"} theme"){dark=!dark}
-                        IconButton(Glyph.Add,"Import audio files",onClick=actions::importFiles)
+                        Label(activeTab.title,32,bold=true,modifier=Modifier.weight(1f))
+                        IconButton(if(dark) Glyph.Sun else Glyph.Moon,if(appearance.material==RynxMaterialMode.Amoled)"Theme fixed by True AMOLED" else "Switch to ${if(dark) "light" else "dark"} theme",enabled=appearance.material!=RynxMaterialMode.Amoled){updateAppearance(appearance.copy(darkTheme=!appearance.darkTheme))}
+                        IconButton(Glyph.Appearance,"Appearance"){appearanceOpen=true}
+                        if(activeTab==AppTab.Library) IconButton(Glyph.Add,"Import audio files",onClick=actions::importFiles)
                     }
-                    if(searching) Row(Modifier.padding(horizontal=24.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(palette.surface).padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
-                        RynxGlyph(Glyph.Search,palette.secondary)
-                        Box(Modifier.padding(start=10.dp).weight(1f)) {
-                            if(query.isEmpty()) Label("Search your library",color=palette.secondary)
-                            BasicTextField(query,{query=it},Modifier.fillMaxWidth().semantics{contentDescription="Search your library"},singleLine=true,textStyle=TextStyle(color=palette.text,fontSize=15.sp))
-                        }
-                        if(query.isNotEmpty()) IconButton(Glyph.Close,"Clear search"){query=""}
+                    if(searching) RynxSearchInput(query,{query=it},{actions.searchYouTubeMusic(query.trim())},Modifier.padding(horizontal=24.dp))
+                    if(searching && state.catalogSearchEnabled) Row(Modifier.fillMaxWidth().padding(horizontal=24.dp, vertical=12.dp),horizontalArrangement=Arrangement.End) {
+                        Action(if(state.catalogSearch.loading) "Searching…" else "Search YouTube Music",{actions.searchYouTubeMusic(query.trim())},enabled=query.isNotBlank()&&!state.catalogSearch.loading)
                     }
                     if(state.error!=null) Row(Modifier.fillMaxWidth().background(Accent.copy(alpha=.1f)).padding(horizontal=20.dp),verticalAlignment=Alignment.CenterVertically) {
                         BasicText(state.error,Modifier.weight(1f),style=TextStyle(color=palette.text,fontSize=13.sp))
                         IconButton(Glyph.Close,"Dismiss error",onClick=actions::dismissError)
                     }
                     if(state.busy) Label("Opening audio…",color=palette.secondary,modifier=Modifier.padding(24.dp))
-                    val visible = state.tracks.filter { it.title.contains(query,ignoreCase=true) }
-                    if(state.tracks.isEmpty()) Column(Modifier.weight(1f).fillMaxWidth().padding(32.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
-                        RynxGlyph(Glyph.Library,palette.secondary,Modifier.size(52.dp))
-                        Spacer(Modifier.height(18.dp));Label("Your music, right here",24,bold=true)
-                        Spacer(Modifier.height(10.dp));Label("Add WAV, AIFF or AU files to your library.",color=palette.secondary)
-                        Spacer(Modifier.height(24.dp));Action("Add music",actions::importFiles)
-                    } else LazyColumn(Modifier.weight(1f).padding(horizontal=if(wide)32.dp else 20.dp),contentPadding=PaddingValues(vertical=20.dp)) {
-                        item { Row(Modifier.fillMaxWidth().padding(bottom=14.dp)) { Label(if(searching) "${visible.size} results" else "Songs",20,bold=true);Spacer(Modifier.weight(1f));Label("${state.tracks.size} songs",color=palette.secondary) } }
-                        items(visible,key={it.id}) { track -> TrackRow(track,state.currentId==track.id,state.playing,{actions.play(track.id)}) }
-                        if(visible.isEmpty()) item { Label("No songs found",color=palette.secondary,modifier=Modifier.padding(vertical=24.dp)) }
+                    when(activeTab) {
+                        AppTab.ListenNow -> ListenNowContent(state,actions,{activeTab=AppTab.Browse},{activeTab=AppTab.Search},Modifier.weight(1f))
+                        AppTab.Browse -> BrowseContent(state,actions,{term -> query=term;activeTab=AppTab.Search;actions.searchYouTubeMusic(term)},Modifier.weight(1f))
+                        AppTab.Radio -> RadioContent({ _:String -> query="";activeTab=AppTab.Search },Modifier.weight(1f))
+                        AppTab.Library -> LibraryContent(state,actions,Modifier.weight(1f))
+                        AppTab.Search -> SearchContent(state,actions,query,Modifier.weight(1f))
                     }
-                    if(!wide) {
-                        if(state.current!=null) Box(Modifier.padding(horizontal=12.dp).clip(RoundedCornerShape(24.dp)).background(palette.surface)) { CompactPlayer(state,actions,{expanded=true},{showQueue=!showQueue}) }
-                        Row(Modifier.fillMaxWidth().padding(12.dp).clip(RoundedCornerShape(30.dp)).background(palette.surface).padding(4.dp),horizontalArrangement=Arrangement.SpaceEvenly) {
-                            NavItem("Library",Glyph.Library,!searching){searching=false;query=""}
-                            NavItem("Search",Glyph.Search,searching){searching=true}
+                    if(!wide) Spacer(Modifier.height(if(state.current!=null)74.dp else NavigationDockHeight.dp))
+                }
+            }
+            Box(Modifier.fillMaxSize().semantics {if(appearanceOpen)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
+            if(!wide) FloatingNavigation(state.current!=null,player,activeTab,effectiveState.reduceMotion,appearanceOpen,
+                maxWidth.value,maxHeight.value,Modifier.align(Alignment.BottomCenter)) {tab->
+                activeTab=tab
+                if(playerVisible)player.close(effectiveState.reduceMotion)
+            }
+            if(appearanceOpen) AppearanceSheet(appearance,::updateAppearance){appearanceOpen=false}
+
+        }
+    }
+}
+
+@Composable private fun FloatingNavigation(hasTrack:Boolean,player:PlayerPresentation,activeTab:AppTab,reduced:Boolean,blocked:Boolean,
+    viewportWidth:Float,viewportHeight:Float,modifier:Modifier,onSelect:(AppTab)->Unit) {
+    val geometry=playerGeometry(viewportWidth,viewportHeight,player.progress)
+    val reveal=if(hasTrack)geometry.navigationReveal else 1f
+    val interactive=(!hasTrack || geometry.navigationInteractive) && !blocked
+    if(reveal<=0f)return
+    Box(modifier.padding(horizontal=14.dp,vertical=7.dp)
+        .graphicsLayer {translationY=(1f-reveal)*40.dp.toPx();alpha=reveal;scaleX=.94f+.06f*reveal;scaleY=scaleX}
+        .semantics {if(!interactive)hideFromAccessibility()}) {
+        CompositionLocalProvider(LocalRynxMaterialLayer provides 4f) {
+            RynxSurface(Modifier.fillMaxWidth().height(64.dp),28.dp,shadow=true) {
+                val selection by animateFloatAsState(AppTab.entries.indexOf(activeTab).toFloat(),if(reduced)snap() else spring(
+                    stiffness=RynxMotionTokens.SelectionStiffness,dampingRatio=RynxMotionTokens.SelectionDamping))
+                val position=if(reduced)AppTab.entries.indexOf(activeTab).toFloat() else selection
+                BoxWithConstraints(Modifier.fillMaxSize().padding(5.dp)) {
+                    val cell=maxWidth/5
+                    Box(Modifier.offset(x=cell*position).width(cell).fillMaxHeight().rynxMaterial(22.dp,selected=true,amount=.5f))
+                    Row(Modifier.fillMaxSize(),horizontalArrangement=Arrangement.SpaceEvenly,verticalAlignment=Alignment.CenterVertically) {
+                        AppTab.entries.forEach {tab->BottomTabItem(tab,activeTab==tab,Modifier.weight(1f),interactive){onSelect(tab)}}
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable private fun ListenNowContent(state:PlayerUiState,actions:PlayerActions,onBrowse:()->Unit,onSearch:()->Unit,modifier:Modifier) {
+    val p=LocalPalette.current
+    LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=8.dp,bottom=20.dp)) {
+        if(state.recentTracks.isEmpty()) item {
+            Column(Modifier.fillMaxWidth().padding(vertical=34.dp),horizontalAlignment=Alignment.CenterHorizontally) {
+                Artwork(144.dp)
+                Spacer(Modifier.height(24.dp))
+                Label("Your music starts here",24,bold=true)
+                Spacer(Modifier.height(8.dp))
+                Label("Search for songs or add audio files to your library.",14,p.secondary)
+                Spacer(Modifier.height(20.dp))
+                Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Action("Find music",onSearch)
+                    Action("Add files",actions::importFiles)
+                }
+            }
+        } else {
+            item {
+                Column {
+                    SectionHeading("Recently Played", "${state.recentTracks.size} songs")
+                    LazyRow(horizontalArrangement=Arrangement.spacedBy(14.dp),contentPadding=PaddingValues(horizontal=2.dp)) {
+                        items(state.recentTracks.take(8),key={"recent:${it.id}"}) { track ->
+                            Column(Modifier.width(152.dp).clip(RoundedCornerShape(12.dp))
+                                .clickable(role=Role.Button,onClick={actions.play(track.id)})
+                                .semantics{contentDescription="Play ${track.title}";role=Role.Button}
+                                .padding(bottom=5.dp)) {
+                                Artwork(152.dp,artworkUrl=track.artworkUrl)
+                                Spacer(Modifier.height(9.dp))
+                                Row(verticalAlignment=Alignment.CenterVertically) {
+                                    Column(Modifier.weight(1f)) { Label(track.title,14,bold=true);Label(track.subtitle,12,p.secondary) }
+                                    IconButton(if(track.id in state.favoriteIds) Glyph.HeartFill else Glyph.Heart,
+                                        if(track.id in state.favoriteIds) "Remove ${track.title} from Favorites" else "Add ${track.title} to Favorites",
+                                        tint=if(track.id in state.favoriteIds) Accent else p.secondary) { actions.toggleFavorite(track.id) }
+                                }
+                            }
                         }
                     }
                 }
-                if(showQueue && wide) QueuePanel(state,actions,{showQueue=false},Modifier.width(280.dp).fillMaxHeight())
             }
-            if(expanded) ExpandedPlayer(state,actions,{expanded=false},{showQueue=!showQueue})
-            if(showQueue && (!wide || expanded)) QueuePanel(state,actions,{showQueue=false},Modifier.align(Alignment.CenterEnd).widthIn(max=360.dp).fillMaxSize())
+            item {
+                Column(Modifier.fillMaxWidth().padding(vertical=22.dp)) {
+                    Label("Keep discovering",22,bold=true)
+                    Spacer(Modifier.height(7.dp))
+                    Label("Search for artists, albums and playlists to add to your listening.",14,p.secondary)
+                    Spacer(Modifier.height(14.dp))
+                    Action("Browse music",onBrowse)
+                }
+            }
         }
+        state.current?.takeIf { current -> state.tracks.none { it.id==current.id } }?.let { current -> item {
+            Column(Modifier.fillMaxWidth().padding(top=18.dp,bottom=18.dp)) {
+                Label("Now Playing",20,bold=true)
+                TrackRow(current,true,state.playing,{actions.toggle()},current.id in state.favoriteIds,{actions.toggleFavorite(current.id)})
+            }
+        } }
+    }
+}
+
+@Composable private fun BrowseContent(state:PlayerUiState,actions:PlayerActions,onSearch:(String)->Unit,modifier:Modifier) {
+    val p=LocalPalette.current
+    LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=8.dp,bottom=20.dp)) {
+        item {
+            Label("Browse music",24,bold=true,modifier=Modifier.padding(bottom=7.dp))
+            Label("Search across songs, artists, albums and playlists.",14,p.secondary)
+            Spacer(Modifier.height(18.dp))
+            BrowseShortcut("New music",Glyph.Note){onSearch("new music")}
+            BrowseShortcut("Popular songs",Glyph.Browse){onSearch("popular songs")}
+            BrowseShortcut("Playlists",Glyph.Queue){onSearch("playlists")}
+            BrowseShortcut("Artists",Glyph.Home){onSearch("artists")}
+        }
+        if(state.tracks.isNotEmpty()) {
+            item { SectionHeading("Your music", "${state.tracks.size} songs") }
+            items(state.tracks.take(6),key={"browse:${it.id}"}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},track.id in state.favoriteIds,{actions.toggleFavorite(track.id)})
+            }
+        }
+    }
+}
+
+@Composable private fun RadioContent(onSearch:(String)->Unit,modifier:Modifier) {
+    val p=LocalPalette.current
+    Column(modifier.fillMaxSize().padding(28.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
+        RynxGlyph(Glyph.Radio,p.secondary,Modifier.size(54.dp))
+        Spacer(Modifier.height(20.dp))
+        Label("Radio playback is not connected yet",20,bold=true)
+        Spacer(Modifier.height(9.dp))
+        Label("Find a song in Search while the radio provider is being built.",14,p.secondary)
+        Spacer(Modifier.height(20.dp))
+        Action("Find music",{onSearch("")})
+    }
+}
+
+@Composable private fun LibraryContent(state:PlayerUiState,actions:PlayerActions,modifier:Modifier) {
+    val p=LocalPalette.current
+    val libraryTracks=(state.tracks+state.favoriteTracks+listOfNotNull(state.current)).distinctBy { it.id }
+    val favorites=libraryTracks.filter { it.id in state.favoriteIds }
+    if(libraryTracks.isEmpty()) Column(modifier.fillMaxSize().padding(32.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
+        RynxGlyph(Glyph.Brand,Accent,Modifier.size(54.dp))
+        Spacer(Modifier.height(18.dp))
+        Label("Your music, right here",24,bold=true)
+        Spacer(Modifier.height(10.dp))
+        Label("Add audio files to build your library.",14,p.secondary)
+        Spacer(Modifier.height(24.dp))
+        Action("Add music",actions::importFiles)
+    } else LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
+        if(favorites.isNotEmpty()) {
+            item { SectionHeading("Favorites", "${favorites.size} songs") }
+            items(favorites,key={"favorite:${it.id}"}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},true,{actions.toggleFavorite(track.id)})
+            }
+        }
+        item { SectionHeading("Songs", "${state.tracks.size} songs") }
+        items(state.tracks,key={"library:${it.id}"}) { track ->
+            TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},track.id in state.favoriteIds,{actions.toggleFavorite(track.id)})
+        }
+    }
+}
+
+@Composable private fun SearchContent(state:PlayerUiState,actions:PlayerActions,query:String,modifier:Modifier) {
+    val p=LocalPalette.current
+    val visible=state.tracks.filter { it.title.contains(query,ignoreCase=true) }
+    val catalog=state.catalogSearch.takeIf { it.query==query.trim() } ?: CatalogSearchState()
+    LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=8.dp,bottom=20.dp)) {
+        if(visible.isNotEmpty()) {
+            item { SectionHeading("Your Library", "${visible.size} songs") }
+            items(visible,key={"search-local:${it.id}"}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},track.id in state.favoriteIds,{actions.toggleFavorite(track.id)})
+            }
+        } else if(query.isNotBlank() && state.tracks.isNotEmpty()) {
+            item { Label("No matching songs in your library",14,p.secondary,modifier=Modifier.padding(vertical=12.dp)) }
+        }
+        if(state.catalogSearchEnabled) {
+            item { SectionHeading("YouTube Music", null) }
+            if(catalog.error!=null) item { Label(catalog.error,14,Accent,modifier=Modifier.padding(vertical=12.dp)) }
+            if(catalog.loading&&catalog.items.isEmpty()) item { Label("Searching…",14,p.secondary,modifier=Modifier.padding(vertical=12.dp)) }
+            items(catalog.items,key={"${it.provider}:${it.mediaId}"}) { item ->
+                CatalogRow(item,state.catalogPlaybackEnabled){actions.playCatalog(item)}
+            }
+            if(!catalog.loading&&catalog.query.isNotBlank()&&catalog.items.isEmpty()&&catalog.error==null) item {
+                Label("No YouTube Music results",14,p.secondary,modifier=Modifier.padding(vertical=12.dp))
+            }
+            if(catalog.continuation!=null) item {
+                Row(Modifier.fillMaxWidth().padding(top=12.dp),horizontalArrangement=Arrangement.Center) {
+                    Action(if(catalog.loadingMore) "Loading…" else "Load more results",{actions.loadMoreYouTubeMusic()},enabled=!catalog.loadingMore)
+                }
+            }
+        }
+    }
+}
+
+@Composable private fun SectionHeading(title:String,detail:String?) {
+    val p=LocalPalette.current
+    Row(Modifier.fillMaxWidth().padding(top=10.dp,bottom=10.dp),verticalAlignment=Alignment.CenterVertically) {
+        Label(title,20,bold=true,modifier=Modifier.weight(1f))
+        detail?.let { Label(it,12,p.secondary) }
+    }
+}
+
+@Composable private fun BrowseShortcut(title:String,glyph:Glyph,onClick:()->Unit) {
+    val p=LocalPalette.current
+    Row(Modifier.fillMaxWidth().padding(vertical=5.dp).rynxMaterial(12.dp,amount=.6f)
+        .clickable(role=Role.Button,onClick=onClick).semantics{contentDescription=title;role=Role.Button}
+        .padding(horizontal=14.dp,vertical=13.dp),verticalAlignment=Alignment.CenterVertically) {
+        RynxGlyph(glyph,Accent)
+        Label(title,16,bold=true,modifier=Modifier.padding(start=12.dp).weight(1f))
+        RynxGlyph(Glyph.Next,p.secondary)
+    }
+}
+
+@Composable private fun CatalogRow(item: dev.bxane.rynx.playback.catalog.CatalogItem, playbackEnabled:Boolean,onPlay:()->Unit) {
+    val p = LocalPalette.current
+    val canPlay=playbackEnabled&&item.type==dev.bxane.rynx.playback.catalog.CatalogItemType.Track
+    Row(Modifier.fillMaxWidth().padding(vertical=5.dp).rynxMaterial(12.dp,amount=.5f)
+        .clickable(enabled=canPlay,role=Role.Button,onClick=onPlay)
+        .semantics { contentDescription="${item.title}, ${item.artist.orEmpty()}, ${if(canPlay) "play" else item.type.name.lowercase()}"; if(!canPlay) disabled() }
+        .padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        Artwork(48.dp,artworkUrl=item.artworkUrl)
+        Column(Modifier.padding(start=14.dp).weight(1f)) {
+            Label(item.title,bold=true)
+            val detail = listOfNotNull(item.artist, item.type.name).joinToString(" · ")
+            if(detail.isNotEmpty()) Label(detail,12,p.secondary)
+        }
+        item.durationSeconds?.let { Label(playerTime(it*1000),12,p.secondary) }
+        if(canPlay) RynxGlyph(Glyph.Play,Accent,Modifier.padding(start=12.dp))
+    }
+}
+
+@Composable private fun BottomTabItem(tab:AppTab,selected:Boolean,modifier:Modifier=Modifier,enabled:Boolean=true,onClick:()->Unit) {
+    val p=LocalPalette.current
+    val reduced=LocalRynxReducedMotion.current
+    val tint by animateColorAsState(if(selected) Accent else p.secondary,animationSpec=if(reduced)snap() else spring(stiffness=RynxMotionTokens.SelectionStiffness,dampingRatio=RynxMotionTokens.SelectionDamping),label="tab tint")
+    val scale by animateFloatAsState(if(selected) 1f else .92f,animationSpec=if(reduced)snap() else spring(stiffness=RynxMotionTokens.SelectionStiffness,dampingRatio=RynxMotionTokens.SelectionDamping),label="tab scale")
+    val interaction=remember {MutableInteractionSource()}
+    Column(modifier.rynxPressFeedback(interaction,enabled).clip(RoundedCornerShape(12.dp))
+        .clickable(enabled=enabled,role=Role.Tab,interactionSource=interaction,indication=null,onClick=onClick)
+        .semantics{contentDescription=tab.title;this.selected=selected;role=Role.Tab}
+        .graphicsLayer{scaleX=scale;scaleY=scale}.padding(vertical=4.dp),
+        horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(2.dp)) {
+        RynxGlyph(tab.glyph,tint,Modifier.size(22.dp))
+        Label(tab.title,10,tint,bold=selected)
     }
 }
 
 @Composable private fun NavItem(text:String,glyph:Glyph,selected:Boolean,onClick:()->Unit) {
     val p=LocalPalette.current
-    Row(Modifier.clip(RoundedCornerShape(10.dp)).background(if(selected) Accent.copy(alpha=.1f) else Color.Transparent).clickable(role=Role.Tab,onClick=onClick).semantics{this.selected=selected}.padding(horizontal=12.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+    Row(Modifier.clip(RoundedCornerShape(10.dp)).background(if(selected) Accent.copy(alpha=.1f) else Color.Transparent).clickable(role=Role.Tab,onClick=onClick).semantics{contentDescription=text;this.selected=selected}.padding(horizontal=12.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
         RynxGlyph(glyph,if(selected) Accent else p.secondary);Label(text,color=if(selected) Accent else p.text,bold=selected)
     }
 }
 
-@Composable private fun TrackRow(track:TrackItem,selected:Boolean,playing:Boolean,onClick:()->Unit) {
+@Composable private fun TrackRow(track:TrackItem,selected:Boolean,playing:Boolean,onClick:()->Unit,favorite:Boolean=false,onToggleFavorite:(()->Unit)?=null) {
     val p=LocalPalette.current
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if(selected) Accent.copy(alpha=.08f) else Color.Transparent).clickable(role=Role.Button,onClick=onClick).padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
-        Artwork(44.dp)
+    Row(Modifier.fillMaxWidth().rynxMaterial(12.dp,selected=selected,amount=.3f).clickable(role=Role.Button,onClick=onClick).padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        Artwork(44.dp,artworkUrl=track.artworkUrl)
         Column(Modifier.padding(start=14.dp).weight(1f)) { Label(track.title,bold=selected,color=if(selected) Accent else p.text);Spacer(Modifier.height(4.dp));Label(track.subtitle,12,p.secondary) }
         if(selected) RynxGlyph(if(playing) Glyph.Pause else Glyph.Play,Accent)
+        onToggleFavorite?.let { toggle -> IconButton(if(favorite) Glyph.HeartFill else Glyph.Heart,if(favorite) "Remove ${track.title} from Favorites" else "Add ${track.title} to Favorites",tint=if(favorite) Accent else p.secondary,onClick=toggle) }
     }
 }
-
-@Composable private fun CompactPlayer(state:PlayerUiState,actions:PlayerActions,open:()->Unit,queue:()->Unit) {
-    val track=state.current?:return
-    val p=LocalPalette.current
-    Row(Modifier.fillMaxWidth().height(72.dp).background(p.surface).padding(horizontal=10.dp),verticalAlignment=Alignment.CenterVertically) {
-        Row(Modifier.weight(1f).clickable(role=Role.Button,onClick=open).semantics{contentDescription="Open Now Playing"}.padding(4.dp),verticalAlignment=Alignment.CenterVertically) {
-            Artwork(44.dp)
-            Column(Modifier.padding(start=12.dp).weight(1f)){Label(track.title,bold=true);Label(track.subtitle,12,p.secondary)}
-        }
-        IconButton(if(state.playing) Glyph.Pause else Glyph.Play,if(state.playing) "Pause" else "Play",!state.busy,onClick=actions::toggle)
-        IconButton(Glyph.Next,"Next track",!state.busy,onClick=actions::next)
-        IconButton(Glyph.Queue,"Show queue",onClick=queue)
-    }
-}
-
-@Composable private fun ExpandedPlayer(state:PlayerUiState,actions:PlayerActions,close:()->Unit,queue:()->Unit) {
-    val p=LocalPalette.current
-    Column(Modifier.fillMaxSize().background(p.bg).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){IconButton(Glyph.Close,"Close Now Playing",onClick=close);Spacer(Modifier.weight(1f));Label("NOW PLAYING",12,p.secondary,bold=true);Spacer(Modifier.weight(1f));IconButton(Glyph.Queue,"Show queue",onClick=queue)}
-        if(state.error!=null) BasicText(state.error,style=TextStyle(color=Accent,fontSize=14.sp))
-        Column(Modifier.widthIn(max=440.dp).fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
-            Artwork(240.dp);Spacer(Modifier.height(32.dp))
-            Label(state.current?.title?:"Nothing playing",24,bold=true)
-            Label(state.current?.subtitle?:"Choose a song from your library",17,p.secondary)
-            Spacer(Modifier.height(28.dp))
-            SeekBar(if(state.durationMillis>0) state.positionMillis.toFloat()/state.durationMillis else 0f,state.durationMillis>0,actions::seek)
-            Row(Modifier.fillMaxWidth().padding(top=7.dp)){Label(time(state.positionMillis),12,p.secondary);Spacer(Modifier.weight(1f));Label("-${time((state.durationMillis-state.positionMillis).coerceAtLeast(0))}",12,p.secondary)}
-            Row(Modifier.fillMaxWidth().padding(vertical=24.dp),horizontalArrangement=Arrangement.SpaceEvenly,verticalAlignment=Alignment.CenterVertically){
-                IconButton(Glyph.Previous,"Previous track",state.current!=null&&!state.busy,onClick=actions::previous)
-                IconButton(if(state.playing) Glyph.Pause else Glyph.Play,if(state.playing) "Pause" else "Play",state.current!=null&&!state.busy,onClick=actions::toggle)
-                IconButton(Glyph.Next,"Next track",state.current!=null&&!state.busy,onClick=actions::next)
-            }
-            Row(verticalAlignment=Alignment.CenterVertically){IconButton(Glyph.Repeat,"Change repeat mode, currently ${state.repeatLabel}",tint=if(state.repeatLabel=="Off") p.secondary else Accent,onClick=actions::cycleRepeat);Label("Repeat: ${state.repeatLabel}",13,p.secondary)}
-        }
-    }
-}
-
-@Composable private fun SeekBar(value:Float,enabled:Boolean,onSeek:(Float)->Unit) {
-    val p=LocalPalette.current
-    var width by remember{mutableFloatStateOf(1f)}
-    Box(Modifier.fillMaxWidth().height(32.dp).onSizeChanged { width=it.width.toFloat().coerceAtLeast(1f) }.semantics {
-        contentDescription="Playback position";progressBarRangeInfo=ProgressBarRangeInfo(value.coerceIn(0f,1f),0f..1f)
-        if(enabled) setProgress { onSeek(it.coerceIn(0f,1f));true } else disabled()
-    }.pointerInput(enabled){detectTapGestures{if(enabled)onSeek((it.x/width).coerceIn(0f,1f))}}.pointerInput(enabled){detectDragGestures{change,_->if(enabled){change.consume();onSeek((change.position.x/width).coerceIn(0f,1f))}}},contentAlignment=Alignment.CenterStart) {
-        androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(5.dp)) {
-            drawRoundRect(p.line,cornerRadius=androidx.compose.ui.geometry.CornerRadius(5f))
-            drawRoundRect(Accent,size=androidx.compose.ui.geometry.Size(size.width*value.coerceIn(0f,1f),size.height),cornerRadius=androidx.compose.ui.geometry.CornerRadius(5f))
-        }
-    }
-}
-
-@Composable private fun QueuePanel(state:PlayerUiState,actions:PlayerActions,close:()->Unit,modifier:Modifier) {
-    val p=LocalPalette.current
-    Column(modifier.background(p.surface).padding(18.dp)) {
-        Row(verticalAlignment=Alignment.CenterVertically){Label("Playing Next",22,bold=true,modifier=Modifier.weight(1f));IconButton(Glyph.Close,"Close queue",onClick=close)}
-        if(state.queue.isEmpty()) Label("Your queue is empty",color=p.secondary,modifier=Modifier.padding(vertical=24.dp))
-        LazyColumn { items(state.queue,key={it.id}) { track -> Row(verticalAlignment=Alignment.CenterVertically) { Box(Modifier.weight(1f)){TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)})};IconButton(Glyph.Close,"Remove ${track.title} from queue"){actions.removeFromQueue(track.id)} } } }
-    }
-}
-private fun time(millis:Long):String { val seconds=millis.coerceAtLeast(0)/1000;return "${seconds/60}:${(seconds%60).toString().padStart(2,'0')}" }

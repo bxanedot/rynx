@@ -398,7 +398,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         .semantics{contentDescription=tab.title;this.selected=selected;role=Role.Tab}
         .graphicsLayer{scaleX=scale;scaleY=scale}.padding(vertical=4.dp),
         horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(2.dp)) {
-        RynxGlyph(tab.glyph,tint,Modifier.size(22.dp))
+        AnimatedNavigationIcon(tab.glyph,selected,Accent,p.secondary,reduced,Modifier.size(22.dp),interaction)
         Label(tab.title,10,tint,bold=selected)
     }
 }

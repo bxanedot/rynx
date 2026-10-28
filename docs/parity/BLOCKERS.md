@@ -3,7 +3,7 @@
 | ID | Blocker | Impact |
 |---|---|---|
 | AND-B001 | Platform-specific Apple Music measurements and motion recordings incomplete | Apple Music is now the authorized direct reference; lack of Vyon media does not block UI work |
-| AND-B002 | No attached physical Android phone and no /dev/kvm locally | Hosted API 36 KVM run works. Run 20 failed when the lyrics-picker test blocked on a stopped ActivityScenario, leaving the following Search test without a resumed host. Test harness now requests recreation through the retained Activity; hosted rerun is pending. Physical phone remains unavailable. |
+| AND-B002 | No attached physical Android phone and no /dev/kvm locally | Hosted API 36 KVM run 22 built successfully but connected tests failed: direct recreation covered the document picker, and native Search timed out. Local test revisions recreate before opening the picker and collect Search semantics on failure; hosted rerun is pending. Physical phone remains unavailable. |
 | AND-B003 | Spotify registered client/callback, entitlements and authorized test account unavailable | Authentication and supported native playback validation |
 | AND-B004 | GlyphStudio implementation Apache license confirmed by user; Apple artwork eligibility not resolved | Original vectors remain in runtime until artwork review |
 | AND-B005 | Resolved for source licensing: Rynx selects GPL-3.0-or-later and includes corresponding source, dependency pins and retained notices | Full release audit and tested release identity remain separate gates |

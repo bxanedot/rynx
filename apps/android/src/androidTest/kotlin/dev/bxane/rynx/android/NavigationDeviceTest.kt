@@ -35,7 +35,23 @@ class NavigationDeviceTest {
             if (condition()) return
             SystemClock.sleep(100)
         }
-        throw AssertionError(message)
+        throw AssertionError("$message. ${accessibilitySnapshot()}")
+    }
+
+    private fun accessibilitySnapshot(): String {
+        val root=instrumentation.uiAutomation.rootInActiveWindow ?: return "No active accessibility window."
+        val nodes=mutableListOf<String>()
+        fun visit(node:AccessibilityNodeInfo) {
+            val label=node.contentDescription?.toString()
+            val text=node.text?.toString()
+            val actions=node.actionList.map { it.id }
+            if(label!=null || text!=null || node.isEditable || AccessibilityNodeInfo.ACTION_SET_TEXT in actions) {
+                nodes += "class=${node.className}, description=$label, text=$text, enabled=${node.isEnabled}, editable=${node.isEditable}, actions=$actions"
+            }
+            for(index in 0 until node.childCount)node.getChild(index)?.let(::visit)
+        }
+        visit(root)
+        return "Active package=${root.packageName}; accessibility nodes=${nodes.take(100)}"
     }
 
     private fun click(label: String) {
@@ -51,7 +67,9 @@ class NavigationDeviceTest {
     @Test fun searchKeepsItsQueryAndBackReturnsToThePreviousTab() {
         ActivityScenario.launch(MainActivity::class.java).use {
             click("Library")
+            eventually("Library tab was not selected") { find("Library")?.isSelected == true }
             click("Search")
+            eventually("Search tab was not selected") { find("Search")?.isSelected == true }
             eventually("Search input did not finish its expansion") {
                 find("Search your music")?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
             }

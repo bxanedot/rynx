@@ -20,9 +20,8 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
-/** Real system-picker return after activity recreation, with an app-owned temporary document. */
+/** Real lyrics import after host recreation, using an app-owned temporary document. */
 @RunWith(AndroidJUnit4::class)
 class LyricsImportRecreationTest {
     private val instrumentation=InstrumentationRegistry.getInstrumentation()
@@ -34,10 +33,22 @@ class LyricsImportRecreationTest {
         }
         return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
     }
+    private fun accessibilitySnapshot():String {
+        val root=instrumentation.uiAutomation.rootInActiveWindow ?: return "No active accessibility window."
+        val nodes=mutableListOf<String>()
+        fun visit(n:AccessibilityNodeInfo) {
+            val label=n.contentDescription?.toString()
+            val text=n.text?.toString()
+            if(label!=null || text!=null)nodes += "${n.className}: description=$label, text=$text"
+            for(i in 0 until n.childCount)n.getChild(i)?.let(::visit)
+        }
+        visit(root)
+        return "Active package=${root.packageName}; nodes=${nodes.take(100)}"
+    }
     private fun waitFor(label:String):AccessibilityNodeInfo {
         val deadline=SystemClock.elapsedRealtime()+30_000
         while(SystemClock.elapsedRealtime()<deadline){node(label)?.let{return it};SystemClock.sleep(100)}
-        error("No accessible document/player control: $label")
+        error("No accessible document/player control: $label. ${accessibilitySnapshot()}")
     }
     private fun click(label:String) {
         var target:AccessibilityNodeInfo?=waitFor(label)
@@ -49,10 +60,10 @@ class LyricsImportRecreationTest {
         }
         fail("Could not activate $label: $details")
     }
-    @Test fun pendingTrackIdentitySurvivesRotationWhileChoosingLyrics() {
+    @Test fun currentTrackRemainsAvailableForLyricsImportAfterHostRecreation() {
         assumeTrue(Build.VERSION.SDK_INT>=29)
         val context=instrumentation.targetContext
-        val audio=File(context.cacheDir,"lyrics-rotation.mp3")
+        val audio=File(context.cacheDir,"lyrics-recreation.mp3")
         instrumentation.context.assets.open("tagged-silence.mp3").use {input->audio.outputStream().use(input::copyTo)}
         val resolver=context.contentResolver
         val filename="rynx-import-${SystemClock.elapsedRealtime()}.lrc"
@@ -60,37 +71,39 @@ class LyricsImportRecreationTest {
             put(MediaStore.MediaColumns.DISPLAY_NAME,filename);put(MediaStore.MediaColumns.MIME_TYPE,"text/plain")
             put(MediaStore.MediaColumns.RELATIVE_PATH,"Download/")
         })!!
-        resolver.openOutputStream(uri)!!.use {it.write("[00:00]Persisted through rotation".toByteArray())}
+        resolver.openOutputStream(uri)!!.use {it.write("[00:00]Persisted through host recreation".toByteArray())}
         try {
             ActivityScenario.launch(MainActivity::class.java).use {scenario->
-                val originalActivity=AtomicReference<MainActivity>()
-                scenario.onActivity { originalActivity.set(it) }
                 lateinit var future:com.google.common.util.concurrent.ListenableFuture<MediaController>
                 instrumentation.runOnMainSync {future=MediaController.Builder(context,SessionToken(context,ComponentName(context,PlaybackService::class.java))).buildAsync()}
                 val controller=future.get(30,TimeUnit.SECONDS)
                 try {
                     instrumentation.runOnMainSync {
-                        controller.setMediaItem(MediaItem.Builder().setMediaId("lyrics-rotation-test")
+                        controller.setMediaItem(MediaItem.Builder().setMediaId("lyrics-recreation-test")
                             .setUri(Uri.fromFile(audio))
                             .setMediaMetadata(MediaMetadata.Builder().setTitle("Lyrics import test").build()).build())
                     }
-                    click("Open Now Playing");click("Show lyrics");click("Add timed lyrics")
-                    val stoppedDeadline=SystemClock.elapsedRealtime()+10_000
-                    while(scenario.state!=androidx.lifecycle.Lifecycle.State.CREATED && SystemClock.elapsedRealtime()<stoppedDeadline)SystemClock.sleep(50)
-                    assertEquals("The system picker must stop the host before recreation",androidx.lifecycle.Lifecycle.State.CREATED,scenario.state)
-                    // ActivityScenario.recreate waits for RESUMED, which cannot happen while the
-                    // document picker is in the foreground. Request the same recreation directly;
-                    // the selected document then returns to the restored host.
-                    instrumentation.runOnMainSync { originalActivity.get().recreate() }
+                    val originalActivity=java.util.concurrent.atomic.AtomicReference<MainActivity>()
+                    scenario.onActivity { originalActivity.set(it) }
+                    // Recreate the host while it owns the foreground. The media session remains
+                    // the authority for the current track; the real picker is launched afterward.
+                    scenario.recreate()
+                    scenario.onActivity {
+                        assertNotSame("ActivityScenario must provide a recreated host",originalActivity.get(),it)
+                    }
+                    click("Open Now Playing")
+                    waitFor("Lyrics import test")
+                    click("Show lyrics")
+                    click("Add timed lyrics")
                     click(filename)
-                    waitFor("Seek to lyric Persisted through rotation")
-                    scenario.onActivity { assertNotSame("The picker result must return to a recreated host",originalActivity.get(),it) }
+                    waitFor("Seek to lyric Persisted through host recreation")
                 } finally {instrumentation.runOnMainSync {controller.clearMediaItems();controller.release()}}
             }
         } finally {
+            instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
             audio.delete()
             resolver.delete(uri,null,null)
-            context.getSharedPreferences("timed-lyrics",0).edit().remove("lyrics-rotation-test").apply()
+            context.getSharedPreferences("timed-lyrics",0).edit().remove("lyrics-recreation-test").apply()
         }
     }
 }

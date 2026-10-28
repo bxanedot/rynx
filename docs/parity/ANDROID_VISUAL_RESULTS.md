@@ -50,6 +50,10 @@ Physical-device optical fidelity, audible quality, accessibility service behavio
 
 Run [40737479787](https://github.com/bxanedot/rynx/actions/runs/40737479787) for commit `ff2b8ae` built the phone/instrumentation APKs and enabled KVM successfully, then failed during connected tests. `LyricsImportRecreationTest` used blocking `ActivityScenario.recreate()` while the system document picker held the foreground; it timed out waiting for the stopped host to resume. The following `NavigationDeviceTest` then launched a host that only reached `CREATED` and timed out waiting for the Search input. Device logs confirm no resumed `MainActivity` during that second test. The lyrics test now requests recreation through the retained host instance and asserts the replacement receives the picker result; this correction has compiled locally but is awaiting another hosted device run. Native Search and lifecycle behavior are not yet verified.
 
+## Hosted phone run 22 and current rerun preparation
+
+Run [40739637239](https://github.com/bxanedot/rynx/actions/runs/40739637239) for `e5b49d0` passed APK build/package in Verify run [40739637162](https://github.com/bxanedot/rynx/actions/runs/40739637162), but connected tests failed again. Calling `Activity.recreate()` directly while DocumentsUI was foregrounded brought the Rynx host above the picker, so its file row could not be selected. The separate Search test timed out finding an enabled `Search your music` field; that run had no accessibility-tree diagnostic. The current local test revision recreates the host before opening the real picker and then verifies the imported lyric on the active player. This avoids relying on rotation of a background task; returning from a picker that remains open through recreation is still unverified. Search now waits for tab selection and attaches an accessibility snapshot to timeouts. These changes are not yet built or rerun on hosted Android.
+
 
 ## Apple discovery checkpoint after review fixes
 

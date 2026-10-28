@@ -19,6 +19,7 @@ import dev.bxane.rynx.ui.material.rynxMaterial
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.min
 
 /**
  * The indicator remains one surface while its position and width deform.
@@ -35,10 +36,12 @@ internal fun ElasticSelectionIndicator(
     if (count <= 0) return
     val position = remember { Animatable(selectedIndex.toFloat()) }
     val stretch = remember { Animatable(0f) }
+    var destination by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
     val latestSelection by rememberUpdatedState(onSelectIndex)
     LaunchedEffect(selectedIndex, reducedMotion) {
-        val target = selectedIndex.coerceIn(0, count - 1).toFloat()
+        destination = selectedIndex.coerceIn(0, count - 1)
+        val target = destination.toFloat()
         if (reducedMotion) {
             position.snapTo(target)
             stretch.snapTo(0f)
@@ -73,6 +76,7 @@ internal fun ElasticSelectionIndicator(
                 onDragEnd = {
                     dragging = false
                     val target = position.value.roundToInt().coerceIn(0, count - 1)
+                    destination = target
                     latestSelection(target)
                     scope.launch {
                         position.animateTo(target.toFloat(), if (reducedMotion) snap() else spring(
@@ -84,8 +88,10 @@ internal fun ElasticSelectionIndicator(
                 },
             )
         }
-        Box(Modifier.offset(x = cell * position.value - cell * stretch.value * .5f)
-            .width(cell * (1f + stretch.value)).fillMaxHeight()
+        val travelStretch = if (reducedMotion) 0f else min(.19f, abs(destination - position.value) * .055f)
+        val deformation = (stretch.value + travelStretch).coerceIn(0f, .25f)
+        Box(Modifier.offset(x = cell * position.value - cell * deformation * .5f)
+            .width(cell * (1f + deformation)).fillMaxHeight()
             .then(gesture)
             .rynxMaterial(22.dp, selected = true, amount = .5f))
     }

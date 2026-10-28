@@ -22,6 +22,9 @@ jobs:
           distribution: temurin
           java-version: '27'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Refresh stable dependency and provenance pins
         run: python3 tools/refresh_vyonex.py

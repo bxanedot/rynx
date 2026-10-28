@@ -20,7 +20,7 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | DISC-014 | Regional discovery | unverified | Observe permitted reference, implement, test and compare |
 | DISC-015 | Suggestions | unverified | Observe permitted reference, implement, test and compare |
 | DISC-016 | Personalized shelves | incomplete | Personalized local candidate ranking and service-owned listening history; no Apple account-history or private algorithm access. |
-| PLAY-001 | Background playback | incomplete | Media3 foreground session/service code present; local and resolved remote sources route through its session; runtime, audio-focus and interruption tests pending |
+| PLAY-001 | Background playback | incomplete | Media3 foreground session/service code present; generated local audio session metadata and pause/resume instrumentation compiles; current-branch device runtime, audio-focus and interruption tests remain pending |
 | PLAY-002 | Mini-player | incomplete | One capsule-to-sheet surface, shared artwork/transport and navigation handoff pass headless interaction/continuity tests; Android gesture/render acceptance pending |
 | PLAY-003 | Expanded player | incomplete | Reference-proportioned transport, volume, output, seek and menus implemented in all material modes; landscape and large-font harness passes; native/reference gates pending |
 | PLAY-004 | Player variants | unverified | Observe permitted reference, implement, test and compare |
@@ -138,13 +138,13 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | UTIL-008 | Error logs | unverified | Observe permitted reference, implement, test and compare |
 | UTIL-009 | Updates | unverified | Observe permitted reference, implement, test and compare |
 | UTIL-010 | Diagnostics | unverified | Observe permitted reference, implement, test and compare |
-| PROV-001 | VyonEx | incomplete | Android/JVM adapter compiles and Android search/stream resolution is wired; live provider behavior and audible playback pending |
+| PROV-001 | VyonEx | incomplete | Android/JVM adapter implements shared KMP catalog/stream contracts; deterministic tests and release builds pass. Live YouTube request was refused by the environment before provider response; device playback is unverified |
 | PROV-002 | Spotify | unverified | Observe permitted reference, implement, test and compare |
 | PROV-003 | Local files | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | PROV-004 | SMB | unverified | Observe permitted reference, implement, test and compare |
 | PROV-005 | WebDAV | unverified | Observe permitted reference, implement, test and compare |
 | PROV-006 | External modules | unverified | Observe permitted reference, implement, test and compare |
-| PROV-007 | NewPipeExtractor fallback | incomplete | Pinned NewPipe fallback builds and ordered cancellation tests pass; GPL-compatible Rynx source selected, live fallback/device acceptance pending |
+| PROV-007 | NewPipeExtractor fallback | incomplete | Pinned Android fallback implements the shared KMP resolver contract and compiles; VyonEx-first/cancellation behavior tests pass. Live fallback and device acceptance remain pending |
 | SPOT-001 | Login | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-002 | Account linking | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-003 | Token persistence | unverified | Observe permitted reference, implement, test and compare |

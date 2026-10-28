@@ -37,6 +37,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import dev.bxane.rynx.playback.catalog.AudioResolutionChain
 import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogProvider
@@ -45,7 +46,6 @@ import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.ui.*
 import dev.bxane.rynx.vyonex.VyonExMusicCatalog
 import dev.bxane.rynx.vyonex.createLoggedOutVyonExMusicCatalog
-import dev.bxane.rynx.vyonex.ResolvedAudioStream
 import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
@@ -65,7 +65,8 @@ class MainActivity : ComponentActivity() {
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: VyonExMusicCatalog
-    private lateinit var audioResolver: AudioResolutionChain<ResolvedAudioStream>
+    private lateinit var audioResolver: AudioResolutionChain
+    private lateinit var playbackPreparer: MusicPlaybackPreparer
     private lateinit var catalogReady: Deferred<Boolean>
     private var searchJob: Job? = null
     private var historyRevision = -1L
@@ -118,10 +119,8 @@ class MainActivity : ComponentActivity() {
         state.update {it.copy(appearance=appearanceStore.load())}
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
         catalog = createLoggedOutVyonExMusicCatalog()
-        audioResolver = AudioResolutionChain(
-            primary = catalog::resolveAudio,
-            fallback = NewPipeFallbackAudioResolver::resolveAudio,
-        )
+        audioResolver = AudioResolutionChain(catalog, NewPipeFallbackAudioResolver)
+        playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver) { state.value.discovery.region }
         catalogReady = lifecycleScope.async(Dispatchers.IO) {
             try {
                 catalog.initialize()
@@ -372,29 +371,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private data class PreparedMusic(val item:CatalogItem,val metadata:MusicMetadata?,val stream:ResolvedAudioStream?)
-    private class RecordingNotFound:Exception()
     private fun playDiscoveryTrack(track:MusicMetadata) = startMusicRequest {
         catalogReady.await()
-        val enriched=if((track.artworkUrl==null || track.durationMillis==null) && track.id.startsWith("apple:")) {
-            try {withContext(Dispatchers.IO){track.id.removePrefix("apple:").toLongOrNull()?.let {catalog.appleSong(it,state.value.discovery.region)}}?:track}
-            catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){track}
-        } else track
-        val item=if(track.source==MetadataSource.YouTubeMusic && track.playbackId!=null)
-            CatalogItem(CatalogProvider.YouTubeMusic,CatalogItemType.Track,track.playbackId!!,track.title,track.artist,track.durationMillis?.div(1000),track.artworkUrl)
-        else withContext(Dispatchers.IO) {
-            val page=catalog.searchMusic("${track.artist} ${track.title}")
-            MetadataMatching.bestPlaybackMatch(enriched,page.items)?:throw RecordingNotFound()
-        }
-        PreparedMusic(item,enriched.copy(genreIds=track.genreIds.ifEmpty {enriched.genreIds}),withContext(Dispatchers.IO){audioResolver.resolve(item.mediaId)})
+        playbackPreparer.prepareDiscovery(track)
     }
     private fun playCatalogItem(item:CatalogItem) {
         if(item.type!=CatalogItemType.Track)return
         startMusicRequest {
             catalogReady.await()
-            val metadata=try {withContext(Dispatchers.IO){MetadataMatching.bestMetadataMatch(item,catalog.searchAppleMusic("${item.artist.orEmpty()} ${item.title}",state.value.discovery.region,5))}}
-                catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){null}
-            PreparedMusic(item,metadata,withContext(Dispatchers.IO){audioResolver.resolve(item.mediaId)})
+            playbackPreparer.prepareCatalog(item)
         }
     }
     private fun startMusicRequest(load:suspend ()->PreparedMusic) {
@@ -413,7 +398,7 @@ class MainActivity : ComponentActivity() {
                 val media=MediaItem.Builder().setMediaId(id).setUri(stream.url).setMimeType(stream.mimeType).setMediaMetadata(metadata).build()
                 output.setMediaItem(media);output.prepare();output.play();discovery.closeSelection();publish()
             }
-        },onFailure={failure->state.update {it.copy(error=if(failure is RecordingNotFound)
+        },onFailure={failure->state.update {it.copy(error=if(failure is NoMatchingRecordingException)
             "No matching recording was found on YouTube Music. Try a search result or open this song in Apple Music."
             else "The selected track could not be prepared. Try another result.")}})
     }

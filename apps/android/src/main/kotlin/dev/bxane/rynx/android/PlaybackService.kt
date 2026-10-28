@@ -6,7 +6,6 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.util.Util
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
@@ -27,14 +26,10 @@ class PlaybackService : MediaSessionService() {
             .setConnectTimeoutMs(15_000)
             .setReadTimeoutMs(20_000)
         val base = DefaultDataSource.Factory(this, http)
-        val requestAware = ResolvingDataSource.Factory(base, object : ResolvingDataSource.Resolver {
-            override fun resolveDataSpec(dataSpec: DataSpec): DataSpec {
-                val headers = StreamRequestHeaderStore.headersFor(dataSpec.uri.toString())
-                return if (headers.isEmpty()) dataSpec else dataSpec.buildUpon()
-                    .setHttpRequestHeaders(headers)
-                    .build()
-            }
-        })
+        val requestAware = ResolvingDataSource.Factory(
+            base,
+            ProviderHeaderResolver(StreamRequestHeaderStore::headersFor),
+        )
         val player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(requestAware))
             .build().apply {

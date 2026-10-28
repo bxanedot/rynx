@@ -4,11 +4,13 @@ import android.content.ComponentName
 import android.net.Uri
 import android.os.SystemClock
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +42,13 @@ class PlaybackSessionTest {
                     instrumentation.runOnMainSync {
                         assertTrue("Own controller must be able to set media",controller.isCommandAvailable(androidx.media3.common.Player.COMMAND_SET_MEDIA_ITEM))
                         assertTrue("Own controller must be able to play",controller.isCommandAvailable(androidx.media3.common.Player.COMMAND_PLAY_PAUSE))
-                        controller.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+                        controller.setMediaItem(
+                            MediaItem.Builder()
+                                .setMediaId("session-test")
+                                .setUri(Uri.fromFile(file))
+                                .setMediaMetadata(MediaMetadata.Builder().setTitle("Generated session audio").build())
+                                .build(),
+                        )
                         controller.prepare();controller.play()
                     }
                     val deadline=SystemClock.elapsedRealtime()+10000
@@ -50,7 +58,22 @@ class PlaybackSessionTest {
                         SystemClock.sleep(50)
                     }
                     assertTrue("Decoded PCM must advance through the real session: ${playbackDiagnostics(controller)}",progressed)
-                    instrumentation.runOnMainSync { controller.pause();assertTrue(!controller.playWhenReady);controller.stop();controller.clearMediaItems() }
+                    var pausedAt = 0L
+                    instrumentation.runOnMainSync {
+                        assertEquals("Generated session audio", controller.mediaMetadata.title.toString())
+                        controller.pause()
+                        pausedAt = controller.currentPosition
+                        assertTrue(!controller.playWhenReady)
+                    }
+                    instrumentation.runOnMainSync { controller.play() }
+                    val resumed=SystemClock.elapsedRealtime()+5000
+                    var resumedPlayback=false
+                    while(!resumedPlayback&&SystemClock.elapsedRealtime()<resumed) {
+                        instrumentation.runOnMainSync { resumedPlayback=controller.isPlaying&&controller.currentPosition>pausedAt }
+                        SystemClock.sleep(50)
+                    }
+                    assertTrue("MediaController must resume the same generated item",resumedPlayback)
+                    instrumentation.runOnMainSync { controller.stop();controller.clearMediaItems() }
                 } finally { instrumentation.runOnMainSync { controller.release() } }
             }
         } finally { file.delete() }

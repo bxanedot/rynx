@@ -2,6 +2,10 @@
 
 2026-10-27, Linux x86_64, OpenJDK Temurin 27.0.1, Gradle 9.8.2, Kotlin 2.4.21, Compose 1.12.1.
 
+## Shared-playback continuation
+
+2026-10-28, isolated Android-first worktree: full local gate passed in 10m18s. It built Android debug and minified unsigned release APKs plus the instrumentation APK; Android lint had zero errors and one `OldTargetApi` warning. The included reports contain 81 cases: 78 passed, three opt-in live checks skipped, zero failures/errors (37 playback, 15 design, 7 shared UI, 8 VyonEx, 10 Apple provider, 4 Android unit). VyonEx live smoke was attempted separately but the network connection was refused before any provider response. Instrumentation compiled; the local software emulator failed to boot, so no current-branch connected test result exists. See `ANDROID_VISUAL_RESULTS.md` and `BLOCKERS.md` for artifact hashes and limits.
+
 ## Checks
 Executed with the pinned Gradle 9.8.2 distribution and the environment's proxy/CA flags:
 `:apps:desktop:jvmTest :providers:vyonex:jvmTest :shared:playback:jvmTest`

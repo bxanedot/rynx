@@ -16,7 +16,7 @@ kotlin {
     }
     sourceSets {
         androidMain.dependencies {
-            api(project(":providers:vyonex"))
+            api(project(":shared:playback"))
             implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.5") {
                 // The extractor calls Rhino's Android-safe core API directly; this optional
                 // JSR-223 adapter requires java.beans/javax.script, which Android does not ship.

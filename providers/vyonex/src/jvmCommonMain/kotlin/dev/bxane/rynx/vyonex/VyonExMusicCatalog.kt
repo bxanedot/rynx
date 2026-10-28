@@ -7,24 +7,28 @@ import com.vyonex.VyonExLogLevel
 import com.vyonex.VyonExPlaylist
 import com.vyonex.VyonExSession
 import okhttp3.OkHttpClient
+import dev.bxane.rynx.playback.catalog.AudioStreamResolver
 import dev.bxane.rynx.playback.catalog.CatalogPage
 import dev.bxane.rynx.playback.catalog.CatalogSearchRepository
+import dev.bxane.rynx.playback.catalog.MusicPlaybackCatalog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 /** Desktop/JVM adapter around the approved VyonEx engine. It never performs extraction itself. */
 class VyonExMusicCatalog(
     host: VyonExHost,
     private val releaseHost: () -> Unit = {},
-) : CatalogSearchRepository {
+) : MusicPlaybackCatalog, AudioStreamResolver {
     private val engine = VyonEx(host)
 
     fun init() = engine.init()
     override fun initialize() = init()
 
-    override suspend fun searchMusic(query: String): CatalogPage {
+    override suspend fun searchMusic(query: String): CatalogPage = withContext(Dispatchers.IO) {
         val normalized = query.trim()
         require(normalized.isNotEmpty()) { "Search text must not be empty" }
-        return engine.searchMusic(normalized).let { page ->
+        engine.searchMusic(normalized).let { page ->
             CatalogPage(
                 items = page.results.map(VyonExCatalogMapper::mapSearchResult),
                 continuation = page.continuation,
@@ -32,9 +36,9 @@ class VyonExMusicCatalog(
         }
     }
 
-    override suspend fun searchMore(continuation: String): CatalogPage {
+    override suspend fun searchMore(continuation: String): CatalogPage = withContext(Dispatchers.IO) {
         require(continuation.isNotBlank()) { "Search continuation must not be empty" }
-        return engine.searchMore(continuation).let { page ->
+        engine.searchMore(continuation).let { page ->
             CatalogPage(
                 items = page.results.map(VyonExCatalogMapper::mapSearchResult),
                 continuation = page.continuation,
@@ -53,19 +57,22 @@ class VyonExMusicCatalog(
         return VyonExCatalogMapper.mapListPage(engine.playlistMore(continuation))
     }
 
-    suspend fun searchAppleMusic(query:String,country:String?,limit:Int=30):List<dev.bxane.rynx.playback.discovery.MusicMetadata> =
-        engine.appleMusic.searchSongs(query,country,limit).mapNotNull(VyonExAppleMetadataMapper::song)
+    override suspend fun searchAppleMusic(query:String,country:String?,limit:Int):List<dev.bxane.rynx.playback.discovery.MusicMetadata> =
+        withContext(Dispatchers.IO) { engine.appleMusic.searchSongs(query,country,limit).mapNotNull(VyonExAppleMetadataMapper::song) }
 
-    suspend fun appleSong(id:Long,country:String?):dev.bxane.rynx.playback.discovery.MusicMetadata? =
-        engine.appleMusic.song(id,country)?.let(VyonExAppleMetadataMapper::song)
+    override suspend fun appleSong(id:Long,country:String?):dev.bxane.rynx.playback.discovery.MusicMetadata? =
+        withContext(Dispatchers.IO) { engine.appleMusic.song(id,country)?.let(VyonExAppleMetadataMapper::song) }
 
-    suspend fun appleArtistImages(id:Long,country:String?):List<com.vyonex.VyonExThumbnail> = engine.appleMusic.artistImages(id,country)
+    suspend fun appleArtistImages(id:Long,country:String?):List<com.vyonex.VyonExThumbnail> =
+        withContext(Dispatchers.IO) { engine.appleMusic.artistImages(id,country) }
 
-    suspend fun resolveAudio(videoId: String, maxKbps: Int = 160): ResolvedAudioStream? {
+    override suspend fun resolveAudio(videoId: String): ResolvedAudioStream? = resolveAudio(videoId, 160)
+
+    suspend fun resolveAudio(videoId: String, maxKbps: Int): ResolvedAudioStream? = withContext(Dispatchers.IO) {
         require(videoId.isNotBlank()) { "Video ID must not be empty" }
         require(maxKbps > 0) { "Maximum bitrate must be positive" }
-        val stream = engine.extract(videoId, maxKbps) ?: return null
-        return ResolvedAudioStream(
+        val stream = engine.extract(videoId, maxKbps) ?: return@withContext null
+        ResolvedAudioStream(
             videoId = stream.videoId,
             url = stream.url,
             headers = stream.headers.toMap(),

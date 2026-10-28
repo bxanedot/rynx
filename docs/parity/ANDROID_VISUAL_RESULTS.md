@@ -2,6 +2,22 @@
 
 2026-10-28 · Linux x86_64 · Temurin JDK 27 · Gradle 9.8.2 · AGP 9.4.1 · compile SDK 37 / target 36 / min 26.
 
+## Current shared-playback continuation
+
+2026-10-28: The isolated playback-preparation worktree passed the full local deterministic gate in 10m18s:
+
+`:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :providers:vyonex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --offline --console=plain`
+
+JUnit reports contain 81 cases: 78 passed, three opt-in live-provider checks skipped, and zero failures/errors. Counts: shared playback 37, design 15, shared UI 7, VyonEx 8 (two live skips), Apple provider 10 (one live skip), and Android local unit tests 4. Android debug, minified unsigned release, and instrumentation APKs were produced. Lint reported zero errors and one warning (`OldTargetApi`, target SDK 36).
+
+Artifacts from this worktree:
+
+- Debug APK: 21,658,776 bytes; SHA-256 `9e8ca215020418b2735e4c47a7f1652d113d5ea122babc3fae975d0bd9e0be8b`.
+- Minified release APK: 6,931,445 bytes; SHA-256 `98fa23990ddda87a4f9fec184980beea795a6adbb3c07852a5eefd4cc3b54433`. It is unsigned and is not a release candidate.
+- Instrumentation APK: 430,090 bytes; SHA-256 `01c1c06485eeb9c0dbbbf27d809383f476ea2d5b85340616ff87831f47b559c4`.
+
+The new shared preparation and stream-resolution contracts are covered by deterministic common tests; instrumentation asserts generated local audio metadata and pause/resume and separately checks URL-scoped request headers. The instrumentation APK only compiled: a local API 36 software emulator never reached `sys.boot_completed`, so no current-branch device test ran. The opt-in VyonEx live request failed before receiving a provider response (`java.io.IOException`, `ConnectPlan.kt:472`, connection refused). Apple live checks were not attempted in this run. Neither release playback nor full product parity is established by this build.
+
 ## Latest local verification
 
 The complete command passed in 8m15s against VyonEx `4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1`:

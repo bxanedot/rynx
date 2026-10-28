@@ -34,6 +34,7 @@ kotlin {
             api(project(":shared:playback"))
             api("com.vyonex:vyonex:0.2.0")
             implementation("com.squareup.okhttp3:okhttp:5.5.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         }
         jvmTest.dependencies { implementation(kotlin("test")) }
     }

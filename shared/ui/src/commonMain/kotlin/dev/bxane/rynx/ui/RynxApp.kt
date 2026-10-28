@@ -118,7 +118,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         LocalRynxRenderingPressure provides state.renderingPressure) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().rynxBackdropSource(0f).background(palette.bg))
-            val wide = maxWidth >= 760.dp && maxHeight>=600.dp
+            val windowPolicy=rynxWindowPolicy(maxWidth.value,maxHeight.value)
+            val wide=windowPolicy.sideNavigation
             val searching = activeTab == AppTab.Search
             Row(Modifier.fillMaxSize().rynxBackdropSource(1f).graphicsLayer { scaleX=1f-.025f*player.progress;scaleY=scaleX }
                 .semantics { if(playerVisible || appearanceOpen || state.discoverySelection!=null) hideFromAccessibility() }) {

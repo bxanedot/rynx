@@ -80,14 +80,22 @@ object ApplePayloads {
         require(tracks.isNotEmpty()){ "Apple's public playlist has no songs" }
         return ChartCollection(id,decode(data.text("name")?:"Apple Music playlist"),tracks,url,data.text("datePublished"),maxOf(tracks.size,data["numTracks"]?.jsonPrimitive?.intOrNull?:0))
     }
-    fun playlistLinks(html:String):List<ApplePlaylistLink> {
+    private fun visibleLinks(html:String):List<Pair<String,String>> {
         val visible=html.replace(Regex("<script\\b[^>]*>[\\s\\S]*?</script\\s*>",RegexOption.IGNORE_CASE),"")
         return Regex("<a\\b[^>]*href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>([\\s\\S]*?)</a>",RegexOption.IGNORE_CASE).findAll(visible).mapNotNull {match->
             val href=decode(match.groupValues[1]);val url=when {href.startsWith("https://music.apple.com/")->href;href.startsWith('/')&&!href.startsWith("//")->"https://music.apple.com$href";else->return@mapNotNull null}.substringBefore('?')
-            val id=url.substringAfterLast('/').takeIf {it.startsWith("pl.")}?:return@mapNotNull null
             val title=decode(match.groupValues[2].replace(Regex("<[^>]*>")," ")).replace(Regex("\\s+")," ").trim()
-            ApplePlaylistLink(id,title.ifBlank {url.substringBeforeLast('/').substringAfterLast('/').replace('-',' ')},url)
-        }.distinctBy {it.id}.toList()
+            url to title
+        }.toList()
     }
+    fun playlistLinks(html:String):List<ApplePlaylistLink> = visibleLinks(html).mapNotNull {(url,title)->
+        val id=url.substringAfterLast('/').takeIf {it.startsWith("pl.")}?:return@mapNotNull null
+        ApplePlaylistLink(id,title.ifBlank {url.substringBeforeLast('/').substringAfterLast('/').replace('-',' ')},url)
+    }.distinctBy {it.id}
+    fun browseGenres(html:String):List<MusicGenre> = visibleLinks(html).mapNotNull {(url,title)->
+        if(!url.contains("/curator/") || title.isBlank())return@mapNotNull null
+        val id=url.substringAfterLast('/').takeIf {it.isNotBlank()&&it.all(Char::isDigit)}?:return@mapNotNull null
+        MusicGenre("curator:$id",title,browseUrl=url)
+    }.distinctBy {it.id}
     private fun decode(value:String)=value.replace("&amp;","&").replace("&quot;","\"").replace("&#39;","'").replace("&apos;","'").replace("&lt;","<").replace("&gt;",">").replace("&nbsp;"," ")
 }

@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
         discovery.load()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                while(true) { publish(); delay(250) }
+                while(true) { publish();discovery.refreshIfStale();delay(250) }
             }
         }
         val actions = object : PlayerActions {

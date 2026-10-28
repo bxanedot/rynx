@@ -29,7 +29,12 @@ class DiscoveryUiTest {
     @Test fun exploreUsesAppleGenresAndInvokesRealGenreAction() {
         val actions=Actions();val pop=MusicGenre("14","Pop")
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(reduceMotion=true,appearance=RynxAppearance(material=RynxMaterialMode.Solid),discovery=DiscoveryState(enabled=true,genres=listOf(pop))),actions)}
-        try {click(scene,"Browse");click(scene,"Explore Pop");assertEquals(pop,actions.genre)} finally {scene.close()}
+        try {
+            click(scene,"Browse")
+            val tile=find(scene,"Explore Pop").boundsInRoot
+            assertTrue(tile.height>=tile.width,"Apple reference uses square artwork with captions below")
+            click(scene,"Explore Pop");assertEquals(pop,actions.genre)
+        } finally {scene.close()}
     }
     @Test fun appleMetadataResultHasSourceLinkAndPlaybackIdentityAction() {
         val actions=Actions();val song=MusicMetadata("apple:1","Moonlight","bxane",sourceUrl="https://music.apple.com/us/song/moonlight/1")

@@ -36,19 +36,22 @@ internal fun playbackOrder(timeline: Timeline, shuffle: Boolean): List<Int> {
 /** Queue editing stays in the service, where ExoPlayer's real shuffle permutation is available. */
 @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 internal class QueueSessionCallback(private val packageName: String) : MediaSession.Callback {
-    override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-        val defaults = super.onConnect(session, controller)
-        if (controller.packageName != packageName) return defaults
-        return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
-            .setAvailableSessionCommands(defaults.availableSessionCommands.buildUpon()
+    private fun ownsController(controller:MediaSession.ControllerInfo)=
+        controller.packageName==packageName && controller.uid==android.os.Process.myUid()
+
+    override fun onConnectAsync(session:MediaSession,controller:MediaSession.ControllerInfo):com.google.common.util.concurrent.ListenableFuture<MediaSession.ConnectionResult> {
+        val result=MediaSession.ConnectionResult.AcceptedResultBuilder(session,controller)
+        if(ownsController(controller)) {
+            result.setAvailableSessionCommands(MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                 .add(QueueSessionCommands.Move).add(QueueSessionCommands.Clear).build())
-            .setAvailablePlayerCommands(defaults.availablePlayerCommands)
-            .build()
+                .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
+        }
+        return Futures.immediateFuture(result.build())
     }
 
     override fun onCustomCommand(session: MediaSession, controller: MediaSession.ControllerInfo, command: SessionCommand, args: Bundle): com.google.common.util.concurrent.ListenableFuture<SessionResult> {
         if (command != QueueSessionCommands.Move && command != QueueSessionCommands.Clear) return super.onCustomCommand(session, controller, command, args)
-        if (controller.packageName != packageName) return Futures.immediateFuture(SessionResult(SessionError.ERROR_PERMISSION_DENIED))
+        if (!ownsController(controller)) return Futures.immediateFuture(SessionResult(SessionError.ERROR_PERMISSION_DENIED))
         val player = session.player as? ExoPlayer
             ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
         if (command == QueueSessionCommands.Clear) {

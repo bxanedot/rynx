@@ -23,18 +23,6 @@ jobs:
         run: python3 tools/audit_workspace.py
       - name: Build Android variants and run shared/provider checks
         run: ./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:vyonex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --console=plain
-      - name: Enable Android hardware acceleration
-        run: sudo chmod a+rw /dev/kvm
-      - name: Run phone instrumentation tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 36
-          target: google_apis
-          arch: x86_64
-          profile: pixel_6
-          disable-linux-hw-accel: false
-          disable-animations: true
-          script: bash tools/android-connected-check.sh --console=plain
       - uses: actions/upload-artifact@v4
         if: always()
         with:

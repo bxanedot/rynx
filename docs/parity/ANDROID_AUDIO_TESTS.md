@@ -18,3 +18,6 @@ Still required: background survival, focus interruptions, headset changes, notif
 
 
 The playback service now owns qualifying listening signals and recent history. A shared tracker verifies advancing playback, pause exclusion, seek discontinuities and repeat sessions. The new BackgroundListeningTest generates 45 seconds of original PCM and waits for a real service-produced signal after stopping the Activity; it compiles but is not yet a runtime pass. The hosted launch/recreation test reproduced TLS teardown on the UI thread; cleanup moved to a process-owned IO scope, with its native rerun pending.
+
+
+Hosted run 40689777924 progressed past recreation; playback/controller tests then failed to start generated PCM and the lyric test had no current item. Inspection of Media3 1.11.1's public callback API identified that the deprecated onConnect default is an empty-command sentinel. Rynx's override had converted it into an accepted connection with no player commands. The callback now uses onConnectAsync and explicitly grants full default player commands only to same-package/same-UID controllers. Other controllers retain Media3's trust-based defaults. Existing native PCM tests plus explicit command assertions verify the regression on rerun; no playback pass is inferred from compilation.

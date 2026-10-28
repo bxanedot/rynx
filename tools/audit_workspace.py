@@ -27,6 +27,9 @@ def main():
             raise ValueError("Unreviewed dependency revision: " + path)
         if git("-C", path, "status", "--porcelain", "--untracked-files=no"):
             raise ValueError("Approved dependency has tracked modifications: " + path)
+    for source, retained in (("LICENSE", "VyonEx-LICENSE.txt"), ("NOTICE", "VyonEx-NOTICE.txt"), ("ejs/LICENSE", "VyonEx-EJS-LICENSE.txt")):
+        if (ROOT / "dependencies/vyonex-clean" / source).read_bytes() != (ROOT / "third_party_licenses" / retained).read_bytes():
+            raise ValueError("Retained VyonEx notice differs from pinned dependency: " + retained)
     for base in ("apps", "shared", "providers", "services"):
         for file in (ROOT / base).rglob("*"):
             if file.is_symlink() and not file.resolve().is_relative_to(ROOT):

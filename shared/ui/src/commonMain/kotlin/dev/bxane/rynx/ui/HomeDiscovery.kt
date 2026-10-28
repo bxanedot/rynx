@@ -79,21 +79,22 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
     }
 }
 @Composable internal fun AppleExploreContent(feed:DiscoveryState,actions:PlayerActions,modifier:Modifier) {
-    LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(bottom=24.dp)) {
-        item {Text("Explore",26,true);Text("Browse by genre",18,true,modifier=Modifier.padding(top=14.dp,bottom=16.dp))}
-        if(feed.genres.isEmpty())item {
+    val genres=feed.browseGenres.ifEmpty {feed.genres}
+    LazyColumn(modifier.padding(horizontal=24.dp),contentPadding=PaddingValues(bottom=24.dp)) {
+        item {Text("Browse by Genre",18,true,modifier=Modifier.padding(top=12.dp,bottom=16.dp))}
+        if(genres.isEmpty())item {
             Text(if(feed.loading)"Loading Apple genres…" else "Genres could not load. Refresh when connected.",14,muted=true)
             RynxButton("Refresh genres",actions::refreshDiscovery,Modifier.padding(top=12.dp),enabled=!feed.loading)
         }
-        items(feed.genres.chunked(2),key={row->row.joinToString {it.id}}) {row->
-            Row(Modifier.fillMaxWidth().padding(bottom=13.dp),horizontalArrangement=Arrangement.spacedBy(13.dp)) {
+        items(genres.chunked(2),key={row->row.joinToString {it.id}}) {row->
+            Row(Modifier.fillMaxWidth().padding(bottom=26.dp),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                 row.forEach {genre->
                     val interaction=remember {androidx.compose.foundation.interaction.MutableInteractionSource()}
-                    Box(Modifier.weight(1f).height(112.dp).clip(RoundedCornerShape(12.dp))
+                    Column(Modifier.weight(1f)
                         .rynxPressFeedback(interaction)
                         .clickable(interactionSource=interaction,indication=null,role=Role.Button){actions.openGenre(genre)}.semantics {contentDescription="Explore ${genre.name}"}) {
-                        GenreDecoration(genre.id,Modifier.fillMaxSize())
-                        BasicText(genre.name,Modifier.align(Alignment.BottomStart).padding(14.dp),style=TextStyle(color=Color.White,fontSize=21.sp,fontWeight=FontWeight.Bold),maxLines=2,overflow=TextOverflow.Ellipsis)
+                        GenreDecoration(genre.name,Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(7.dp)))
+                        Text(genre.name,13,modifier=Modifier.padding(top=5.dp),maxLines=2)
                     }
                 }
                 if(row.size==1)Spacer(Modifier.weight(1f))
@@ -105,7 +106,8 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
 /** Original geometric artwork; category names and hierarchy are obtained from Apple, not hard-coded. */
 @Composable private fun GenreDecoration(id:String,modifier:Modifier) {
     val colors=listOf(Color(0xFFC33B53),Color(0xFF7759C1),Color(0xFF1C887D),Color(0xFFB35A29),Color(0xFF306EB9),Color(0xFF9E3F8D))
-    val base=colors[(id.hashCode().toUInt()%colors.size.toUInt()).toInt()]
+    val measured=mapOf("Acoustic" to Color(0xFFB2BF00),"African" to Color(0xFF7FA30A),"Afrikaans" to Color(0xFF99A400),"Afrobeats" to Color(0xFF8EC000),"Alpha Women" to Color(0xFF8D39CA))
+    val base=measured[id]?:colors[(id.hashCode().toUInt()%colors.size.toUInt()).toInt()]
     Canvas(modifier.background(Brush.linearGradient(listOf(base,base.copy(red=base.red*.55f,green=base.green*.55f,blue=base.blue*.55f))))) {
         val radius=size.maxDimension*.58f
         repeat(4){i->drawCircle(Color.White.copy(alpha=.055f+i*.015f),radius-i*size.minDimension*.12f,androidx.compose.ui.geometry.Offset(size.width*.93f,size.height*.1f))}

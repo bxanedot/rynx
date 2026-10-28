@@ -24,3 +24,8 @@ Final: minor (deferred): Android favorite/skip training and artist-image display
 
 
 Final fix validation: default full suite 106 cases / 104 passed / 2 live opt-in skips / zero failures; Android debug/test packaging, lint, unit and source audit pass. Alternate recording, missing modal feedback, fallback erasure and empty enrichment have observed behavioral RED→GREEN cases. Service-owned tracker covers seek/pause/repeat and background-independent sampling; actual native BackgroundListeningTest remains pending. The harness's nonmonotonic timestamps exposed a Compose spatial-index error; its clock now advances monotonically and all 43 Compose cases pass.
+
+
+Reference refinement: inspected current public Apple Browse by Genre at a 390×844 viewport. Source uses square artwork/captions, unlike the initial rectangular overlays. The geometry regression was observed RED and now passes; Browse categories parse real curator IDs separately from canonical genre IDs. Original vector artwork remains a recorded substitution. Daily-refresh/backoff shared test was observed missing, implemented, and passes.
+
+Native runtime continuation: API 36 test run reproduced empty player commands. Media3's deprecated onConnect super default is a sentinel, not the real available commands; converting it caused every player action to be ignored. Moved to documented onConnectAsync and own-package/UID grants. Native regression rerun pending in a separate fast phone workflow, while release/shared verification continues independently. No tests are removed or marked passed.

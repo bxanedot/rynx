@@ -12,3 +12,10 @@ and docs/cleanroom/DEPENDENCY_AUDIT.md for the dependency inventory.
 
 Rynx does not bundle Apple SF Symbols artwork, proprietary fonts or reference
 screenshots. Its Android semantic icons, logo and placeholder artwork are original.
+
+QuickJS-kt 1.0.15: Copyright 2024 dokar3; retained wrapper LICENSE also
+credits Copyright 2015 Anton Lopyrev (Apache-2.0).
+Bundled QuickJS: Copyright 2017-2021 Fabrice Bellard and Charlie Gordon (MIT).
+Bundled c-vector: Copyright 2015 Evan Teran (MIT).
+Full retained licenses, including VyonEx and its EJS/meriyah/astring notices,
+are included in the third_party_licenses directory and Android assets.

@@ -26,6 +26,7 @@ internal class AndroidDiscoveryCoordinator(
     private val client=AppleMetadataClient(HttpClient(OkHttp),DiskAppleCache(File(context.cacheDir,"apple-metadata")))
     private val repository=AppleHomeRepository(client)
     private var job:Job?=null
+    private var lastAttemptMillis:Long?=null
     private var selectionJob:Job?=null
     private var current=DiscoveryState(enabled=true,region=preferences.getString("region",null)?:Locale.getDefault().country.lowercase().takeIf {code->Regions.all.any {it.code==code}}?:"us",regions=Regions.all)
     private var signals=readSignals()
@@ -33,7 +34,9 @@ internal class AndroidDiscoveryCoordinator(
         if(key=="signals") {signals=readSignals();current=rerankDiscovery(current,signals,System.currentTimeMillis());onFeed(current)}
     }
     init {preferences.registerOnSharedPreferenceChangeListener(signalListener)}
+    fun refreshIfStale(){if(shouldRefreshDiscovery(current,lastAttemptMillis,System.currentTimeMillis()))load()}
     fun load(region:String=current.region) {
+        lastAttemptMillis=System.currentTimeMillis()
         job?.cancel()
         val selected=region.takeIf {code->Regions.all.any {it.code==code}}?:"us"
         preferences.edit {putString("region",selected)}
@@ -68,8 +71,17 @@ internal class AndroidDiscoveryCoordinator(
         selectionJob?.cancel();onSelection(HomeSection("genre:${value.id}",value.name,"iTunes genre chart",HomeSectionKind.Daily100),true)
         selectionJob=scope.launch {
             try {
-                val chart=withContext(Dispatchers.IO){client.genreChart(value,current.region)}
-                ensureActive();onSelection(HomeSection(chart.id,chart.title,"iTunes genre chart · Apple catalog",HomeSectionKind.Daily100,chart.tracks,chart.sourceUrl),false)
+                val section=withContext(Dispatchers.IO) {
+                    if(value.browseUrl!=null) {
+                        val collections=client.genreCollections(value)
+                        HomeSection(value.id,value.name,"Apple Music genre collections",HomeSectionKind.Daily100,sourceUrl=value.browseUrl,collections=collections,
+                            unavailableReason=if(collections.isEmpty())"No collections are available from this genre page." else null)
+                    } else {
+                        val chart=client.genreChart(value,current.region)
+                        HomeSection(chart.id,chart.title,"iTunes genre chart · Apple catalog",HomeSectionKind.Daily100,chart.tracks,chart.sourceUrl)
+                    }
+                }
+                ensureActive();onSelection(section,false)
             } catch(cancelled:CancellationException){throw cancelled}
             catch(_:Exception){onSelection(HomeSection("genre:${value.id}",value.name,"Apple catalog",HomeSectionKind.Daily100,unavailableReason="This genre's songs could not load. Search remains available."),false)}
         }

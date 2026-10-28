@@ -64,6 +64,12 @@ class AppleMetadataClient(
         require(genre.id.isNotBlank()&&genre.id.all(Char::isDigit))
         return ApplePayloads.genreFeed(document("https://itunes.apple.com/${country(region)}/rss/topsongs/limit=50/genre=${genre.id}/json"),country(region),genre)
     }
+    suspend fun browseGenres(region:String):List<MusicGenre> = ApplePayloads.browseGenres(document("https://music.apple.com/${country(region)}/room/6456176470",86_400_000L))
+    suspend fun genreCollections(genre:MusicGenre):List<ChartCollection> {
+        val url=genre.browseUrl?:error("This category has no curator page")
+        require(genre.id.startsWith("curator:") && url.contains("/curator/"))
+        return ApplePayloads.playlistLinks(document(url)).map {ChartCollection(it.id,it.title,emptyList(),it.url)}
+    }
     suspend fun cityCharts(region:String):List<ApplePlaylistLink> = ApplePayloads.playlistLinks(document("https://music.apple.com/${country(region)}/new/top-charts/city-charts",86_400_000L)).filter {it.url.contains("top-25-")}
     suspend fun tourSetLists(region:String):List<ApplePlaylistLink> = ApplePayloads.playlistLinks(document("https://music.apple.com/${country(region)}/new",86_400_000L)).filter {it.url.contains("set-list")}
     fun close(){http.close();owner.close()}

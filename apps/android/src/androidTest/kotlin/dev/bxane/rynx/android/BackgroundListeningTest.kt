@@ -52,7 +52,8 @@ class BackgroundListeningTest {
                             .setMediaMetadata(MediaMetadata.Builder().setTitle("Original background PCM").setArtist("bxane").build()).build())
                         controller.prepare();controller.play()
                     }
-                    assertTrue("Generated PCM must play",started.await(30,TimeUnit.SECONDS))
+                    val startedInTime=started.await(30,TimeUnit.SECONDS)
+                    assertTrue("Generated PCM must play: ${playbackDiagnostics(controller)}",startedInTime)
                     scenario.moveToState(Lifecycle.State.CREATED)
                     assertTrue("Service must record 30 seconds of listening without Activity publication",learned.await(45,TimeUnit.SECONDS))
                 } finally {instrumentation.runOnMainSync {controller.stop();controller.clearMediaItems();controller.release()}}

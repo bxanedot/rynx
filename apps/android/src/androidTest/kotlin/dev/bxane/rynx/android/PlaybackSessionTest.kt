@@ -38,6 +38,8 @@ class PlaybackSessionTest {
                 val controller=future.get(15,TimeUnit.SECONDS)
                 try {
                     instrumentation.runOnMainSync {
+                        assertTrue("Own controller must be able to set media",controller.isCommandAvailable(androidx.media3.common.Player.COMMAND_SET_MEDIA_ITEM))
+                        assertTrue("Own controller must be able to play",controller.isCommandAvailable(androidx.media3.common.Player.COMMAND_PLAY_PAUSE))
                         controller.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
                         controller.prepare();controller.play()
                     }
@@ -47,7 +49,7 @@ class PlaybackSessionTest {
                         instrumentation.runOnMainSync { progressed=controller.isPlaying&&controller.currentPosition>100 }
                         SystemClock.sleep(50)
                     }
-                    assertTrue("Decoded PCM must advance through the real session",progressed)
+                    assertTrue("Decoded PCM must advance through the real session: ${playbackDiagnostics(controller)}",progressed)
                     instrumentation.runOnMainSync { controller.pause();assertTrue(!controller.playWhenReady);controller.stop();controller.clearMediaItems() }
                 } finally { instrumentation.runOnMainSync { controller.release() } }
             }

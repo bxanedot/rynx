@@ -11,6 +11,7 @@ class AppleHomeRepository(private val client:AppleMetadataClient) {
         val location=Regions.all.firstOrNull {it.code==region}?:Regions.all.first()
         suspend fun <T> safely(block:suspend ()->T):T?=try {block()} catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){null}
         val genres=async {safely {client.genres(location.code)}}
+        val browse=async {safely {client.browseGenres(location.code)}}
         val global=async {safely {client.playlist(AppleMetadataClient.Global,location.code)}}
         val local=async {safely {client.topSongs(location.code)}}
         val neighbors=location.neighbors.take(3).map {code->async {code to safely {client.topSongs(code)}}}
@@ -37,7 +38,7 @@ class AppleHomeRepository(private val client:AppleMetadataClient) {
         }
         DiscoveryState(true,false,location.code,Regions.all,genres.await().orEmpty(),sections,
             error=if(candidates.isEmpty())"Apple discovery is unavailable. You can still search YouTube Music." else null,
-            stale=client.usedStaleCache,updatedMillis=now)
+            stale=client.usedStaleCache,updatedMillis=now,browseGenres=browse.await().orEmpty())
     }
 }
 object Regions {

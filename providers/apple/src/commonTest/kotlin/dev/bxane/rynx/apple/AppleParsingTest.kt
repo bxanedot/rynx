@@ -23,4 +23,11 @@ class AppleParsingTest {
         val html="""<script>"href=\"/us/playlist/bad/pl.hidden\""</script><a href="https://evil.test/us/playlist/hack/pl.bad">Bad</a><a href="/us/playlist/top-25-city/pl.city">City</a>"""
         assertEquals(listOf("https://music.apple.com/us/playlist/top-25-city/pl.city"),ApplePayloads.playlistLinks(html).map {it.url})
     }
+    @Test fun browseCategoriesKeepCuratorIdentitySeparateFromMusicGenreIds() {
+        val html="""<a href="/us/curator/apple-music-acoustic/979231701"><span>Acoustic</span></a><a href="https://evil.test/us/curator/bad/1">Bad</a>"""
+        val category=ApplePayloads.browseGenres(html).single()
+        assertEquals("curator:979231701",category.id);assertEquals("Acoustic",category.name)
+        assertEquals("https://music.apple.com/us/curator/apple-music-acoustic/979231701",category.browseUrl)
+    }
+
 }

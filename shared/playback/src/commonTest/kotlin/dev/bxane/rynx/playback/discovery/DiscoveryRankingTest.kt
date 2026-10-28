@@ -47,4 +47,14 @@ class DiscoveryRankingTest {
         assertEquals(listOf(fallback),updated.sections.single().tracks)
     }
 
+    @Test fun dailyChartsRefreshAcrossDaysAndFailuresBackOffInsteadOfLooping() {
+        val day=86_400_000L
+        val yesterday=DiscoveryState(enabled=true,updatedMillis=day)
+        assertTrue(shouldRefreshDiscovery(yesterday,day,2*day))
+        assertFalse(shouldRefreshDiscovery(yesterday,2*day-1000,2*day))
+        assertFalse(shouldRefreshDiscovery(yesterday.copy(loading=true),day,2*day))
+        assertFalse(shouldRefreshDiscovery(yesterday.copy(updatedMillis=2*day),day,2*day+1000))
+        assertTrue(shouldRefreshDiscovery(yesterday.copy(updatedMillis=2*day,error="offline"),day,2*day+1000))
+    }
+
 }

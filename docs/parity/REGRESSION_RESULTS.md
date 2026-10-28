@@ -37,3 +37,7 @@ Android is P0; desktop UI development is paused. On 2026-10-28, `:apps:android:a
 ## Universal-material continuation
 
 2026-10-28: complete Android debug/release/test packaging, lint and 82 local cases passed. New shared design/UI tests cover real backdrop input, three material policies, player continuity, navigation ownership, lyrics, queue and cancellation. See ANDROID_VISUAL_RESULTS.md for the current scope, hashes and device limitations. Earlier counts above are historical. No production/parity claim follows from this pass.
+
+## Navigation-motion continuation
+
+2026-10-28: debug app and Android instrumentation APK builds, Android unit tests, lint, the Compose/JVM UI harness and shared UI/design suites succeeded. There were 78 applicable test cases with zero failures, errors or skips (15 design, 7 shared UI, 49 app harness, 7 Android unit). The design suite was explicitly rerun after the full command reported it up-to-date. Lint has zero errors and the two existing warnings noted above. Native instrumentation compiled but did not run locally because there is no connected device or `/dev/kvm`; see `ANDROID_VISUAL_RESULTS.md` for the hosted-check requirement and fidelity limits.

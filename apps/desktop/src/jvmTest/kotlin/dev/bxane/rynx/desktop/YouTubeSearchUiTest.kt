@@ -10,6 +10,8 @@ import dev.bxane.rynx.ui.*
 import kotlin.test.*
 
 class YouTubeSearchUiTest {
+    private var clock=System.nanoTime()
+    private fun settle(scene:ImageComposeScene) {repeat(5){clock+=100_000_000;scene.render(clock).close()}}
     private class Actions : PlayerActions {
         val searches=mutableListOf<String>()
         var pageRequests=0
@@ -22,15 +24,15 @@ class YouTubeSearchUiTest {
     private fun nodes(scene:ImageComposeScene)=scene.semanticsOwners.flatMap { descendants(it.rootSemanticsNode) }
     private fun descendants(node:SemanticsNode):List<SemanticsNode> = listOf(node)+node.children.flatMap(::descendants)
     private fun click(scene:ImageComposeScene,label:String) {
-        scene.render().close()
+        settle(scene)
         val node=nodes(scene).firstOrNull{it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains(label)==true}
             ?:error("No accessible control: $label")
         assertTrue(node.config[SemanticsActions.OnClick].action!!.invoke())
-        scene.render().close()
+        settle(scene)
     }
     @Test fun submitsTrimmedQueryAndRequestsMoreResults() {
         val actions=Actions()
-        val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(catalogSearch=CatalogSearchState(query="jazz",continuation="next")),actions)}
+        val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(reduceMotion=true,catalogSearch=CatalogSearchState(query="jazz",continuation="next")),actions)}
         try {
             click(scene,"Search")
             val field=nodes(scene).first{it.config.getOrNull(SemanticsProperties.ContentDescription)?.contains("Search your music")==true}
@@ -46,7 +48,7 @@ class YouTubeSearchUiTest {
         val actions=Actions()
         val result=CatalogItem(CatalogProvider.YouTubeMusic,CatalogItemType.Track,"abc123","Blue Hour","Artist",210)
         val scene=ImageComposeScene(390,844,Density(1f)){
-            RynxApp(PlayerUiState(catalogSearch=CatalogSearchState(query="jazz",items=listOf(result))),actions)
+            RynxApp(PlayerUiState(reduceMotion=true,catalogSearch=CatalogSearchState(query="jazz",items=listOf(result))),actions)
         }
         try {
             click(scene,"Search")

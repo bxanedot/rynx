@@ -40,6 +40,12 @@ The local software API 35 ATD emulator eventually booted, then its host QEMU pro
 
 Physical-device optical fidelity, audible quality, accessibility service behavior, low-end/high-refresh performance, battery/latency, live extraction, Spotify, downloads and advanced DSP remain incomplete or unverified. See `BLOCKERS.md` and `ANDROID_FEATURE_MATRIX.md`.
 
+## Navigation-motion checkpoint
+
+2026-10-28: `:shared:design:jvmTest :shared:ui:jvmTest :apps:desktop:jvmTest :apps:android:assembleDebug :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest` completed successfully. The resulting reports contain 78 applicable tests: design 15, shared UI 7, Compose/JVM app harness 49, and Android local unit 7, with zero failures, errors or skips. The design suite was explicitly rerun after Gradle initially marked it up-to-date. Android debug and instrumentation APK packaging succeeded; lint reported zero errors and two existing warnings (`OldTargetApi`, `ObsoleteSdkInt`).
+
+`NavigationDeviceTest` covers native Search text entry, query retention and Android Back navigation. It compiled into the instrumentation APK, but this workspace reports no connected device and no `/dev/kvm`, so that test did not execute locally. The PR's hosted Android workflow must be checked before claiming native device verification. These tests establish behavior in the headless Compose harness, not Apple/Vyon visual similarity, glass rendering quality or device motion timing.
+
 
 ## Apple discovery checkpoint after review fixes
 

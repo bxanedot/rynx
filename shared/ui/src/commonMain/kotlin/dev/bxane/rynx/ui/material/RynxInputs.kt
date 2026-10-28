@@ -15,9 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import dev.bxane.rynx.design.RynxNavigationMotionSpec
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,23 +53,36 @@ import dev.bxane.rynx.ui.RynxGlyph
     }
 }
 
-@Composable internal fun RynxSearchInput(value:String,onChange:(String)->Unit,onSearch:()->Unit,modifier:Modifier=Modifier) {
+@Composable internal fun RynxSearchInput(
+    value:String,
+    onChange:(String)->Unit,
+    onSearch:()->Unit,
+    modifier:Modifier=Modifier,
+    expansionProgress:Float=1f,
+    focusRequester:FocusRequester?=null,
+) {
     val interaction=remember {MutableInteractionSource()}
     val dark=LocalRynxAppearance.current.darkTheme || LocalRynxAppearance.current.material==RynxMaterialMode.Amoled
     val ink=if(dark)Color.White else Color(0xFF25262D)
     val keyboard=LocalSoftwareKeyboardController.current
     val depth=LocalRynxMaterialDepth.current
-    Row(modifier.fillMaxWidth().heightIn(min=52.dp).rynxPressFeedback(interaction)
+    val progress=if(expansionProgress.isFinite())expansionProgress.coerceIn(0f,1f) else 1f
+    val inputEnabled=progress>=RynxNavigationMotionSpec.SearchInputEnableThreshold
+    val textModifier=Modifier.fillMaxWidth().then(if(focusRequester!=null)Modifier.focusRequester(focusRequester) else Modifier)
+    Row(modifier.fillMaxWidth().heightIn(min=52.dp).clipToBounds().rynxPressFeedback(interaction)
         .rynxMaterial(15.dp,interaction=interaction).padding(horizontal=12.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
         RynxGlyph(Glyph.Search,ink.copy(alpha=.5f))
         Box(Modifier.padding(start=10.dp).weight(1f)) {
-            if(value.isEmpty())BasicText("Search your music",style=TextStyle(color=ink.copy(alpha=.5f),fontSize=15.sp))
-            BasicTextField(value,onChange,Modifier.fillMaxWidth().semantics {contentDescription="Search your music"},
+            if(value.isEmpty() && progress>=.3f)BasicText("Search your music",Modifier.graphicsLayer{alpha=((progress-.3f)/.7f).coerceIn(0f,1f)},style=TextStyle(color=ink.copy(alpha=.5f),fontSize=15.sp))
+            BasicTextField(value,onChange,textModifier.semantics {
+                    contentDescription="Search your music"
+                    if(!inputEnabled)hideFromAccessibility()
+                },enabled=inputEnabled,
                 singleLine=true,textStyle=TextStyle(color=ink,fontSize=15.sp),interactionSource=interaction,
                 keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),
                 keyboardActions=KeyboardActions(onSearch={keyboard?.hide();onSearch()}))
         }
-        if(value.isNotEmpty())CompositionLocalProvider(LocalRynxMaterialDepth provides depth+1) {
+        if(value.isNotEmpty() && progress>=.75f)CompositionLocalProvider(LocalRynxMaterialDepth provides depth+1) {
             val clear=remember {MutableInteractionSource()}
             Box(Modifier.size(44.dp).rynxPressFeedback(clear).rynxMaterial(22.dp,interaction=clear,amount=.3f)
                 .clickable(role=Role.Button,interactionSource=clear,indication=null){onChange("")}

@@ -12,3 +12,5 @@ Record original frame timestamps for motion; do not infer spring coefficients fr
 Keep private reference media under reference-private/ (ignored); commit only permitted evidence and hashes.
 
 User follow-up authorizes Apple Music across platforms as the practical visual reference and describes Vyon as matching Apple Music. See ../parity/APPLE_MUSIC_REFERENCE.md for public guides and listing evidence. Public Apple images are not application assets; avoid retaining store artwork in Rynx resources.
+
+2026-10-28 Apple catalog continuation: official public metadata/genre/chart endpoints, visible editorial playlist anchors and public schema.org JSON-LD were checked independently. Public Apple Browse by Genre serves as a category reference for original geometric tiles. See APPLE_CATALOG_EVIDENCE.md. No Apple application JavaScript/private state or web bearer token was used as an implementation source.

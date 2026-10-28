@@ -41,6 +41,7 @@ import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogProvider
 import dev.bxane.rynx.playback.toggleFavoriteId
+import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.ui.*
 import dev.bxane.rynx.vyonex.VyonExMusicCatalog
 import dev.bxane.rynx.vyonex.createLoggedOutVyonExMusicCatalog
@@ -67,6 +68,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var audioResolver: AudioResolutionChain<ResolvedAudioStream>
     private lateinit var catalogReady: Deferred<Boolean>
     private var searchJob: Job? = null
+    private var historyRevision = -1L
+    private lateinit var discovery:AndroidDiscoveryCoordinator
     private val playbackRequests by lazy {LatestPlaybackRequest(lifecycleScope){pending->
         state.update {it.copy(busy=pending || controller?.playbackState==Player.STATE_BUFFERING)}
     }}
@@ -134,12 +137,32 @@ class MainActivity : ComponentActivity() {
         val recentTracks=TrackMetadataStorage.decode(preferences.getString("recent-tracks",null))
         state.update { it.copy(favoriteIds=favoriteIds,favoriteTracks=favoriteTracks,recentTracks=recentTracks) }
         restoreLibrary()
+        discovery=AndroidDiscoveryCoordinator(applicationContext,lifecycleScope,
+            onFeed={feed->state.update {it.copy(discovery=feed)}},
+            onSelection={section,loading->state.update {it.copy(discoverySelection=section,discoverySelectionLoading=loading)}},
+            fallbackSearch={query->catalogReady.await();catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
+                MusicMetadata("yt:${item.mediaId}",item.title,item.artist.orEmpty(),source=MetadataSource.YouTubeMusic,artworkUrl=item.artworkUrl,durationMillis=item.durationSeconds?.times(1000),playbackId=item.mediaId)
+            }})
+        discovery.load()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while(true) { publish(); delay(250) }
             }
         }
         val actions = object : PlayerActions {
+            override fun refreshDiscovery()=discovery.load()
+            override fun changeDiscoveryRegion(code:String)=discovery.load(code)
+            override fun openDiscoverySection(id:String)=discovery.section(id)
+            override fun openDiscoveryCollection(collection:ChartCollection)=discovery.collection(collection)
+            override fun openGenre(genre:MusicGenre)=discovery.genre(genre)
+            override fun closeDiscovery()=discovery.closeSelection()
+            override fun playDiscovery(track:MusicMetadata)=playDiscoveryTrack(track)
+            override fun openMusicSource(url:String) {
+                val uri=url.toUri()
+                if(uri.scheme=="https" && uri.host in setOf("music.apple.com","itunes.apple.com"))
+                    runCatching {startActivity(Intent(Intent.ACTION_VIEW,uri))}
+                        .onFailure {state.update {it.copy(error="No application can open this music link.")}}
+            }
             override fun importFiles() = picker.launch(arrayOf("audio/*"))
             override fun play(id: String) {
                 playbackRequests.cancel()
@@ -277,9 +300,12 @@ class MainActivity : ComponentActivity() {
     }
     override fun onDestroy() {
         searchJob?.cancel()
+        if(::discovery.isInitialized)discovery.close()
         playbackRequests.cancel()
         lyricsJob?.cancel()
-        if(::catalog.isInitialized) catalog.close()
+        val ready=if(::catalogReady.isInitialized)catalogReady else null
+        ready?.cancel()
+        if(::catalog.isInitialized) {val owned=catalog;AndroidResourceCloser.close {ready?.join();owned.close()}}
         super.onDestroy()
     }
 
@@ -294,6 +320,12 @@ class MainActivity : ComponentActivity() {
         searchJob=lifecycleScope.launch {
             try {
                 if(!catalogReady.await()) error("YouTube Music is unavailable")
+                val apple=try {withContext(Dispatchers.IO){catalog.searchAppleMusic(normalized,state.value.discovery.region)}}
+                    catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){emptyList()}
+                if(apple.isNotEmpty()) {
+                    state.update {it.copy(catalogSearch=CatalogSearchState(query=normalized,metadataItems=apple))}
+                    return@launch
+                }
                 val page=withContext(Dispatchers.IO) { catalog.searchMusic(normalized) }
                 state.update { it.copy(catalogSearch=CatalogSearchState(
                     query=normalized,
@@ -340,28 +372,50 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun playCatalogItem(item: CatalogItem) {
+    private data class PreparedMusic(val item:CatalogItem,val metadata:MusicMetadata?,val stream:ResolvedAudioStream?)
+    private class RecordingNotFound:Exception()
+    private fun playDiscoveryTrack(track:MusicMetadata) = startMusicRequest {
+        catalogReady.await()
+        val enriched=if((track.artworkUrl==null || track.durationMillis==null) && track.id.startsWith("apple:")) {
+            try {withContext(Dispatchers.IO){track.id.removePrefix("apple:").toLongOrNull()?.let {catalog.appleSong(it,state.value.discovery.region)}}?:track}
+            catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){track}
+        } else track
+        val item=if(track.source==MetadataSource.YouTubeMusic && track.playbackId!=null)
+            CatalogItem(CatalogProvider.YouTubeMusic,CatalogItemType.Track,track.playbackId!!,track.title,track.artist,track.durationMillis?.div(1000),track.artworkUrl)
+        else withContext(Dispatchers.IO) {
+            val page=catalog.searchMusic("${track.artist} ${track.title}")
+            MetadataMatching.bestPlaybackMatch(enriched,page.items)?:throw RecordingNotFound()
+        }
+        PreparedMusic(item,enriched.copy(genreIds=track.genreIds.ifEmpty {enriched.genreIds}),withContext(Dispatchers.IO){audioResolver.resolve(item.mediaId)})
+    }
+    private fun playCatalogItem(item:CatalogItem) {
         if(item.type!=CatalogItemType.Track)return
+        startMusicRequest {
+            catalogReady.await()
+            val metadata=try {withContext(Dispatchers.IO){MetadataMatching.bestMetadataMatch(item,catalog.searchAppleMusic("${item.artist.orEmpty()} ${item.title}",state.value.discovery.region,5))}}
+                catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){null}
+            PreparedMusic(item,metadata,withContext(Dispatchers.IO){audioResolver.resolve(item.mediaId)})
+        }
+    }
+    private fun startMusicRequest(load:suspend ()->PreparedMusic) {
         state.update {it.copy(error=null)}
-        playbackRequests.start(
-            load={catalogReady.await();withContext(Dispatchers.IO){audioResolver.resolve(item.mediaId)}},
-            commit={stream->
-                if(stream==null)state.update {it.copy(error="This track could not be played right now.")}
-                else {
-                    val output=controller
-                    if(output==null)state.update {it.copy(error="The player is reconnecting. Try this track again shortly.")}
-                    else {
-                        StreamRequestHeaderStore.register(stream.url,stream.headers)
-                        val metadata=MediaMetadata.Builder().setTitle(item.title).setArtist(item.artist ?: "YouTube Music")
-                            .apply {item.artworkUrl?.let {setArtworkUri(it.toUri())}}.build()
-                        val media=MediaItem.Builder().setMediaId("yt:${item.mediaId}").setUri(stream.url)
-                            .setMimeType(stream.mimeType).setMediaMetadata(metadata).build()
-                        output.setMediaItem(media);output.prepare();output.play();publish()
-                    }
-                }
-            },
-            onFailure={state.update {it.copy(error="The selected track could not be prepared. Try another result.")}},
-        )
+        playbackRequests.start(load=load,commit={prepared->
+            val stream=prepared.stream;val item=prepared.item;val apple=prepared.metadata
+            val output=controller
+            if(stream==null)state.update {it.copy(error="This track could not be played right now.")}
+            else if(output==null)state.update {it.copy(error="The player is reconnecting. Try this track again shortly.")}
+            else {
+                StreamRequestHeaderStore.register(stream.url,stream.headers)
+                val metadata=MediaMetadata.Builder().setTitle(apple?.title?:item.title).setArtist(apple?.artist?:item.artist?:"YouTube Music")
+                    .setExtras(Bundle().apply {apple?.sourceUrl?.let {putString("rynx.metadata-source",it)};apple?.let {putString("rynx.metadata-id",it.id);putStringArrayList("rynx.metadata-genres",ArrayList(it.genreIds))}})
+                    .apply {(apple?.artworkUrl?:item.artworkUrl)?.let {setArtworkUri(it.toUri())}}.build()
+                val id="yt:${item.mediaId}"
+                val media=MediaItem.Builder().setMediaId(id).setUri(stream.url).setMimeType(stream.mimeType).setMediaMetadata(metadata).build()
+                output.setMediaItem(media);output.prepare();output.play();discovery.closeSelection();publish()
+            }
+        },onFailure={failure->state.update {it.copy(error=if(failure is RecordingNotFound)
+            "No matching recording was found on YouTube Music. Try a search result or open this song in Apple Music."
+            else "The selected track could not be prepared. Try another result.")}})
     }
     private fun restoreLibrary() {
         lifecycleScope.launch(Dispatchers.IO) {
@@ -383,12 +437,10 @@ class MainActivity : ComponentActivity() {
         val previous=state.value
         val currentItem=output.currentMediaItem
         val currentTrack=currentItem?.let { trackFor(it,previous.tracks) }
-        val recentTracks=if(output.isPlaying && currentTrack!=null && previous.recentTracks.firstOrNull()?.id!=currentTrack.id) {
-            (listOf(currentTrack)+previous.recentTracks.filterNot { it.id==currentTrack.id }).take(50)
+        val revision=preferences.getLong("history-revision",0L)
+        val recentTracks=if(historyRevision!=revision) {
+            historyRevision=revision;TrackMetadataStorage.decode(preferences.getString("recent-tracks",null))
         } else previous.recentTracks
-        if(recentTracks!=previous.recentTracks) {
-            preferences.edit { putString("recent-tracks",TrackMetadataStorage.encode(recentTracks)) }
-        }
         state.update { current -> current.copy(
             currentId=currentItem?.mediaId,
             currentTrack=currentTrack,
@@ -424,5 +476,6 @@ class MainActivity : ComponentActivity() {
             title=item.mediaMetadata.title?.toString()?.takeIf(String::isNotBlank) ?: "Unknown track",
             subtitle=item.mediaMetadata.artist?.toString()?.takeIf(String::isNotBlank) ?: "Unknown artist",
             artworkUrl=item.mediaMetadata.artworkUri?.toString(),
+            metadataSourceUrl=item.mediaMetadata.extras?.getString("rynx.metadata-source"),
         )
 }

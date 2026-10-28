@@ -290,6 +290,7 @@ internal enum class PlayerPane { Artwork, Queue, Lyrics }
                         PlayerMenuItem(if(favorite)"Remove from Favorites" else "Add to Favorites"){track?.let {actions.toggleFavorite(it.id)};more=false}
                         if(state.shuffleAvailable)PlayerMenuItem(if(state.shuffleEnabled)"Turn shuffle off" else "Turn shuffle on"){actions.toggleShuffle();more=false}
                         PlayerMenuItem("Repeat: ${state.repeatLabel}"){actions.cycleRepeat();more=false}
+                        track?.metadataSourceUrl?.let {url->PlayerMenuItem("Open in Apple Music"){actions.openMusicSource(url);more=false}}
                     }
                 }
             }

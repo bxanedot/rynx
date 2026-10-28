@@ -121,7 +121,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             val wide = maxWidth >= 760.dp && maxHeight>=600.dp
             val searching = activeTab == AppTab.Search
             Row(Modifier.fillMaxSize().rynxBackdropSource(1f).graphicsLayer { scaleX=1f-.025f*player.progress;scaleY=scaleX }
-                .semantics { if(playerVisible || appearanceOpen) hideFromAccessibility() }) {
+                .semantics { if(playerVisible || appearanceOpen || state.discoverySelection!=null) hideFromAccessibility() }) {
                 if(wide) Column(Modifier.width(216.dp).fillMaxHeight().background(palette.surface).padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                     Label("rynx",28,bold=true,modifier=Modifier.padding(bottom=30.dp))
                     AppTab.entries.forEach { tab -> NavItem(tab.title,tab.glyph,activeTab==tab){activeTab=tab} }
@@ -137,7 +137,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     }
                     if(searching) RynxSearchInput(query,{query=it},{actions.searchYouTubeMusic(query.trim())},Modifier.padding(horizontal=24.dp))
                     if(searching && state.catalogSearchEnabled) Row(Modifier.fillMaxWidth().padding(horizontal=24.dp, vertical=12.dp),horizontalArrangement=Arrangement.End) {
-                        Action(if(state.catalogSearch.loading) "Searching…" else "Search YouTube Music",{actions.searchYouTubeMusic(query.trim())},enabled=query.isNotBlank()&&!state.catalogSearch.loading)
+                        Action(if(state.catalogSearch.loading) "Searching…" else if(state.discovery.enabled) "Search music" else "Search YouTube Music",{actions.searchYouTubeMusic(query.trim())},enabled=query.isNotBlank()&&!state.catalogSearch.loading)
                     }
                     if(state.error!=null) Row(Modifier.fillMaxWidth().background(Accent.copy(alpha=.1f)).padding(horizontal=20.dp),verticalAlignment=Alignment.CenterVertically) {
                         BasicText(state.error,Modifier.weight(1f),style=TextStyle(color=palette.text,fontSize=13.sp))
@@ -154,12 +154,13 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     if(!wide) Spacer(Modifier.height(if(state.current!=null)74.dp else NavigationDockHeight.dp))
                 }
             }
-            Box(Modifier.fillMaxSize().semantics {if(appearanceOpen)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
-            if(!wide) FloatingNavigation(state.current!=null,player,activeTab,effectiveState.reduceMotion,appearanceOpen,
+            Box(Modifier.fillMaxSize().semantics {if(appearanceOpen || state.discoverySelection!=null)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
+            if(!wide) FloatingNavigation(state.current!=null,player,activeTab,effectiveState.reduceMotion,appearanceOpen || state.discoverySelection!=null,
                 maxWidth.value,maxHeight.value,Modifier.align(Alignment.BottomCenter)) {tab->
                 activeTab=tab
                 if(playerVisible)player.close(effectiveState.reduceMotion)
             }
+            if(state.discoverySelection!=null)DiscoveryDetail(state,actions)
             if(appearanceOpen) AppearanceSheet(appearance,::updateAppearance){appearanceOpen=false}
 
         }
@@ -195,7 +196,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
 @Composable private fun ListenNowContent(state:PlayerUiState,actions:PlayerActions,onBrowse:()->Unit,onSearch:()->Unit,modifier:Modifier) {
     val p=LocalPalette.current
     LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=8.dp,bottom=20.dp)) {
-        if(state.recentTracks.isEmpty()) item {
+        if(state.discovery.enabled)item {DiscoveryHeader(state.discovery,actions)}
+        if(state.recentTracks.isEmpty() && !state.discovery.enabled) item {
             Column(Modifier.fillMaxWidth().padding(vertical=34.dp),horizontalAlignment=Alignment.CenterHorizontally) {
                 Artwork(144.dp)
                 Spacer(Modifier.height(24.dp))
@@ -208,7 +210,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     Action("Add files",actions::importFiles)
                 }
             }
-        } else {
+        } else if(state.recentTracks.isNotEmpty()) {
             item {
                 Column {
                     SectionHeading("Recently Played", "${state.recentTracks.size} songs")
@@ -241,6 +243,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                 }
             }
         }
+        if(state.discovery.enabled)homeDiscoverySections(state.discovery,actions)
         state.current?.takeIf { current -> state.tracks.none { it.id==current.id } }?.let { current -> item {
             Column(Modifier.fillMaxWidth().padding(top=18.dp,bottom=18.dp)) {
                 Label("Now Playing",20,bold=true)
@@ -251,6 +254,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
 }
 
 @Composable private fun BrowseContent(state:PlayerUiState,actions:PlayerActions,onSearch:(String)->Unit,modifier:Modifier) {
+    if(state.discovery.enabled) {AppleExploreContent(state.discovery,actions,modifier);return}
     val p=LocalPalette.current
     LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=8.dp,bottom=20.dp)) {
         item {
@@ -323,7 +327,11 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         } else if(query.isNotBlank() && state.tracks.isNotEmpty()) {
             item { Label("No matching songs in your library",14,p.secondary,modifier=Modifier.padding(vertical=12.dp)) }
         }
-        if(state.catalogSearchEnabled) {
+        if(catalog.metadataItems.isNotEmpty()) {
+            item {SectionHeading("Apple Music", "Metadata · playback via YouTube Music")}
+            items(catalog.metadataItems,key={"apple-search:${it.id}"}) {track->DiscoveryTrackRow(track,actions)}
+        }
+        if(state.catalogSearchEnabled && catalog.metadataItems.isEmpty()) {
             item { SectionHeading("YouTube Music", null) }
             if(catalog.error!=null) item { Label(catalog.error,14,Accent,modifier=Modifier.padding(vertical=12.dp)) }
             if(catalog.loading&&catalog.items.isEmpty()) item { Label("Searching…",14,p.secondary,modifier=Modifier.padding(vertical=12.dp)) }

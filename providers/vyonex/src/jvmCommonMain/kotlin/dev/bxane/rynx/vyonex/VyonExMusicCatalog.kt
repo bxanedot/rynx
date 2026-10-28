@@ -53,6 +53,14 @@ class VyonExMusicCatalog(
         return VyonExCatalogMapper.mapListPage(engine.playlistMore(continuation))
     }
 
+    suspend fun searchAppleMusic(query:String,country:String?,limit:Int=30):List<dev.bxane.rynx.playback.discovery.MusicMetadata> =
+        engine.appleMusic.searchSongs(query,country,limit).mapNotNull(VyonExAppleMetadataMapper::song)
+
+    suspend fun appleSong(id:Long,country:String?):dev.bxane.rynx.playback.discovery.MusicMetadata? =
+        engine.appleMusic.song(id,country)?.let(VyonExAppleMetadataMapper::song)
+
+    suspend fun appleArtistImages(id:Long,country:String?):List<com.vyonex.VyonExThumbnail> = engine.appleMusic.artistImages(id,country)
+
     suspend fun resolveAudio(videoId: String, maxKbps: Int = 160): ResolvedAudioStream? {
         require(videoId.isNotBlank()) { "Video ID must not be empty" }
         require(maxKbps > 0) { "Maximum bitrate must be positive" }

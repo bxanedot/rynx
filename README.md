@@ -4,7 +4,9 @@ An independently authored Kotlin Multiplatform music application by **bxane**. A
 
 The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through VyonEx, an independently obtained NewPipe fallback, favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
 
-This is a development build. Spotify, downloads/offline management, advanced DSP/DJ, recognition, social/backend features and complete reference screen/motion parity are not finished. No production readiness, audible audio quality, benchmark or 95% visual-parity result is claimed. See [current blockers](docs/parity/BLOCKERS.md) and the [Android feature inventory](docs/parity/ANDROID_FEATURE_MATRIX.md).
+This is a development build. Spotify, downloads/offline management, advanced DSP/DJ, recognition, social/backend features and complete reference screen/motion parity are not finished. No production readiness, audible audio quality, benchmark or 95% visual-parity result is claimed. Apple discovery includes real genres, global/regional/city charts, release/tour collections and original local recommendations; see [discovery sources](docs/parity/APPLE_DISCOVERY.md).
+
+See [current blockers](docs/parity/BLOCKERS.md) and the [Android feature inventory](docs/parity/ANDROID_FEATURE_MATRIX.md).
 
 ## Build and test
 
@@ -12,7 +14,7 @@ Use JDK 27, Android SDK 37/build tools, and the approved dependency submodules. 
 
 ```sh
 git submodule update --init
-./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:vyonex:jvmTest :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
+./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:vyonex:jvmTest :providers:apple:jvmTest :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
 ./gradlew :apps:android:connectedDebugAndroidTest
 ```
 

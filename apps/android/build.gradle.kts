@@ -53,6 +53,7 @@ dependencies {
     implementation(project(":shared:ui"))
     implementation(project(":shared:playback"))
     implementation(project(":providers:vyonex"))
+    implementation(project(":providers:apple"))
     implementation(project(":providers:newpipe"))
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")

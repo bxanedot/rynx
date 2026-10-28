@@ -15,3 +15,6 @@ Compiled instrumentation:
 Runtime status: not yet passed. The local unaccelerated emulator crashed before app installation, so no app test outcome can be inferred. CI uses the existing repository's hardware-accelerated phone runner. Even a silent-PCM pass would not establish audible signal quality.
 
 Still required: background survival, focus interruptions, headset changes, notification interaction, live buffering/recovery, audio device changes, long sessions, glitches, DSP correctness, battery and first-audio latency. No performance numbers or bit-perfect claim are available.
+
+
+The playback service now owns qualifying listening signals and recent history. A shared tracker verifies advancing playback, pause exclusion, seek discontinuities and repeat sessions. The new BackgroundListeningTest generates 45 seconds of original PCM and waits for a real service-produced signal after stopping the Activity; it compiles but is not yet a runtime pass. The hosted launch/recreation test reproduced TLS teardown on the UI thread; cleanup moved to a process-owned IO scope, with its native rerun pending.

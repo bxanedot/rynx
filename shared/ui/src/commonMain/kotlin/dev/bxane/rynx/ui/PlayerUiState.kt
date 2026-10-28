@@ -3,17 +3,20 @@ package dev.bxane.rynx.ui
 import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.LyricLine
 import dev.bxane.rynx.design.RynxAppearance
+import dev.bxane.rynx.playback.discovery.*
 
 data class TrackItem(
     val id: String,
     val title: String,
     val subtitle: String = "Local audio",
     val artworkUrl: String? = null,
+    val metadataSourceUrl:String?=null,
 )
 data class CatalogSearchState(
     val query: String = "",
     val items: List<CatalogItem> = emptyList(),
     val continuation: String? = null,
+    val metadataItems:List<MusicMetadata> = emptyList(),
     val loading: Boolean = false,
     val loadingMore: Boolean = false,
     val error: String? = null,
@@ -51,6 +54,9 @@ data class PlayerUiState(
     val queueOrder: List<Int> = emptyList(),
     val appearance: RynxAppearance = RynxAppearance(),
     val renderingPressure: Boolean = false,
+    val discovery:DiscoveryState = DiscoveryState(),
+    val discoverySelection:HomeSection?=null,
+    val discoverySelectionLoading:Boolean=false,
 ) { val current: TrackItem? get() = currentTrack ?: tracks.firstOrNull { it.id == currentId } }
 
 interface PlayerActions {
@@ -74,4 +80,12 @@ interface PlayerActions {
     fun clearUpcomingQueue() = Unit
     fun updateAppearance(appearance: RynxAppearance) = Unit
     fun importLyrics() = Unit
+    fun refreshDiscovery() = Unit
+    fun changeDiscoveryRegion(code:String) = Unit
+    fun openDiscoverySection(id:String) = Unit
+    fun openDiscoveryCollection(collection:ChartCollection) = Unit
+    fun openGenre(genre:MusicGenre) = Unit
+    fun closeDiscovery() = Unit
+    fun playDiscovery(track:MusicMetadata) = Unit
+    fun openMusicSource(url:String) = Unit
 }

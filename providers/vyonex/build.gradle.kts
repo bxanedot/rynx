@@ -38,3 +38,5 @@ kotlin {
         jvmTest.dependencies { implementation(kotlin("test")) }
     }
 }
+
+tasks.withType<Test>().configureEach {inputs.property("appleLiveContracts",providers.environmentVariable("RYNX_APPLE_LIVE").orElse("0"))}

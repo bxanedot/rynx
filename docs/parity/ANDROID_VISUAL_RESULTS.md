@@ -39,3 +39,12 @@ The user authorizes Apple Music as direct reference; public player/queue stills 
 The local software API 35 ATD emulator eventually booted, then its host QEMU process crashed before app installation. API 36 software-emulator attempts were also unstable without `/dev/kvm`. No connected app test passed locally. The existing Rynx repository CI is configured to run API 36 Pixel 6 instrumentation with hardware acceleration and collect device frames/logs; results must be recorded after execution.
 
 Physical-device optical fidelity, audible quality, accessibility service behavior, low-end/high-refresh performance, battery/latency, live extraction, Spotify, downloads and advanced DSP remain incomplete or unverified. See `BLOCKERS.md` and `ANDROID_FEATURE_MATRIX.md`.
+
+
+## Apple discovery checkpoint after review fixes
+
+A fresh default suite passed on 2026-10-28 in 1m42s: Android debug/test packaging, lint/unit tests, all shared tests, both provider test suites, and the complete Compose harness. Reports contain 106 cases: 104 passed, two opt-in live checks skipped, no failures/errors. Breakdown: Compose harness 43; Android unit 7; playback/ranking/listening 26; design 7; shared UI 7; Apple provider 9 (one live skip); VyonEx provider 7 (one live skip). The explicit live run separately passed Apple engine search/lookup/artwork and public data checks (51 genres, 100 regional, 100 global, 50 cities, 50 Pop songs).
+
+The independent review's four behavioral regressions were observed failing before fixes and now pass. New shared listening tracker tests pass; its service/background instrumentation is compiled but has not yet run. Default test tasks track the live-contract opt-in as an input so cached live results cannot silently stand in for default execution.
+
+The complete pre-review build also packaged minified release in 9m04s. That release predates the final review fixes; a fresh release package is still needed for the latest source. Earlier hashes/counts above are historical checkpoints. Current source publication and native CI results are recorded separately, not inferred from local headless tests.

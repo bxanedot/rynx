@@ -4,14 +4,14 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 
 | ID | Feature | Android status | Evidence / next acceptance |
 |---|---|---|---|
-| DISC-001 | Home | incomplete | Current UI exposes Home and an artwork-led Recently Played shelf from real playback history; Compose test passes. Public Apple Music Play Store screenshots were inspected, but exact screen, state and device parity remains unverified. |
-| DISC-002 | Explore | unverified | Observe permitted reference, implement, test and compare |
-| DISC-003 | Search | incomplete | Local filtering and VyonEx YouTube Music search/pagination are wired; live search and device/reference validation pending |
-| DISC-004 | Charts | unverified | Observe permitted reference, implement, test and compare |
-| DISC-005 | Genres | unverified | Observe permitted reference, implement, test and compare |
+| DISC-001 | Home | incomplete | Real Apple-backed Home shelves and local service-owned Recently Played. Global/region/neighbors, editorial releases, date-filtered week, rising ranks, city/tour collections and local recommendations implemented; provider/UI tests pass; native acceptance pending. |
+| DISC-002 | Explore | incomplete | Explore renders dynamically fetched Apple genre IDs/names with original vector tiles and a genuine genre-chart drilldown; headless interaction test passes. |
+| DISC-003 | Search | incomplete | Apple metadata search through VyonEx with YouTube Music fallback; conservative variant/artist/duration matching before playback. Live Apple and deterministic tests pass; native stream path pending. |
+| DISC-004 | Charts | incomplete | Actual Apple Global chart and labelled storefront snapshots; City Charts from public links/JSON-LD. Live data contract checks pass; source availability may vary. |
+| DISC-005 | Genres | incomplete | 51 actual Apple genres verified live; nested taxonomy retained; original tile artwork and real iTunes genre charts. |
 | DISC-006 | Moods | unverified | Observe permitted reference, implement, test and compare |
-| DISC-007 | Recommendations | unverified | Observe permitted reference, implement, test and compare |
-| DISC-008 | New releases | unverified | Observe permitted reference, implement, test and compare |
+| DISC-007 | Recommendations | incomplete | Original local content-based ranker with decayed artist/genre affinity, popularity, freshness, diversity and replay penalty; qualifying service-owned playback signals persist; favorite/skip training incomplete. |
+| DISC-008 | New releases | incomplete | Best new songs from actual New Music Daily; New this week filters actual release dates. Not a complete upcoming-release service. |
 | DISC-009 | Radios | unverified | Observe permitted reference, implement, test and compare |
 | DISC-010 | Artists | unverified | Observe permitted reference, implement, test and compare |
 | DISC-011 | Albums | unverified | Observe permitted reference, implement, test and compare |
@@ -19,7 +19,7 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | DISC-013 | Videos | unverified | Observe permitted reference, implement, test and compare |
 | DISC-014 | Regional discovery | unverified | Observe permitted reference, implement, test and compare |
 | DISC-015 | Suggestions | unverified | Observe permitted reference, implement, test and compare |
-| DISC-016 | Personalized shelves | unverified | Observe permitted reference, implement, test and compare |
+| DISC-016 | Personalized shelves | incomplete | Personalized local candidate ranking and service-owned listening history; no Apple account-history or private algorithm access. |
 | PLAY-001 | Background playback | incomplete | Media3 foreground session/service code present; local and resolved remote sources route through its session; runtime, audio-focus and interruption tests pending |
 | PLAY-002 | Mini-player | incomplete | One capsule-to-sheet surface, shared artwork/transport and navigation handoff pass headless interaction/continuity tests; Android gesture/render acceptance pending |
 | PLAY-003 | Expanded player | incomplete | Reference-proportioned transport, volume, output, seek and menus implemented in all material modes; landscape and large-font harness passes; native/reference gates pending |
@@ -112,7 +112,7 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | AI-002 | AI music tools | unverified | Observe permitted reference, implement, test and compare |
 | AI-003 | AI playlist editing | unverified | Observe permitted reference, implement, test and compare |
 | AI-004 | AI configuration | unverified | Observe permitted reference, implement, test and compare |
-| STAT-001 | Listening history | unverified | Observe permitted reference, implement, test and compare |
+| STAT-001 | Listening history | incomplete | Service-owned recent history and qualifying listening signals implemented, including background sessions; native background regression compiles and awaits CI. |
 | STAT-002 | Statistics | unverified | Observe permitted reference, implement, test and compare |
 | STAT-003 | Song insights | unverified | Observe permitted reference, implement, test and compare |
 | STAT-004 | Replay presentations | unverified | Observe permitted reference, implement, test and compare |

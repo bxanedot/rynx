@@ -19,6 +19,7 @@ import androidx.media3.session.MediaSessionService
 @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
+    private var listening:AndroidListeningRecorder?=null
     override fun onCreate() {
         super.onCreate()
         val http = DefaultHttpDataSource.Factory()
@@ -40,12 +41,14 @@ class PlaybackService : MediaSessionService() {
                 setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true)
                 setHandleAudioBecomingNoisy(true)
             }
+        listening=AndroidListeningRecorder(applicationContext,player)
         val activity = PendingIntent.getActivity(this,0,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         session = MediaSession.Builder(this, player).setSessionActivity(activity)
             .setCallback(QueueSessionCallback(packageName)).build()
     }
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
     override fun onDestroy() {
+        listening?.close();listening=null
         session?.let { it.player.release(); it.release() }
         session = null
         StreamRequestHeaderStore.clear()

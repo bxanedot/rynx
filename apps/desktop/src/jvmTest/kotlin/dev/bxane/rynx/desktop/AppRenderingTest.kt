@@ -70,12 +70,12 @@ class AppRenderingTest {
             capture(scene,"phone-queue")
         } finally{scene.close()}
     }
-    @Test fun phoneNavigationOffersHomeBrowseRadioLibraryAndSearch() {
+    @Test fun phoneNavigationOffersListenNowBrowseRadioLibraryAndSearch() {
         val actions=Actions()
         val state=PlayerUiState(tracks=listOf(TrackItem("a","Evening walk")))
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(state,actions)}
         try {
-            assertSelectedTab(scene,"Home")
+            assertSelectedTab(scene,"Listen Now")
             click(scene,"Browse")
             assertSelectedTab(scene,"Browse")
             click(scene,"Radio")

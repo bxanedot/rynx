@@ -1,7 +1,7 @@
 # Dependency audit
 | Dependency | Pinned revision/version | Use | State |
 |---|---|---|---|
-| VyonEx | 4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1 / 0.2.0 | Primary YouTube Music search and stream resolution | Composite-linked JVM/Android adapter compiles; live provider/playback unverified |
+| VyonEx | 4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1 / 0.2.0 | Primary YouTube Music search and stream resolution | Composite-linked JVM/Android adapter compiles; opt-in live probe was blocked by the environment proxy (`CONNECT 403`), so live provider/playback remains unverified |
 | NewPipeExtractor | v0.26.5 | Android-only audio resolution fallback after VyonEx | JitPack dependency, public API integration compiles; GPL-3.0-or-later release obligation documented |
 | GlyphStudio | v1.0.0 / pinned submodule commit | sfsymbols | Apache implementation per owner; Apple SF artwork terms separately restrict use; not linked into Android runtime, which uses original Rynx vectors |
 | Kotlin Multiplatform | 2.4.21 | Shared application code | Root build |

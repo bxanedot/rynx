@@ -51,8 +51,8 @@ import dev.bxane.rynx.ui.material.*
 import dev.chrisbanes.haze.rememberHazeState
 
 private data class Palette(val bg: Color, val surface: Color, val text: Color, val secondary: Color, val line: Color)
-private enum class AppTab(val title: String, val glyph: Glyph) {
-    ListenNow("Home", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
+internal enum class AppTab(val title: String, val glyph: Glyph) {
+    ListenNow("Listen Now", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
     Library("Library", Glyph.Library), Search("Search", Glyph.Search),
 }
 private val Accent = Color(0xFFFA2D48)
@@ -102,8 +102,23 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val backdrop=rememberHazeState()
     var query by rememberSaveable { mutableStateOf("") }
     var activeTab by rememberSaveable { mutableStateOf(AppTab.ListenNow) }
+    var previousTab by rememberSaveable { mutableStateOf(AppTab.ListenNow) }
+    var navigationExpanded by rememberSaveable { mutableStateOf(true) }
+    var requestSearchFocus by remember { mutableStateOf(false) }
+    fun selectTab(tab:AppTab,focusSearch:Boolean=false) {
+        if(tab==AppTab.Search) {
+            if(activeTab!=AppTab.Search)previousTab=activeTab
+            requestSearchFocus=focusSearch
+        } else {
+            previousTab=tab
+            requestSearchFocus=false
+        }
+        activeTab=tab
+    }
+    fun closeSearch() { selectTab(if(previousTab==AppTab.Search)AppTab.ListenNow else previousTab) }
     val player=rememberPlayerPresentation()
     val playerVisible by remember {derivedStateOf {player.visible}}
+    RynxPlatformBackHandler(enabled=activeTab==AppTab.Search && !appearanceOpen && state.discoverySelection==null,onBack=::closeSearch)
     LaunchedEffect(playerVisible) {onPlayerVisibleChanged(playerVisible)}
     var previousTrackId by remember {mutableStateOf(state.currentId)}
     LaunchedEffect(state.currentId) {
@@ -118,24 +133,35 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         LocalRynxRenderingPressure provides state.renderingPressure) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().rynxBackdropSource(0f).background(palette.bg))
-            val wide = maxWidth >= 760.dp && maxHeight>=600.dp
+            val windowPolicy=rynxWindowPolicy(maxWidth.value,maxHeight.value)
+            val wide=windowPolicy.sideNavigation
             val searching = activeTab == AppTab.Search
             Row(Modifier.fillMaxSize().rynxBackdropSource(1f).graphicsLayer { scaleX=1f-.025f*player.progress;scaleY=scaleX }
                 .semantics { if(playerVisible || appearanceOpen || state.discoverySelection!=null) hideFromAccessibility() }) {
                 if(wide) Column(Modifier.width(216.dp).fillMaxHeight().background(palette.surface).padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                     Label("rynx",28,bold=true,modifier=Modifier.padding(bottom=30.dp))
-                    AppTab.entries.forEach { tab -> NavItem(tab.title,tab.glyph,activeTab==tab){activeTab=tab} }
+                    AppTab.entries.forEach { tab -> NavItem(tab.title,tab.glyph,activeTab==tab){selectTab(tab)} }
                     Spacer(Modifier.weight(1f))
                     Label("by bxane",12,palette.secondary)
                 }
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     Row(Modifier.fillMaxWidth().padding(horizontal=if(wide)32.dp else 24.dp,vertical=20.dp),verticalAlignment=Alignment.CenterVertically) {
+                        if(searching) IconButton(Glyph.Previous,"Return to ${previousTab.title}",onClick=::closeSearch)
                         Label(activeTab.title,32,bold=true,modifier=Modifier.weight(1f))
                         IconButton(if(dark) Glyph.Sun else Glyph.Moon,if(appearance.material==RynxMaterialMode.Amoled)"Theme fixed by True AMOLED" else "Switch to ${if(dark) "light" else "dark"} theme",enabled=appearance.material!=RynxMaterialMode.Amoled){updateAppearance(appearance.copy(darkTheme=!appearance.darkTheme))}
                         IconButton(Glyph.Appearance,"Appearance"){appearanceOpen=true}
                         if(activeTab==AppTab.Library) IconButton(Glyph.Add,"Import audio files",onClick=actions::importFiles)
                     }
-                    if(searching) RynxSearchInput(query,{query=it},{actions.searchYouTubeMusic(query.trim())},Modifier.padding(horizontal=24.dp))
+                    NavigationSearchTransition(
+                        expanded=searching,
+                        requestFocusOnExpand=requestSearchFocus,
+                        value=query,
+                        onValueChange={query=it},
+                        onSearch={actions.searchYouTubeMusic(query.trim())},
+                        onFocusConsumed={requestSearchFocus=false},
+                        reducedMotion=effectiveState.reduceMotion,
+                        modifier=Modifier.padding(horizontal=24.dp),
+                    )
                     if(searching && state.catalogSearchEnabled) Row(Modifier.fillMaxWidth().padding(horizontal=24.dp, vertical=12.dp),horizontalArrangement=Arrangement.End) {
                         Action(if(state.catalogSearch.loading) "Searching…" else if(state.discovery.enabled) "Search music" else "Search YouTube Music",{actions.searchYouTubeMusic(query.trim())},enabled=query.isNotBlank()&&!state.catalogSearch.loading)
                     }
@@ -145,9 +171,9 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     }
                     if(state.busy) Label("Opening audio…",color=palette.secondary,modifier=Modifier.padding(24.dp))
                     when(activeTab) {
-                        AppTab.ListenNow -> ListenNowContent(state,actions,{activeTab=AppTab.Browse},{activeTab=AppTab.Search},Modifier.weight(1f))
-                        AppTab.Browse -> BrowseContent(state,actions,{term -> query=term;activeTab=AppTab.Search;actions.searchYouTubeMusic(term)},Modifier.weight(1f))
-                        AppTab.Radio -> RadioContent({ _:String -> query="";activeTab=AppTab.Search },Modifier.weight(1f))
+                        AppTab.ListenNow -> ListenNowContent(state,actions,{selectTab(AppTab.Browse)},{selectTab(AppTab.Search,focusSearch=true)},Modifier.weight(1f))
+                        AppTab.Browse -> BrowseContent(state,actions,{term -> query=term;selectTab(AppTab.Search);actions.searchYouTubeMusic(term)},Modifier.weight(1f))
+                        AppTab.Radio -> RadioContent({ _:String -> query="";selectTab(AppTab.Search,focusSearch=true) },Modifier.weight(1f))
                         AppTab.Library -> LibraryContent(state,actions,Modifier.weight(1f))
                         AppTab.Search -> SearchContent(state,actions,query,Modifier.weight(1f))
                     }
@@ -155,9 +181,13 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                 }
             }
             Box(Modifier.fillMaxSize().semantics {if(appearanceOpen || state.discoverySelection!=null)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
-            if(!wide) FloatingNavigation(state.current!=null,player,activeTab,effectiveState.reduceMotion,appearanceOpen || state.discoverySelection!=null,
-                maxWidth.value,maxHeight.value,Modifier.align(Alignment.BottomCenter)) {tab->
-                activeTab=tab
+            if(!wide) FloatingNavigation(
+                hasTrack=state.current!=null,player=player,activeTab=activeTab,reduced=effectiveState.reduceMotion,
+                blocked=appearanceOpen || state.discoverySelection!=null,expanded=navigationExpanded,
+                onExpansionChange={navigationExpanded=it},viewportWidth=maxWidth.value,viewportHeight=maxHeight.value,
+                modifier=Modifier.align(Alignment.BottomCenter),
+            ) {tab->
+                selectTab(tab,focusSearch=tab==AppTab.Search)
                 if(playerVisible)player.close(effectiveState.reduceMotion)
             }
             if(state.discoverySelection!=null)DiscoveryDetail(state,actions)
@@ -167,28 +197,28 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     }
 }
 
-@Composable private fun FloatingNavigation(hasTrack:Boolean,player:PlayerPresentation,activeTab:AppTab,reduced:Boolean,blocked:Boolean,
-    viewportWidth:Float,viewportHeight:Float,modifier:Modifier,onSelect:(AppTab)->Unit) {
+@Composable private fun FloatingNavigation(
+    hasTrack:Boolean,player:PlayerPresentation,activeTab:AppTab,reduced:Boolean,blocked:Boolean,
+    expanded:Boolean,onExpansionChange:(Boolean)->Unit,viewportWidth:Float,viewportHeight:Float,modifier:Modifier,onSelect:(AppTab)->Unit,
+) {
     val geometry=playerGeometry(viewportWidth,viewportHeight,player.progress)
     val reveal=if(hasTrack)geometry.navigationReveal else 1f
     val interactive=(!hasTrack || geometry.navigationInteractive) && !blocked
     if(reveal<=0f)return
-    Box(modifier.padding(horizontal=14.dp,vertical=7.dp)
+    Box(modifier.padding(horizontal=14.dp,vertical=7.dp).height(RynxNavigationMotionSpec.BarHeightDp.dp)
         .graphicsLayer {translationY=(1f-reveal)*40.dp.toPx();alpha=reveal;scaleX=.94f+.06f*reveal;scaleY=scaleX}
         .semantics {if(!interactive)hideFromAccessibility()}) {
         CompositionLocalProvider(LocalRynxMaterialLayer provides 4f) {
-            RynxSurface(Modifier.fillMaxWidth().height(64.dp),28.dp,shadow=true) {
-                val selection by animateFloatAsState(AppTab.entries.indexOf(activeTab).toFloat(),if(reduced)snap() else spring(
-                    stiffness=RynxMotionTokens.SelectionStiffness,dampingRatio=RynxMotionTokens.SelectionDamping))
-                val position=if(reduced)AppTab.entries.indexOf(activeTab).toFloat() else selection
-                BoxWithConstraints(Modifier.fillMaxSize().padding(5.dp)) {
-                    val cell=maxWidth/5
-                    Box(Modifier.offset(x=cell*position).width(cell).fillMaxHeight().rynxMaterial(22.dp,selected=true,amount=.5f))
-                    Row(Modifier.fillMaxSize(),horizontalArrangement=Arrangement.SpaceEvenly,verticalAlignment=Alignment.CenterVertically) {
-                        AppTab.entries.forEach {tab->BottomTabItem(tab,activeTab==tab,Modifier.weight(1f),interactive){onSelect(tab)}}
-                    }
-                }
-            }
+            MorphingNavigationBar(
+                destinations=AppTab.entries.map {NavigationDestination(it.title,it.glyph)},
+                selectedIndex=AppTab.entries.indexOf(activeTab),searchIndex=AppTab.entries.indexOf(AppTab.Search),
+                expanded=expanded,onExpansionChange=onExpansionChange,playerReveal=if(hasTrack)reveal else 0f,
+                reducedMotion=reduced,blocked=!interactive,
+                onSelectIndex={index -> if(interactive)onSelect(AppTab.entries[index])},
+                itemContent={index,selected,labelAlpha,morphProgress,itemModifier,enabled,onClick ->
+                    BottomTabItem(AppTab.entries[index],selected,labelAlpha,morphProgress,itemModifier,enabled,onClick)
+                },
+            )
         }
     }
 }
@@ -387,7 +417,10 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     }
 }
 
-@Composable private fun BottomTabItem(tab:AppTab,selected:Boolean,modifier:Modifier=Modifier,enabled:Boolean=true,onClick:()->Unit) {
+@Composable internal fun BottomTabItem(
+    tab:AppTab,selected:Boolean,labelAlpha:Float,morphProgress:Float,
+    modifier:Modifier=Modifier,enabled:Boolean=true,onClick:()->Unit,
+) {
     val p=LocalPalette.current
     val reduced=LocalRynxReducedMotion.current
     val tint by animateColorAsState(if(selected) Accent else p.secondary,animationSpec=if(reduced)snap() else spring(stiffness=RynxMotionTokens.SelectionStiffness,dampingRatio=RynxMotionTokens.SelectionDamping),label="tab tint")
@@ -398,8 +431,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         .semantics{contentDescription=tab.title;this.selected=selected;role=Role.Tab}
         .graphicsLayer{scaleX=scale;scaleY=scale}.padding(vertical=4.dp),
         horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(2.dp)) {
-        RynxGlyph(tab.glyph,tint,Modifier.size(22.dp))
-        Label(tab.title,10,tint,bold=selected)
+        AnimatedNavigationIcon(tab.glyph,selected,Accent,p.secondary,reduced,morphProgress,Modifier.size(22.dp),interaction)
+        Label(tab.title,10,tint,bold=selected,modifier=Modifier.graphicsLayer{alpha=labelAlpha})
     }
 }
 

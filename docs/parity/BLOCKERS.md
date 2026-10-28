@@ -3,7 +3,7 @@
 | ID | Blocker | Impact |
 |---|---|---|
 | AND-B001 | Platform-specific Apple Music measurements and motion recordings incomplete | Apple Music is now the authorized direct reference; lack of Vyon media does not block UI work |
-| AND-B002 | No attached physical Android phone and no /dev/kvm | Hosted emulator now runs with KVM; native launch/recreation reproduced network teardown on the main thread. IO cleanup fix and background-listening instrumentation await rerun. Physical phone still unavailable. |
+| AND-B002 | No attached physical Android phone and no /dev/kvm locally | Hosted API 36 KVM run 28 built successfully and passed all 10/10 device tests, including Search entry/back restoration and lyrics import after host recreation. The physical-device check remains unavailable; hosted emulator results do not establish optical fidelity or physical-device performance. |
 | AND-B003 | Spotify registered client/callback, entitlements and authorized test account unavailable | Authentication and supported native playback validation |
 | AND-B004 | GlyphStudio implementation Apache license confirmed by user; Apple artwork eligibility not resolved | Original vectors remain in runtime until artwork review |
 | AND-B005 | Resolved for source licensing: Rynx selects GPL-3.0-or-later and includes corresponding source, dependency pins and retained notices | Full release audit and tested release identity remain separate gates |

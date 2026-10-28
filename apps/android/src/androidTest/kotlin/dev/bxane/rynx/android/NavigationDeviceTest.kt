@@ -1,0 +1,116 @@
+package dev.bxane.rynx.android
+
+import android.os.Bundle
+import android.os.SystemClock
+import android.view.KeyEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import androidx.test.core.app.ActivityScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/** Native checks for the Compose search handoff and Android back-stack behavior. */
+@RunWith(AndroidJUnit4::class)
+class NavigationDeviceTest {
+    private val instrumentation = InstrumentationRegistry.getInstrumentation()
+
+    private fun find(label: String): AccessibilityNodeInfo? {
+        fun visit(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.contentDescription?.toString()?.let { it == label || it.startsWith("$label, ") } == true) return node
+            for (index in 0 until node.childCount) {
+                val child = node.getChild(index) ?: continue
+                visit(child)?.let { return it }
+            }
+            return null
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
+    }
+
+    private fun findVisibleText(label: String): AccessibilityNodeInfo? {
+        fun visit(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.text?.toString() == label) return node
+            for (index in 0 until node.childCount) {
+                val child = node.getChild(index) ?: continue
+                visit(child)?.let { return it }
+            }
+            return null
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
+    }
+
+    private fun findEditableField(): AccessibilityNodeInfo? {
+        fun visit(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.isEditable || node.actionList.any { it.id == AccessibilityNodeInfo.ACTION_SET_TEXT }) return node
+            for (index in 0 until node.childCount) {
+                val child = node.getChild(index) ?: continue
+                visit(child)?.let { return it }
+            }
+            return null
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
+    }
+
+    private fun eventually(message: String, condition: () -> Boolean) {
+        val deadline = SystemClock.elapsedRealtime() + 15_000
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (condition()) return
+            SystemClock.sleep(100)
+        }
+        throw AssertionError("$message. ${accessibilitySnapshot()}")
+    }
+
+    private fun accessibilitySnapshot(): String {
+        val root=instrumentation.uiAutomation.rootInActiveWindow ?: return "No active accessibility window."
+        val nodes=mutableListOf<String>()
+        fun visit(node:AccessibilityNodeInfo) {
+            val label=node.contentDescription?.toString()
+            val text=node.text?.toString()
+            val actions=node.actionList.map { it.id }
+            if(label!=null || text!=null || node.isEditable || AccessibilityNodeInfo.ACTION_SET_TEXT in actions) {
+                nodes += "class=${node.className}, description=$label, text=$text, selected=${node.isSelected}, enabled=${node.isEnabled}, editable=${node.isEditable}, actions=$actions"
+            }
+            for(index in 0 until node.childCount)node.getChild(index)?.let(::visit)
+        }
+        visit(root)
+        return "Active package=${root.packageName}; accessibility nodes=${nodes.take(100)}"
+    }
+
+    private fun click(label: String) {
+        eventually("Missing navigation action: $label") { find(label) != null }
+        var target = find(label)
+        while (target != null) {
+            if (target.isEnabled && target.isClickable && target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
+            target = target.parent
+        }
+        throw AssertionError("Could not activate navigation action: $label")
+    }
+
+    @Test fun searchKeepsItsQueryAndBackReturnsToThePreviousTab() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            click("Library")
+            eventually("Library screen did not open") { findVisibleText("Your music, right here") != null }
+            click("Search")
+            eventually("Search screen did not open") { findVisibleText("YouTube Music") != null }
+            eventually("Search input did not finish its expansion") {
+                findEditableField()?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
+            }
+            val query = "navigation survives back"
+            val args = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, query) }
+            assertTrue("Search must accept accessibility text input", findEditableField()!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args))
+
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            SystemClock.sleep(350)
+            if (findVisibleText("Your music, right here") == null) instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            eventually("Android back must return to the tab that opened Search") { findVisibleText("Your music, right here") != null }
+
+            click("Search")
+            eventually("Search query was lost while returning from the prior tab") {
+                findEditableField()?.text?.toString() == query
+            }
+            assertEquals(query, findEditableField()?.text?.toString())
+        }
+    }
+}

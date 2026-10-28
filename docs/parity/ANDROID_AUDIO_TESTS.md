@@ -9,7 +9,7 @@ Compiled instrumentation:
 - `PlaybackSessionTest`: generated silent PCM advances/pauses through the actual service.
 - `PlayerDeviceTest`: actual player controls reach system volume and Media3, LRC tap seeks, shuffle/reorder/clear retain correct identity, rendered frames captured.
 - `LocalAudioMetadataTest`: independently generated silent MP3 with original embedded cover/title and fallback metadata.
-- `LyricsImportRecreationTest`: real document picker result survives activity recreation and attaches to the selected track.
+- `LyricsImportRecreationTest`: recreates the host while the player is active, then imports a real timed-lyrics file and verifies it attaches to that track. It does not verify a result returning from a picker that remained open through recreation.
 - `AppearancePersistenceTest` and `LaunchTest`: preference normalization and recreation/metadata behavior.
 
 Runtime status: not yet passed. The local unaccelerated emulator crashed before app installation, so no app test outcome can be inferred. CI uses the existing repository's hardware-accelerated phone runner. Even a silent-PCM pass would not establish audible signal quality.

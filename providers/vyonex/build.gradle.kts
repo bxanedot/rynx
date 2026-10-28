@@ -40,3 +40,4 @@ kotlin {
 }
 
 tasks.withType<Test>().configureEach {inputs.property("appleLiveContracts",providers.environmentVariable("RYNX_APPLE_LIVE").orElse("0"))}
+tasks.withType<Test>().configureEach {inputs.property("youtubeLiveContracts",providers.environmentVariable("RYNX_YOUTUBE_LIVE").orElse("0"))}

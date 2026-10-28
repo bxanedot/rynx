@@ -40,6 +40,20 @@ The local software API 35 ATD emulator eventually booted, then its host QEMU pro
 
 Physical-device optical fidelity, audible quality, accessibility service behavior, low-end/high-refresh performance, battery/latency, live extraction, Spotify, downloads and advanced DSP remain incomplete or unverified. See `BLOCKERS.md` and `ANDROID_FEATURE_MATRIX.md`.
 
+## Navigation-motion checkpoint
+
+2026-10-28: `:shared:design:jvmTest :shared:ui:jvmTest :apps:desktop:jvmTest :apps:android:assembleDebug :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest` completed successfully. The resulting reports contain 78 applicable tests: design 15, shared UI 7, Compose/JVM app harness 49, and Android local unit 7, with zero failures, errors or skips. The design suite was explicitly rerun after Gradle initially marked it up-to-date. Android debug and instrumentation APK packaging succeeded; lint reported zero errors and two existing warnings (`OldTargetApi`, `ObsoleteSdkInt`).
+
+`NavigationDeviceTest` covers native Search text entry, query retention and Android Back navigation. It compiled into the instrumentation APK, but this workspace reports no connected device and no `/dev/kvm`, so that test did not execute locally. The PR's hosted Android workflow must be checked before claiming native device verification. These tests establish behavior in the headless Compose harness, not Apple/Vyon visual similarity, glass rendering quality or device motion timing.
+
+## Hosted phone run 20
+
+Run [40737479787](https://github.com/bxanedot/rynx/actions/runs/40737479787) for commit `ff2b8ae` built the phone/instrumentation APKs and enabled KVM successfully, then failed during connected tests. `LyricsImportRecreationTest` used blocking `ActivityScenario.recreate()` while the system document picker held the foreground; it timed out waiting for the stopped host to resume. The following `NavigationDeviceTest` then launched a host that only reached `CREATED` and timed out waiting for the Search input. Device logs confirm no resumed `MainActivity` during that second test. The lyrics test now requests recreation through the retained host instance and asserts the replacement receives the picker result; this correction has compiled locally but is awaiting another hosted device run. Native Search and lifecycle behavior are not yet verified.
+
+## Hosted phone run 22 and current rerun preparation
+
+Run [40739637239](https://github.com/bxanedot/rynx/actions/runs/40739637239) for `e5b49d0` passed APK build/package in Verify run [40739637162](https://github.com/bxanedot/rynx/actions/runs/40739637162), but connected tests failed again. Calling `Activity.recreate()` directly while DocumentsUI was foregrounded brought the Rynx host above the picker, so its file row could not be selected. The separate Search test timed out finding an enabled `Search your music` field; that run had no accessibility-tree diagnostic. The current local test revision recreates the host before opening the real picker and then verifies the imported lyric on the active player. This avoids relying on rotation of a background task; returning from a picker that remains open through recreation is still unverified. Search now waits for tab selection and attaches an accessibility snapshot to timeouts. These changes are not yet built or rerun on hosted Android.
+
 
 ## Apple discovery checkpoint after review fixes
 
@@ -48,3 +62,19 @@ A fresh default suite passed on 2026-10-28 in 1m42s: Android debug/test packagin
 The independent review's four behavioral regressions were observed failing before fixes and now pass. New shared listening tracker tests pass; its service/background instrumentation is compiled but has not yet run. Default test tasks track the live-contract opt-in as an input so cached live results cannot silently stand in for default execution.
 
 The complete pre-review build also packaged minified release in 9m04s. That release predates the final review fixes; a fresh release package is still needed for the latest source. Earlier hashes/counts above are historical checkpoints. Current source publication and native CI results are recorded separately, not inferred from local headless tests.
+
+## Hosted phone run 24
+
+Run [40742491136](https://github.com/bxanedot/rynx/actions/runs/40742491136) for `1b3ea78` passed APK packaging but 8 of 10 device tests passed. The recreated-host lyrics workflow reached DocumentsUI; Android displayed the temporary `.lrc` document as `.lrc.txt`, so the test's exact-name lookup missed the existing row. The navigation test opened Library correctly, but `AccessibilityNodeInfo.isSelected` did not reflect the Compose selected semantics; the screen content was present in the failure snapshot. The test now identifies destinations by page content and accepts the document provider suffix. The first follow-up run is recorded below. Verify run [40742490946](https://github.com/bxanedot/rynx/actions/runs/40742490946) passed.
+
+## Local verification of run 24 test fixes
+
+The updated shared design, shared UI and Compose app harness suites passed. A separate Gradle invocation with `--rerun-tasks` freshly compiled `:apps:android:compileDebugAndroidTestKotlin` successfully. Debug and instrumentation APK assembly targets also passed in the preceding suite. The hosted run exposed one more test-selector assumption, recorded below.
+
+## Hosted phone run 26
+
+Run [40745857565](https://github.com/bxanedot/rynx/actions/runs/40745857565) for `feaf55a` built both APKs and passed 9/10 device tests. Lyrics import after host recreation passed. Search opened and exposed both its accessible “Search your music” description and an enabled editable `EditText` with `ACTION_SET_TEXT`, but Compose presented them as separate accessibility nodes; the test incorrectly required the description node itself to carry text-input actions. The test was corrected to find the actual editable node; run 28 below verifies the full Search/back flow.
+
+## Hosted phone run 28
+
+Run [40747483200](https://github.com/bxanedot/rynx/actions/runs/40747483200) for `f6b5523` built the debug and instrumentation APKs and passed all 10/10 API 36 KVM device tests in 2m57s. This includes lyrics import after host recreation and Search text entry, Back to the previous tab, and query restoration. The `Verify Android-first Rynx` workflow [40747483065](https://github.com/bxanedot/rynx/actions/runs/40747483065) also passed its source-boundary audit and Android/shared/provider checks. These hosted results close the device-test failures described above; they do not establish visual parity or physical-device performance.

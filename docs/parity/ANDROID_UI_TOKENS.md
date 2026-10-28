@@ -1,6 +1,6 @@
 # Android UI tokens
 
-Source of truth: `shared/design/RynxAppearance.kt`, `PlayerGeometry.kt` and the shared material/player components. No Vyon captures exist. The user authorizes public Apple Music imagery as the direct reference; no exact Android or animation parity is claimed.
+Source of truth: `shared/design/RynxAppearance.kt`, `NavigationMotionSpec.kt`, `PlayerGeometry.kt` and the shared material/player components. No Vyon captures exist. The user authorizes public Apple Music imagery as the direct reference; no exact Android or animation parity is claimed.
 
 ## Measured reference proportions
 
@@ -22,6 +22,10 @@ The current public Apple player still is 490×1008 with app content approximatel
 | Compact player | 12dp horizontal inset, 62dp height, 27dp radius, 40dp artwork |
 | Expanded player | Full available width; 28dp radius; separate 82dp navigation dock |
 | Navigation reveal | smoothstep from .42 to 1 of player progress; hit testing at reveal ≥ .96 |
+
+## Authored navigation motion
+
+`RynxNavigationMotionSpec` owns original defaults: icon spring 390/.62, Library layer spring 340/.58, selection spring 310/.76, bar morph 430/.88 and search expansion 470/.90. The compact dock is 58×64dp; its separate Search target is 48dp. Labels track the same morph progress, and Search expands from a 52dp capsule. Horizontal settling projects velocity by .18s with a 2.1-tabs-per-second fling threshold; a 28dp vertical swipe retracts or restores the dock. Search input becomes active after .18 expansion and autofocus begins after .82. These are implementation defaults, not measured Apple or Vyon motion values.
 
 Appearance floats normalize finite values to [0,1] before shader use. Solid has opaque tonal surfaces and no backdrop effects. AMOLED disables ambient glow, backdrop blur, refraction and shadows. Actual cover art remains media. All modes share geometry and semantic actions.
 

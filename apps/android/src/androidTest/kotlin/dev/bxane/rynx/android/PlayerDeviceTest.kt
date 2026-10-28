@@ -125,9 +125,14 @@ class PlayerDeviceTest {
                     instrumentation.runOnMainSync {
                         sourceTitle=controller.getMediaItemAt(sourceIndex).mediaMetadata.title.toString()
                     }
-                    val reorder=control("Reorder $sourceTitle")
-                    val up=reorder.actionList.first {action -> action.label?.toString()=="Move up"}
-                    assertTrue(reorder.performAction(up.id))
+                    var reorder:AccessibilityNodeInfo?=null
+                    var moveUp:AccessibilityNodeInfo.AccessibilityAction?=null
+                    eventually("Queue accessibility must reflect the updated shuffle order") {
+                        reorder=findNode("Reorder $sourceTitle")
+                        moveUp=reorder?.actionList?.firstOrNull {action->action.label?.toString()=="Move up"}
+                        moveUp!=null
+                    }
+                    assertTrue(reorder!!.performAction(moveUp!!.id))
                     eventually("Queue reorder did not update Media3's shuffle permutation") {
                         var updated=false
                         instrumentation.runOnMainSync {

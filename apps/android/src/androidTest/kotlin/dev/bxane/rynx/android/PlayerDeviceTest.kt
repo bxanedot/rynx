@@ -34,7 +34,7 @@ class PlayerDeviceTest {
     }
     private fun findNode(label:String):AccessibilityNodeInfo? {
         fun visit(node:AccessibilityNodeInfo):AccessibilityNodeInfo? {
-            if(node.contentDescription?.toString()==label)return node
+            if(node.contentDescription?.toString()?.let {it==label || it.startsWith("$label, ")}==true)return node
             for(index in 0 until node.childCount) { val child=node.getChild(index) ?: continue;visit(child)?.let {return it} }
             return null
         }
@@ -45,7 +45,16 @@ class PlayerDeviceTest {
         eventually("No accessible player control: $label") { found=findNode(label);found!=null }
         return found!!
     }
-    private fun click(label:String) { assertTrue("Could not click $label",control(label).performAction(AccessibilityNodeInfo.ACTION_CLICK)) }
+    private fun click(label:String) {
+        var target:AccessibilityNodeInfo?=control(label)
+        val details=mutableListOf<String>()
+        while(target!=null) {
+            details+="clickable=${target.isClickable}, enabled=${target.isEnabled}, actions=${target.actionList.map {it.id}}"
+            if(target.isClickable && target.isEnabled && target.performAction(AccessibilityNodeInfo.ACTION_CLICK))return
+            target=target.parent
+        }
+        fail("Could not activate $label: $details")
+    }
     private fun capture(name:String) {
         val screenshot=instrumentation.uiAutomation.takeScreenshot()
         assertNotNull("A rendered device frame is required",screenshot)

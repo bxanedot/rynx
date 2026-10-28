@@ -135,12 +135,18 @@ internal enum class PlayerPane { Artwork, Queue, Lyrics }
         if(p>.001f) Box(Modifier.fillMaxSize().pointerInput(Unit) {
             awaitPointerEventScope {while(true)awaitPointerEvent().changes.forEach {it.consume()}}
         })
+        val openPlayer={focus.clearFocus();keyboard?.hide();presentation.open(state.reduceMotion)}
         CompositionLocalProvider(LocalRynxMaterialLayer provides 2f,LocalRynxDarkSurface provides true) {
             Box(Modifier.offset(x=geometry.left.dp,y=geometry.top.dp).size(width,height)
-                .rynxMaterial(geometry.radius.dp,amount=1f-p,shadow=p<.2f).then(dragModifier).semantics {testTag="player-surface"}
+                .rynxMaterial(geometry.radius.dp,amount=1f-p,shadow=p<.2f).then(dragModifier).semantics {
+                    testTag="player-surface"
+                    if(p<.001f) {
+                        contentDescription="Open Now Playing";role=Role.Button
+                        onClick("Expand Now Playing"){openPlayer();true}
+                    } else paneTitle="Now Playing"
+                }
                 .clip(RoundedCornerShape(geometry.radius.dp))
-                .then(if(p<.001f)Modifier.clickable(role=Role.Button){focus.clearFocus();keyboard?.hide();presentation.open(state.reduceMotion)}
-                    .semantics {contentDescription="Open Now Playing"} else Modifier.semantics {paneTitle="Now Playing"})) {
+                .then(if(p<.001f)Modifier.clickable(role=Role.Button,onClick=openPlayer) else Modifier)) {
                 val landscape=geometry.landscape
                 val margin=if(landscape)24.dp else (width*.081f).coerceIn(20.dp,40.dp)
                 val compact=expandedCompact

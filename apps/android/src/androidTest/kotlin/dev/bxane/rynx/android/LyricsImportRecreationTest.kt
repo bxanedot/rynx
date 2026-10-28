@@ -27,7 +27,7 @@ class LyricsImportRecreationTest {
     private val instrumentation=InstrumentationRegistry.getInstrumentation()
     private fun node(label:String):AccessibilityNodeInfo? {
         fun visit(n:AccessibilityNodeInfo):AccessibilityNodeInfo? {
-            if(n.contentDescription?.toString()==label || n.text?.toString()==label)return n
+            if(n.contentDescription?.toString()?.let {it==label || it.startsWith("$label, ")}==true || n.text?.toString()==label)return n
             for(i in 0 until n.childCount)n.getChild(i)?.let {visit(it)?.let {return it}}
             return null
         }
@@ -38,7 +38,16 @@ class LyricsImportRecreationTest {
         while(SystemClock.elapsedRealtime()<deadline){node(label)?.let{return it};SystemClock.sleep(100)}
         error("No accessible document/player control: $label")
     }
-    private fun click(label:String){assertTrue(waitFor(label).performAction(AccessibilityNodeInfo.ACTION_CLICK))}
+    private fun click(label:String) {
+        var target:AccessibilityNodeInfo?=waitFor(label)
+        val details=mutableListOf<String>()
+        while(target!=null) {
+            details+="clickable=${target.isClickable}, enabled=${target.isEnabled}, actions=${target.actionList.map {it.id}}"
+            if(target.isClickable && target.isEnabled && target.performAction(AccessibilityNodeInfo.ACTION_CLICK))return
+            target=target.parent
+        }
+        fail("Could not activate $label: $details")
+    }
     @Test fun pendingTrackIdentitySurvivesRotationWhileChoosingLyrics() {
         assumeTrue(Build.VERSION.SDK_INT>=29)
         val context=instrumentation.targetContext

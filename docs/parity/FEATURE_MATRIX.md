@@ -6,7 +6,7 @@ Statuses: implemented = code present; verified = relevant tests and reference co
 
 | ID | Requested feature | Status | Reference | Acceptance |
 |---|---|---|---|---|
-| DISC-001 | Home | unverified | REQ-001; not observed | Observe home; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
+| DISC-001 | Listen Now | unverified | Apple Music iOS is the visual target; the screen still needs a permitted iPhone capture/spec | Record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
 | DISC-002 | Explore | unverified | REQ-001; not observed | Observe explore; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
 | DISC-003 | Search | partial | REQ-001; Apple reference adaptation; complete parity unverified | Desktop local filtering plus VyonEx YouTube Music search/pagination; UI, query trimming, paging and provider-error handling tested. Live network, visual parity and other platforms unverified. |
 | DISC-004 | Charts | unverified | REQ-001; not observed | Observe charts; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
@@ -40,7 +40,7 @@ Statuses: implemented = code present; verified = relevant tests and reference co
 | LIB-001 | Favorites | partial | Apple Music is the authorized UI reference; the owner describes Vyon as matching it, but specific feature parity remains unverified | Android favorite IDs and track metadata persist; library/player toggles, remote-track restoration, and deterministic UI/shared tests are implemented. Device persistence and replay validation remain pending. |
 | LIB-002 | Playlists | unverified | REQ-001; not observed | Observe playlists; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
 | LIB-003 | History | unverified | REQ-001; not observed | Observe history; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
-| LIB-004 | Recent tracks | partial | Apple Music Android listing screenshots show Home recent shelves; exact contents and parity are unverified | Android stores up to 50 actually playing tracks and restores metadata to Home. Device playback-history validation and cross-platform behavior remain pending. |
+| LIB-004 | Recent tracks | partial | The iOS Apple Music Listen Now screen is the visual target; recent-shelf order and contents are not yet captured or verified | Android stores up to 50 actually playing tracks and restores metadata to Listen Now. Device playback-history validation and cross-platform behavior remain pending. |
 | LIB-005 | Local songs | partial | REQ-001; Apple reference adaptation; complete parity unverified | Observe local songs; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
 | LIB-006 | Local folders | unverified | REQ-001; not observed | Observe local folders; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |
 | LIB-007 | Albums | unverified | REQ-001; not observed | Observe albums; record input, output, persistence, cancellation and failure cases; implement and verify on relevant platforms. |

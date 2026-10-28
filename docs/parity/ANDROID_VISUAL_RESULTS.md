@@ -62,3 +62,11 @@ A fresh default suite passed on 2026-10-28 in 1m42s: Android debug/test packagin
 The independent review's four behavioral regressions were observed failing before fixes and now pass. New shared listening tracker tests pass; its service/background instrumentation is compiled but has not yet run. Default test tasks track the live-contract opt-in as an input so cached live results cannot silently stand in for default execution.
 
 The complete pre-review build also packaged minified release in 9m04s. That release predates the final review fixes; a fresh release package is still needed for the latest source. Earlier hashes/counts above are historical checkpoints. Current source publication and native CI results are recorded separately, not inferred from local headless tests.
+
+## Hosted phone run 24
+
+Run [40742491136](https://github.com/bxanedot/rynx/actions/runs/40742491136) for `1b3ea78` passed APK packaging but 8 of 10 device tests passed. The recreated-host lyrics workflow reached DocumentsUI; Android displayed the temporary `.lrc` document as `.lrc.txt`, so the test's exact-name lookup missed the existing row. The navigation test opened Library correctly, but `AccessibilityNodeInfo.isSelected` did not reflect the Compose selected semantics; the screen content was present in the failure snapshot. The test now identifies destinations by page content and accepts the document provider suffix. Hosted rerun is pending; no native Search pass is claimed. Verify run [40742490946](https://github.com/bxanedot/rynx/actions/runs/40742490946) passed.
+
+## Local verification of run 24 test fixes
+
+The updated shared design, shared UI and Compose app harness suites passed. A separate Gradle invocation with `--rerun-tasks` freshly compiled `:apps:android:compileDebugAndroidTestKotlin` successfully. Debug and instrumentation APK assembly targets also passed in the preceding suite. There is no attached device or `/dev/kvm` in this workspace, so the fixed lyrics-picker and Android Search cases still require the hosted phone workflow; no device pass is claimed here.

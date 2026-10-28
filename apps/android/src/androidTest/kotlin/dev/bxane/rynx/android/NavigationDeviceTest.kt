@@ -29,6 +29,18 @@ class NavigationDeviceTest {
         return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
     }
 
+    private fun findVisibleText(label: String): AccessibilityNodeInfo? {
+        fun visit(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.text?.toString() == label) return node
+            for (index in 0 until node.childCount) {
+                val child = node.getChild(index) ?: continue
+                visit(child)?.let { return it }
+            }
+            return null
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
+    }
+
     private fun eventually(message: String, condition: () -> Boolean) {
         val deadline = SystemClock.elapsedRealtime() + 15_000
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -46,7 +58,7 @@ class NavigationDeviceTest {
             val text=node.text?.toString()
             val actions=node.actionList.map { it.id }
             if(label!=null || text!=null || node.isEditable || AccessibilityNodeInfo.ACTION_SET_TEXT in actions) {
-                nodes += "class=${node.className}, description=$label, text=$text, enabled=${node.isEnabled}, editable=${node.isEditable}, actions=$actions"
+                nodes += "class=${node.className}, description=$label, text=$text, selected=${node.isSelected}, enabled=${node.isEnabled}, editable=${node.isEditable}, actions=$actions"
             }
             for(index in 0 until node.childCount)node.getChild(index)?.let(::visit)
         }
@@ -67,9 +79,9 @@ class NavigationDeviceTest {
     @Test fun searchKeepsItsQueryAndBackReturnsToThePreviousTab() {
         ActivityScenario.launch(MainActivity::class.java).use {
             click("Library")
-            eventually("Library tab was not selected") { find("Library")?.isSelected == true }
+            eventually("Library screen did not open") { findVisibleText("Your music, right here") != null }
             click("Search")
-            eventually("Search tab was not selected") { find("Search")?.isSelected == true }
+            eventually("Search screen did not open") { findVisibleText("YouTube Music") != null }
             eventually("Search input did not finish its expansion") {
                 find("Search your music")?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
             }
@@ -79,8 +91,8 @@ class NavigationDeviceTest {
 
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             SystemClock.sleep(350)
-            if (find("Library")?.isSelected != true) instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-            eventually("Android back must return to the tab that opened Search") { find("Library")?.isSelected == true }
+            if (findVisibleText("Your music, right here") == null) instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            eventually("Android back must return to the tab that opened Search") { findVisibleText("Your music, right here") != null }
 
             click("Search")
             eventually("Search query was lost while returning from the prior tab") {

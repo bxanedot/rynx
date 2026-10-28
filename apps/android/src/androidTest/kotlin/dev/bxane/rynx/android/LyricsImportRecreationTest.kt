@@ -27,7 +27,9 @@ class LyricsImportRecreationTest {
     private val instrumentation=InstrumentationRegistry.getInstrumentation()
     private fun node(label:String):AccessibilityNodeInfo? {
         fun visit(n:AccessibilityNodeInfo):AccessibilityNodeInfo? {
-            if(n.contentDescription?.toString()?.let {it==label || it.startsWith("$label, ")}==true || n.text?.toString()==label)return n
+            val description=n.contentDescription?.toString()
+            val text=n.text?.toString()
+            if(description?.let {it==label || it.startsWith("$label, ")}==true || text==label || text=="$label.txt")return n
             for(i in 0 until n.childCount)n.getChild(i)?.let {visit(it)?.let {return it}}
             return null
         }

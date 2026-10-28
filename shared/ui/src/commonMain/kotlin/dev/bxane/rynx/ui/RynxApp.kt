@@ -52,7 +52,7 @@ import dev.chrisbanes.haze.rememberHazeState
 
 private data class Palette(val bg: Color, val surface: Color, val text: Color, val secondary: Color, val line: Color)
 internal enum class AppTab(val title: String, val glyph: Glyph) {
-    ListenNow("Home", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
+    ListenNow("Listen Now", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
     Library("Library", Glyph.Library), Search("Search", Glyph.Search),
 }
 private val Accent = Color(0xFFFA2D48)

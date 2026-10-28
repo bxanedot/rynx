@@ -101,7 +101,7 @@ class NavigationMotionUiTest {
     @Test fun horizontalDragSettlesTheElasticIndicatorOnTheDestination() {
         val scene = app()
         try {
-            val start = find(scene, "Home").boundsInRoot.center
+            val start = find(scene, "Listen Now").boundsInRoot.center
             val end = find(scene, "Library").boundsInRoot.center
             scene.sendPointerEvent(PointerEventType.Press, start, timeMillis = clock / 1_000_000)
             repeat(12) { step ->

@@ -21,6 +21,7 @@ internal class AndroidAppearanceStore(context:Context) {
             shadowIntensity=value("shadow",defaults.shadowIntensity),dynamicColor=flag("dynamic",true),
             motionIntensity=value("motion-intensity",1f),
             motion=RynxMotionPreference.entries.firstOrNull {it.name==text("motion")} ?: defaults.motion,
+            brandVariant=RynxBrandVariant.entries.firstOrNull {it.name==text("brand-variant")} ?: defaults.brandVariant,
         ).normalized()
     }
     fun save(value:RynxAppearance) {
@@ -31,6 +32,7 @@ internal class AndroidAppearanceStore(context:Context) {
             putFloat("highlight",safe.highlightIntensity);putFloat("tint",safe.tintStrength);putFloat("border",safe.borderBrightness)
             putFloat("vibrancy",safe.vibrancy);putFloat("shadow",safe.shadowIntensity);putBoolean("dynamic",safe.dynamicColor)
             putFloat("motion-intensity",safe.motionIntensity);putString("motion",safe.motion.name)
+            putString("brand-variant",safe.brandVariant.name)
         }
     }
 }

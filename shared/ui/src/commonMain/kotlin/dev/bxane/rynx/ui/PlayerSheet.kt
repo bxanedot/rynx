@@ -276,7 +276,7 @@ internal enum class PlayerPane { Artwork, Queue, Lyrics }
 
 @Composable private fun HeroArtwork(url:String?) {
     BoxWithConstraints(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xFF272E42),Color(0xFF713246)))),contentAlignment=Alignment.Center) {
-        RynxGlyph(Glyph.Brand,Color(0xFFFF6A81).copy(alpha=.5f),Modifier.size(minOf(maxWidth,maxHeight)*.52f))
+        RynxBrandMark(Modifier.size(minOf(maxWidth,maxHeight)*.52f),tint=Color(0xFFFF6A81).copy(alpha=.5f))
         if(!url.isNullOrBlank()) AsyncImage(url,null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop,alignment=Alignment.TopCenter)
     }
 }

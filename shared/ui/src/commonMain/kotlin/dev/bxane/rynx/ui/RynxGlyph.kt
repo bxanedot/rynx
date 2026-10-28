@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
 
 /** Original geometric vectors. No Apple SF Symbols artwork is bundled. */
-enum class Glyph { Play, Pause, Next, Previous, Search, Add, Library, Queue, Close, Note, Sun, Moon, Repeat, Heart, HeartFill, Brand, Home, Browse, Radio, Star, StarFill, More, SpeakerQuiet, SpeakerLoud, Output, Lyrics, Shuffle, Reorder, Infinity, AutoMix, Appearance }
+enum class Glyph { Play, Pause, Next, Previous, Search, Add, Library, Queue, Close, Note, Sun, Moon, Repeat, Heart, HeartFill, Home, Browse, Radio, Star, StarFill, More, SpeakerQuiet, SpeakerLoud, Output, Lyrics, Shuffle, Reorder, Infinity, AutoMix, Appearance }
 
 @Composable
 fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
@@ -96,14 +96,6 @@ fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
                     drawCircle(tint,1.5f,Offset(12f,12f))
                     line(9f,4f,19f,4f)
                 }
-                Glyph.Brand -> drawPath(Path().apply {
-                    fillType=androidx.compose.ui.graphics.PathFillType.EvenOdd
-                    moveTo(6.7f,5.6f);lineTo(12.2f,5.6f);cubicTo(16f,5.6f,18.2f,7.6f,18.2f,10.9f)
-                    cubicTo(18.2f,13.4f,16.9f,15f,14.4f,15.8f);lineTo(18.7f,19.6f);lineTo(14.2f,19.6f)
-                    lineTo(10.7f,16f);lineTo(10.4f,16f);lineTo(10.4f,19.6f);lineTo(6.7f,19.6f);close()
-                    moveTo(10.4f,8.9f);lineTo(10.4f,12.9f);lineTo(12.2f,12.9f);cubicTo(13.8f,12.9f,14.7f,12.2f,14.7f,10.9f)
-                    cubicTo(14.7f,9.5f,13.8f,8.9f,12.2f,8.9f);close()
-                },tint)
             }
         }
     }

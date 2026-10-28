@@ -178,12 +178,14 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         .semantics {if(!interactive)hideFromAccessibility()}) {
         CompositionLocalProvider(LocalRynxMaterialLayer provides 4f) {
             RynxSurface(Modifier.fillMaxWidth().height(64.dp),28.dp,shadow=true) {
-                val selection by animateFloatAsState(AppTab.entries.indexOf(activeTab).toFloat(),if(reduced)snap() else spring(
-                    stiffness=RynxMotionTokens.SelectionStiffness,dampingRatio=RynxMotionTokens.SelectionDamping))
-                val position=if(reduced)AppTab.entries.indexOf(activeTab).toFloat() else selection
-                BoxWithConstraints(Modifier.fillMaxSize().padding(5.dp)) {
-                    val cell=maxWidth/5
-                    Box(Modifier.offset(x=cell*position).width(cell).fillMaxHeight().rynxMaterial(22.dp,selected=true,amount=.5f))
+                Box(Modifier.fillMaxSize().padding(5.dp)) {
+                    ElasticSelectionIndicator(
+                        selectedIndex=AppTab.entries.indexOf(activeTab),
+                        count=AppTab.entries.size,
+                        reducedMotion=reduced,
+                        onSelectIndex={index -> if(interactive)onSelect(AppTab.entries[index])},
+                        modifier=Modifier.fillMaxSize(),
+                    )
                     Row(Modifier.fillMaxSize(),horizontalArrangement=Arrangement.SpaceEvenly,verticalAlignment=Alignment.CenterVertically) {
                         AppTab.entries.forEach {tab->BottomTabItem(tab,activeTab==tab,Modifier.weight(1f),interactive){onSelect(tab)}}
                     }

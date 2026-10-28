@@ -41,6 +41,18 @@ class NavigationDeviceTest {
         return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
     }
 
+    private fun findEditableField(): AccessibilityNodeInfo? {
+        fun visit(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+            if (node.isEditable || node.actionList.any { it.id == AccessibilityNodeInfo.ACTION_SET_TEXT }) return node
+            for (index in 0 until node.childCount) {
+                val child = node.getChild(index) ?: continue
+                visit(child)?.let { return it }
+            }
+            return null
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
+    }
+
     private fun eventually(message: String, condition: () -> Boolean) {
         val deadline = SystemClock.elapsedRealtime() + 15_000
         while (SystemClock.elapsedRealtime() < deadline) {
@@ -83,11 +95,11 @@ class NavigationDeviceTest {
             click("Search")
             eventually("Search screen did not open") { findVisibleText("YouTube Music") != null }
             eventually("Search input did not finish its expansion") {
-                find("Search your music")?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
+                findEditableField()?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
             }
             val query = "navigation survives back"
             val args = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, query) }
-            assertTrue("Search must accept accessibility text input", find("Search your music")!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args))
+            assertTrue("Search must accept accessibility text input", findEditableField()!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args))
 
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             SystemClock.sleep(350)
@@ -96,9 +108,9 @@ class NavigationDeviceTest {
 
             click("Search")
             eventually("Search query was lost while returning from the prior tab") {
-                find("Search your music")?.text?.toString() == query
+                findEditableField()?.text?.toString() == query
             }
-            assertEquals(query, find("Search your music")?.text?.toString())
+            assertEquals(query, findEditableField()?.text?.toString())
         }
     }
 }

@@ -6,7 +6,7 @@ Apple Music public screenshots and guides are the user-authorized reference. No 
 |---|---|---|
 | Home | Apple-backed chart/editorial/city/tour shelves, local recommendations, real persisted recent metadata | Source reliability, complete catalog and native validation |
 | Browse / Explore | Dynamic Apple genre grid with original vector graphics and genre-chart detail | Native/reference comparison |
-| Search | Local filter, Apple metadata first through VyonEx, YouTube Music fallback, recording matching and stream resolution; search capsule grows into a field and Android Back returns to the prior tab | Native keyboard/focus/query flow awaits device execution; stream/error/offline behavior and reference comparison remain unverified |
+| Search | Local filter, Apple metadata first through VyonEx, YouTube Music fallback, recording matching and stream resolution; search capsule grows into a field and Android Back returns to the prior tab | First hosted attempt never reached a resumed Search screen after the prior picker test failed; lifecycle-test correction awaits rerun. Stream/error/offline and reference comparison remain unverified |
 | Library | Local document import, metadata/covers, favorites, saved remote-track metadata | Full playlists, sorting, folders and offline/download management |
 | Compact player | Single glass capsule with shared artwork/metadata/transport; hides app navigation | Android gesture/optical checks and reference recording |
 | Expanded player | Same surface grows continuously; real seek, favorite, transport, volume/output; separate navigation dock | Device/audio, predictive back and exact motion comparison |

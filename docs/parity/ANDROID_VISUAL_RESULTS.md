@@ -46,6 +46,10 @@ Physical-device optical fidelity, audible quality, accessibility service behavio
 
 `NavigationDeviceTest` covers native Search text entry, query retention and Android Back navigation. It compiled into the instrumentation APK, but this workspace reports no connected device and no `/dev/kvm`, so that test did not execute locally. The PR's hosted Android workflow must be checked before claiming native device verification. These tests establish behavior in the headless Compose harness, not Apple/Vyon visual similarity, glass rendering quality or device motion timing.
 
+## Hosted phone run 20
+
+Run [40737479787](https://github.com/bxanedot/rynx/actions/runs/40737479787) for commit `ff2b8ae` built the phone/instrumentation APKs and enabled KVM successfully, then failed during connected tests. `LyricsImportRecreationTest` used blocking `ActivityScenario.recreate()` while the system document picker held the foreground; it timed out waiting for the stopped host to resume. The following `NavigationDeviceTest` then launched a host that only reached `CREATED` and timed out waiting for the Search input. Device logs confirm no resumed `MainActivity` during that second test. The lyrics test now requests recreation through the retained host instance and asserts the replacement receives the picker result; this correction has compiled locally but is awaiting another hosted device run. Native Search and lifecycle behavior are not yet verified.
+
 
 ## Apple discovery checkpoint after review fixes
 

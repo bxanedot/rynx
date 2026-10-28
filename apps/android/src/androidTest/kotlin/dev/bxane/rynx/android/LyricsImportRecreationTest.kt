@@ -20,6 +20,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /** Real system-picker return after activity recreation, with an app-owned temporary document. */
 @RunWith(AndroidJUnit4::class)
@@ -62,6 +63,8 @@ class LyricsImportRecreationTest {
         resolver.openOutputStream(uri)!!.use {it.write("[00:00]Persisted through rotation".toByteArray())}
         try {
             ActivityScenario.launch(MainActivity::class.java).use {scenario->
+                val originalActivity=AtomicReference<MainActivity>()
+                scenario.onActivity { originalActivity.set(it) }
                 lateinit var future:com.google.common.util.concurrent.ListenableFuture<MediaController>
                 instrumentation.runOnMainSync {future=MediaController.Builder(context,SessionToken(context,ComponentName(context,PlaybackService::class.java))).buildAsync()}
                 val controller=future.get(30,TimeUnit.SECONDS)
@@ -75,9 +78,13 @@ class LyricsImportRecreationTest {
                     val stoppedDeadline=SystemClock.elapsedRealtime()+10_000
                     while(scenario.state!=androidx.lifecycle.Lifecycle.State.CREATED && SystemClock.elapsedRealtime()<stoppedDeadline)SystemClock.sleep(50)
                     assertEquals("The system picker must stop the host before recreation",androidx.lifecycle.Lifecycle.State.CREATED,scenario.state)
-                    scenario.recreate()
+                    // ActivityScenario.recreate waits for RESUMED, which cannot happen while the
+                    // document picker is in the foreground. Request the same recreation directly;
+                    // the selected document then returns to the restored host.
+                    instrumentation.runOnMainSync { originalActivity.get().recreate() }
                     click(filename)
                     waitFor("Seek to lyric Persisted through rotation")
+                    scenario.onActivity { assertNotSame("The picker result must return to a recreated host",originalActivity.get(),it) }
                 } finally {instrumentation.runOnMainSync {controller.clearMediaItems();controller.release()}}
             }
         } finally {

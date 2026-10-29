@@ -77,3 +77,13 @@ Artifacts from this run:
 - Instrumentation APK: `apps/android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk`, 434,010 bytes, SHA-256 `f0fbb112b141dba21bb2ea07d7dfb613347144f13af6410037b1a48792268349`.
 
 The instrumentation APK compiled but `adb devices -l` returned no attached devices. No connected run, audible output, route/DAC test, or current-branch emulator result exists yet. Release minification/signing was not run on this combined branch. GitHub's API 36 hardware-accelerated phone workflow must run on the pushed branch before marking device tests verified.
+
+## Current combined eXcor/audio/library CI
+
+2026-10-29, commit `a407e1c` on PR #4. Verify run [40838202297](https://github.com/bxanedot/rynx/actions/runs/40838202297) passed the source-boundary audit, Android debug/instrumentation/minified-release packaging, lint, Android unit tests, desktop/headless Compose, shared modules, provider tests and NewPipe Android compilation. The release APK built successfully but remains unsigned.
+
+Hosted phone run [40838202274](https://github.com/bxanedot/rynx/actions/runs/40838202274) passed the `adb install -r` step and the configured API 36 Pixel 6 `connectedDebugAndroidTest` suite. This verifies APK installation and current Android instrumentation in the hosted emulator. It does not prove physical-device audibility, DAC routing, audio quality or performance.
+
+The first device run on `4d0400c` exposed that the new playlist test returned a `Boolean`, which JUnit rejects; the test now has a `void` method signature and verifies database reopen/order. A later run on `ab4c09b` passed Verify but the navigation test found the launcher instead of Rynx; the latest run passed. The cause of that intermittent failure is not established. The Android check script now prints sanitized fatal-app logcat excerpts if a connected test fails again.
+
+Install the debug APK with `adb install -r`. A debug APK signed by a different development key cannot update an existing install; uninstalling `dev.bxane.rynx` first removes app data. The release artifact is unsigned, so Android correctly refuses to install it until an owner-controlled signing key is configured.

@@ -20,11 +20,11 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | DISC-014 | Regional discovery | unverified | Observe permitted reference, implement, test and compare |
 | DISC-015 | Suggestions | unverified | Observe permitted reference, implement, test and compare |
 | DISC-016 | Personalized shelves | incomplete | Personalized local candidate ranking and service-owned listening history; no Apple account-history or private algorithm access. |
-| PLAY-001 | Background playback | incomplete | Media3 foreground session/service code present; generated local audio session metadata and pause/resume instrumentation compiles; current-branch device runtime, audio-focus and interruption tests remain pending |
+| PLAY-001 | Background playback | incomplete | Media3 foreground session/service code present; hosted API 36 instrumentation passes generated PCM playback, pause/resume and service-owned listening after Activity stop. Physical audio-focus/interruption and long-session tests remain pending. |
 | PLAY-002 | Mini-player | incomplete | One capsule-to-sheet surface, shared artwork/transport and navigation handoff pass headless interaction/continuity tests; Android gesture/render acceptance pending |
 | PLAY-003 | Expanded player | incomplete | Reference-proportioned transport, volume, output, seek and menus implemented in all material modes; landscape and large-font harness passes; native/reference gates pending |
 | PLAY-004 | Player variants | unverified | Observe permitted reference, implement, test and compare |
-| PLAY-005 | Queue | incomplete | Playback-order aware queue with shuffle-safe reorder/remove/clear; headless tests pass; actual Media3 instrumentation compiled, not run |
+| PLAY-005 | Queue | incomplete | Playback-order aware queue with shuffle-safe reorder/remove/clear; headless tests and hosted API 36 Media3 instrumentation pass. Full reference comparison and physical-device validation remain open. |
 | PLAY-006 | Shuffle | incomplete | Native Media3 shuffle and shuffle-order editing wired; headless/order tests pass, device test pending |
 | PLAY-007 | Repeat | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | PLAY-008 | Seeking | incomplete | Android host code present; actual-device validation and reference comparison pending |
@@ -35,8 +35,8 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | PLAY-013 | Media controls | unverified | Observe permitted reference, implement, test and compare |
 | PLAY-014 | Notifications | unverified | Observe permitted reference, implement, test and compare |
 | PLAY-015 | Playback recovery | unverified | Observe permitted reference, implement, test and compare |
-| LIB-001 | Favorites | incomplete | Compose actions update shared favorite IDs; Android persists IDs plus local/YouTube Music display metadata and can resolve saved YouTube Music items again. Shared/UI tests pass and Android unit/instrumentation tests compile; device persistence/playback validation remains pending. |
-| LIB-002 | Playlists | incomplete | SQLDelight common repository persists names and stable local/provider track IDs; create/rename/add/remove/reorder/delete and Library list/detail flows are implemented. Shared SQLite and headless Compose tests cover persistence/rules, detail, create/add/rename, reorder and remove. Android driver close/reopen instrumentation runtime, import/export and reference comparison remain open. |
+| LIB-001 | Favorites | incomplete | Compose actions update shared favorite IDs; Android persists IDs plus local/YouTube Music display metadata and can resolve saved YouTube Music items again. Shared/UI tests and hosted Android metadata persistence instrumentation pass; full library/reference validation remains open. |
+| LIB-002 | Playlists | incomplete | SQLDelight common repository persists names and stable local/provider track IDs; create/rename/add/remove/reorder/delete and Library list/detail flows are implemented. Shared SQLite/headless workflow tests and hosted API 36 Android driver close/reopen/order instrumentation pass; import/export and reference comparison remain open. |
 | LIB-003 | History | unverified | Observe permitted reference, implement, test and compare |
 | LIB-004 | Recent tracks | incomplete | Android persists up to 50 actually playing tracks and restores metadata for the Home shelf; playback-history device test and comparison remain pending. |
 | LIB-005 | Local songs | incomplete | Android host code present; actual-device validation and reference comparison pending |

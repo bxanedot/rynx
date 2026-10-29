@@ -2,6 +2,12 @@
 
 2026-10-28 · Linux x86_64 · Temurin JDK 27 · Gradle 9.8.2 · AGP 9.4.1 · compile SDK 37 / target 36 / min 26.
 
+## Latest hosted verification — 2026-10-29
+
+For commit `a407e1c`, Verify run [40838202297](https://github.com/bxanedot/rynx/actions/runs/40838202297) passed source-boundary audit, Android debug/instrumentation/minified-release packaging, lint and configured unit/shared/provider checks. Android phone run [40838202274](https://github.com/bxanedot/rynx/actions/runs/40838202274) passed an explicit `adb install -r` of the debug APK followed by the API 36 Pixel 6 `connectedDebugAndroidTest` suite, including service playback/pause-resume and playlist persistence after database reopen. The APK is signed with the Android development key. The minified release APK is unsigned and Android will reject it until an owner-controlled release key is configured. This verifies emulator installation and instrumentation only; it does not establish physical-device audibility, DAC routing, production signing, audio quality or visual parity.
+
+Earlier dated sections below are retained as historical snapshots and are superseded for current-branch build/device status by these hosted results. The current local software emulator still fails to boot.
+
 ## Current shared-playback continuation
 
 2026-10-28: The isolated playback-preparation worktree passed the full local deterministic gate in 10m18s:

@@ -8,16 +8,16 @@ Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `
 - Apple public-catalog data models, Home collections, Explore genre navigation, local recommendation ranking, and original Rynx brand/palette SVG assets.
 - Compose navigation/player shells, Liquid Glass/Solid/AMOLED materials, animated player/navigation handoff, and shared UI regression coverage.
 - Android Media3 session/service, local audio import, favorites, recent metadata, queue controls, and imported LRC support at code or unit-test level.
-- A shared `commonMain` PCM DSP core (10/31-band and parametric biquads, tone shelves, headroom, stereo width/balance, crossfeed, linked compression and an interpolated peak guard) is attached to the existing Android Media3 sink. Pure Mode bypasses Rynx processing, Android settings persist locally, and the existing player exposes the sound sheet. The current combined eXcor branch passed Android debug/instrumentation packaging, Android unit tests, lint, and common/JVM suites. No device playback is verified.
+- A shared `commonMain` PCM DSP core (10/31-band and parametric biquads, tone shelves, headroom, stereo width/balance, crossfeed, linked compression and an interpolated peak guard) is attached to the existing Android Media3 sink. Pure Mode bypasses Rynx processing, Android settings persist locally, and the existing player exposes the sound sheet. Hosted Android API 36 instrumentation passes, including generated PCM playback through the Media3 service, pause/resume and playlist database reopen/order. Physical-device output quality and route behavior remain unverified.
 - Portable KMP download provenance now encodes `Downloaded by Rynx`, app ID and track/provider/timestamp fields; an Android writer atomically writes a `.rynx.json` sidecar without touching downloaded media bytes. Serializer and file-preservation tests pass. Rynx does not yet have an app download queue, so the writer is a ready integration point and no current download invokes it automatically.
 - eXcor catalog/stream adapter and NewPipe Android fallback adapter, with deterministic mapping, redaction, ordering, cancellation, and build checks.
-- Persistent playlists use SQLDelight with common KMP models, validation/edit rules, transactions and Flow observation; Android supplies the SQLite driver. Library create/rename/add/remove/reorder/delete and playlist detail UI are wired. Shared SQLDelight/rules tests and headless playlist workflows pass; Android persistence instrumentation compiles but has not run on a device.
+- Persistent playlists use SQLDelight with common KMP models, validation/edit rules, transactions and Flow observation; Android supplies the SQLite driver. Library create/rename/add/remove/reorder/delete and playlist detail UI are wired. Shared SQLDelight/rules tests, headless workflows and hosted Android SQLite close/reopen/order instrumentation pass.
 
-Fresh local verification on this combined branch completed successfully: Android debug and instrumentation APK packaging, Android unit tests, lint, desktop/headless Compose, shared playback/library/design/UI suites, eXcor and Apple provider tests, and NewPipe Android compilation. Reports contain 161 cases: 158 passed, three opt-in live-provider checks skipped, and zero failures/errors. Lint has zero errors and two warnings. Release minification was not run on this combined branch.
+Fresh local verification on this combined branch completed successfully: Android debug and instrumentation APK packaging, Android unit tests, lint, desktop/headless Compose, shared playback/library/design/UI suites, eXcor and Apple provider tests, and NewPipe Android compilation. Reports contain 161 cases: 158 passed, three opt-in live-provider checks skipped, and zero failures/errors. Lint has zero errors and two warnings. Hosted Verify run [40838202297](https://github.com/bxanedot/rynx/actions/runs/40838202297) passed the source-boundary audit, debug/instrumentation/minified-release packaging, lint and configured shared/provider checks. Hosted phone run [40838202274](https://github.com/bxanedot/rynx/actions/runs/40838202274) passed debug APK installation and API 36 connected instrumentation. The release APK is unsigned and not installable without bxane's signing key.
 
 ## Implemented but unverified at runtime
 
-- Current-branch Android instrumentation, including generated-audio service metadata/pause/resume, URL-scoped provider headers, and playlist persistence. The APK compiles, but the tests have not run on a device in this workspace.
+- Physical Android phone acceptance, including real output routing, audibility, underrun behavior and performance; hosted emulator tests do not replace these checks.
 - Live YouTube search/stream resolution, audible provider playback, audio focus, notification/headset behavior, and network recovery.
 - Real Android output routing, audibility, glitch/underrun behavior, DAC format, and physical-device DSP/performance acceptance.
 - Glass rendering cost, optical/motion comparison against Apple Music, physical-device performance, and battery behavior.
@@ -31,8 +31,7 @@ Fresh local verification on this combined branch completed successfully: Android
 
 ## Blocked
 
-- The prior local API 36 software emulator never reached `sys.boot_completed`; use the hosted hardware-accelerated Android phone workflow or a real device for connected tests.
-- The Android SQLite close/reopen instrumentation test compiles into the test APK but has not run; this environment has no working hardware-accelerated emulator/device.
+- The prior local API 36 software emulator never reached `sys.boot_completed`; hosted hardware-accelerated instrumentation passes, but a physical phone is needed for device-specific acceptance.
 - The latest opt-in YouTube live request was refused in the network connection path before a provider response. Live provider behavior remains unverified.
 - Spotify needs a registered client/callback, an authorized test account, and a current supported-playback/API review.
 - iOS/iPadOS, Android TV, and Wear targets are not configured. iOS/Apple Simulator validation requires macOS; Android TV/Wear also need dedicated target and device acceptance.
@@ -44,10 +43,10 @@ Remaining advanced audio work includes ReplayGain tag normalization, overlapping
 
 ## Next acceptance gates
 
-1. Run connected API 36 instrumentation in hardware-accelerated CI for this combined branch and review the device logs/results.
-2. Confirm live provider behavior and actual audible playback without logging secrets.
-3. Complete persistent playlists/library editing and restart recovery.
-4. Finish core Android screens, accessibility, reference comparisons and lifecycle/audio tests.
+1. Repeat the API 36 connected run to confirm the transient Search/navigation test failure on `ab4c09b` does not recur.
+2. Confirm live provider behavior and actual audible playback on a physical Android device without logging secrets.
+3. Integrate download completion with the attribution sidecar and complete Spotify authorization.
+4. Finish remaining Android screens, accessibility, Apple Music reference comparisons and device-level audio/performance tests.
 5. Only after the Android completion gate, expand substantially to tablet, desktop, TV, Wear and iOS/iPadOS targets.
 
 For full inventories and evidence see `docs/IMPLEMENTATION_PLAN.md`, `docs/parity/ANDROID_FEATURE_MATRIX.md`, `docs/parity/ANDROID_SCREEN_MATRIX.md`, `docs/parity/PLATFORM_MATRIX.md`, and `docs/parity/BLOCKERS.md`.

@@ -18,7 +18,9 @@ git submodule update --init
 ./gradlew :apps:android:connectedDebugAndroidTest
 ```
 
-The debug APK is installable with a development signing key. The release APK remains unsigned until an owner-controlled release signing configuration is supplied. CI packages both variants and runs actual Android instrumentation on a hardware-accelerated emulator.
+To install from a GitHub Actions build, download and extract the `android-development` artifact from the [latest verification run](https://github.com/bxanedot/rynx/actions/runs/40838202297). Choose `apps/android/build/outputs/apk/debug/android-debug.apk` from the extracted files; do not try to install the artifact ZIP or the `androidTest` APK. With Android platform tools installed and USB debugging enabled, run `adb install -r apps/android/build/outputs/apk/debug/android-debug.apk`. The debug APK uses the Android development key. If Android reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, uninstall `dev.bxane.rynx` first, then retry; uninstalling removes its app data. For file-manager installation, open the extracted debug APK and allow that file manager to install apps if Android prompts.
+
+The minified release output, `android-release-unsigned.apk`, is **not installable** until signed with bxane's owner-controlled release key. No release signing key is stored in this repository. CI builds both variants, installs the debug APK, and runs Android instrumentation on a hardware-accelerated emulator.
 
 Liquid Glass uses the Apache-2.0 Haze renderer through an original shared Rynx material/interaction layer. Solid and AMOLED bypass backdrop effects. Preferences update live and persist on Android; the quality fallback retains the selected material. [Material behavior and limits](docs/parity/INTERFACE_MATERIALS.md).
 

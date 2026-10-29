@@ -4,21 +4,21 @@ Media3 ExoPlayer is owned by MediaSessionService. The session implements focus/n
 
 Passed local checks include queue/order invariants, synchronized/enhanced LRC parsing, seek interaction/cancellation and latest-request ownership. A superseded network resolution cannot commit over a newer selection or clear its loading state. These do not prove audible output.
 
-Compiled instrumentation:
+Instrumentation:
 
-- `PlaybackSessionTest`: generated silent PCM advances, exposes the expected media metadata, and pauses/resumes through the actual service. Compiled in the current branch; not run on a device in this workspace.
-- `ProviderHeaderResolverTest`: verifies URL-scoped provider headers and immutable input `DataSpec`; compiled as Android instrumentation, not run on a device.
+- `PlaybackSessionTest`: generated silent PCM advances, exposes the expected media metadata, and pauses/resumes through the actual service. Passed in the hosted API 36 connected run for commit `a407e1c`.
+- `ProviderHeaderResolverTest`: verifies URL-scoped provider headers and immutable input `DataSpec`; passed in the hosted API 36 connected run.
 - `PlayerDeviceTest`: actual player controls reach system volume and Media3, LRC tap seeks, shuffle/reorder/clear retain correct identity, rendered frames captured.
 - `LocalAudioMetadataTest`: independently generated silent MP3 with original embedded cover/title and fallback metadata.
 - `LyricsImportRecreationTest`: recreates the host while the player is active, then imports a real timed-lyrics file and verifies it attaches to that track. It does not verify a result returning from a picker that remained open through recreation.
 - `AppearancePersistenceTest` and `LaunchTest`: preference normalization and recreation/metadata behavior.
 
-Runtime status: the instrumentation target compiles, but current-branch device runtime is not verified. A local API 36 software emulator remained offline and never reached `sys.boot_completed`; it was stopped before app installation. The historical hosted phone passes in this document apply to earlier commits and are not evidence for this worktree. Even a silent-PCM pass would not establish audible signal quality.
+Runtime status: the hosted API 36 Pixel 6 emulator installed the debug APK and passed `connectedDebugAndroidTest` on commit `a407e1c` ([run 40838202274](https://github.com/bxanedot/rynx/actions/runs/40838202274)). This includes the generated-PCM service playback/pause-resume and Android SQLite playlist close/reopen/order tests. The local software emulator still does not boot; no physical phone is attached. Even generated silent-PCM playback passing does not establish audible signal quality.
 
-Still required: background survival, focus interruptions, headset changes, notification interaction, live buffering/recovery, audio device changes, long sessions, glitches, DSP correctness, battery and first-audio latency. No performance numbers or bit-perfect claim are available.
+Still required: process/OS recovery beyond the tested Activity-stop case, focus interruptions, headset changes, notification interaction, live buffering/recovery, audio device changes, long audible sessions, glitches, physical DSP behavior, battery and first-audio latency. No performance numbers or bit-perfect claim are available.
 
 
-The playback service now owns qualifying listening signals and recent history. A shared tracker verifies advancing playback, pause exclusion, seek discontinuities and repeat sessions. The new BackgroundListeningTest generates 45 seconds of original PCM and waits for a real service-produced signal after stopping the Activity; it compiles but is not yet a runtime pass. The hosted launch/recreation test reproduced TLS teardown on the UI thread; cleanup moved to a process-owned IO scope, with its native rerun pending.
+The playback service now owns qualifying listening signals and recent history. A shared tracker verifies advancing playback, pause exclusion, seek discontinuities and repeat sessions. `BackgroundListeningTest` generates original PCM and observes a service-produced listening signal after stopping the Activity; it is included in the successful hosted API 36 connected run above.
 
 
 Hosted run 40689777924 progressed past recreation; playback/controller tests then failed to start generated PCM and the lyric test had no current item. Inspection of Media3 1.11.1's public callback API identified that the deprecated onConnect default is an empty-command sentinel. Rynx's override had converted it into an accepted connection with no player commands. The callback now uses onConnectAsync and explicitly grants full default player commands only to same-package/same-UID controllers. Other controllers retain Media3's trust-based defaults. Existing native PCM tests plus explicit command assertions verify the regression on rerun; no playback pass is inferred from compilation.

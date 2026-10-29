@@ -88,12 +88,29 @@ class NavigationDeviceTest {
         return "Active package=${root.packageName}; accessibility nodes=${nodes.take(100)}"
     }
 
+    private fun startMainActivity(): String {
+        val packageName = instrumentation.targetContext.packageName
+        return shell("am start -W -n $packageName/${MainActivity::class.java.name}")
+    }
+
+    private fun keepMainActivityInForeground() {
+        val packageName = instrumentation.targetContext.packageName
+        if (instrumentation.uiAutomation.rootInActiveWindow?.packageName == packageName) return
+        val launch = startMainActivity()
+        if (!launch.contains("Status: ok")) throw AssertionError("Android did not foreground Rynx: $launch")
+        instrumentation.waitForIdleSync()
+    }
+
     private fun click(label: String) {
-        eventually("Missing navigation action: $label") { find(label) != null }
-        var target = find(label)
-        while (target != null) {
-            if (target.isEnabled && target.isClickable && target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
-            target = target.parent
+        val deadline = SystemClock.elapsedRealtime() + 15_000
+        while (SystemClock.elapsedRealtime() < deadline) {
+            keepMainActivityInForeground()
+            var target = find(label)
+            while (target != null) {
+                if (target.isEnabled && target.isClickable && target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
+                target = target.parent
+            }
+            SystemClock.sleep(100)
         }
         throw AssertionError("Could not activate navigation action: $label. ${accessibilitySnapshot()}")
     }
@@ -105,10 +122,9 @@ class NavigationDeviceTest {
 
     @Test fun searchKeepsItsQueryAndBackReturnsToThePreviousTab() {
         val packageName = instrumentation.targetContext.packageName
-        val component = "$packageName/${MainActivity::class.java.name}"
         // Launch from Android itself so the real app task is foregrounded. Do not force-stop:
         // instrumentation runs in the target process on some API levels.
-        val launch = shell("am start -W -n $component")
+        val launch = startMainActivity()
         assertTrue("Android did not launch Rynx: $launch", launch.contains("Status: ok"))
         instrumentation.waitForIdleSync()
         eventually("Rynx did not become the foreground accessibility window") {

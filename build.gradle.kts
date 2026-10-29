@@ -16,8 +16,8 @@ subprojects {
         plugins.withId("org.jetbrains.kotlin.multiplatform") {
             extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> {
                 sourceSets.named("commonMain") {
-                    kotlin.exclude("com/composables/sfsymbols/dualtone/**")
-                    kotlin.exclude("com/composables/sfsymbols/monochrome/**")
+                    kotlin.exclude("**/dualtone/**")
+                    kotlin.exclude("**/monochrome/**")
                 }
             }
         }

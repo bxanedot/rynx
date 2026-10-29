@@ -24,7 +24,9 @@ class PlaybackSessionTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         val file = java.io.File(context.cacheDir,"session-test.wav")
-        val samples=ByteArray(16000*4)
+        // Keep enough playable time for slow, software-rendered emulator runs; this test targets
+        // session controls rather than track-end behavior.
+        val samples=ByteArray(8_000*2*20)
         val header=ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN).apply {
             put("RIFF".toByteArray());putInt(36+samples.size);put("WAVEfmt ".toByteArray());putInt(16)
             putShort(1);putShort(1);putInt(8000);putInt(16000);putShort(2);putShort(16)
@@ -63,7 +65,7 @@ class PlaybackSessionTest {
                         assertEquals("Generated session audio", controller.mediaMetadata.title.toString())
                         controller.pause()
                         pausedAt = controller.currentPosition
-                        assertTrue(!controller.playWhenReady)
+                        assertTrue("Controller must acknowledge pause: ${playbackDiagnostics(controller)}",!controller.playWhenReady)
                     }
                     instrumentation.runOnMainSync { controller.play() }
                     val resumed=SystemClock.elapsedRealtime()+5000
@@ -72,7 +74,7 @@ class PlaybackSessionTest {
                         instrumentation.runOnMainSync { resumedPlayback=controller.isPlaying&&controller.currentPosition>pausedAt }
                         SystemClock.sleep(50)
                     }
-                    assertTrue("MediaController must resume the same generated item",resumedPlayback)
+                    assertTrue("MediaController must resume the same generated item: ${playbackDiagnostics(controller)}",resumedPlayback)
                     instrumentation.runOnMainSync { controller.stop();controller.clearMediaItems() }
                 } finally { instrumentation.runOnMainSync { controller.release() } }
             }

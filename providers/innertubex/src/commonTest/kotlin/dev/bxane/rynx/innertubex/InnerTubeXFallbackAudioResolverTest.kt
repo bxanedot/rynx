@@ -5,7 +5,10 @@ import com.metrolist.innertubex.extraction.ContentHints
 import com.metrolist.innertubex.extraction.ExtractedStream
 import com.metrolist.innertubex.extraction.StreamExtractor
 import com.metrolist.innertubex.extraction.StreamResolveException
+import dev.bxane.rynx.playback.catalog.AudioResolutionChain
+import dev.bxane.rynx.playback.catalog.AudioStreamResolver
 import dev.bxane.rynx.playback.catalog.ProviderAccessRefusalException
+import dev.bxane.rynx.playback.catalog.ResolvedAudioStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -132,6 +135,36 @@ class InnerTubeXFallbackAudioResolverTest {
         )
 
         assertFailsWith<ProviderAccessRefusalException> { resolver.resolveAudio("abc12345678") }
+    }
+
+    @Test
+    fun missingMusicVideoMetadataAllowsTheConfiguredFallbackResolver() = runSuspend {
+        val primary = InnerTubeXFallbackAudioResolver(
+            FakeExtractor(
+                stream = null,
+                failure = StreamResolveException(
+                    reason = StreamResolveException.Reason.NO_MUSIC_VIDEO,
+                    message = "No music video metadata",
+                ),
+            ),
+        )
+        var fallbackCalled = false
+        val fallback = AudioStreamResolver { videoId ->
+            fallbackCalled = true
+            ResolvedAudioStream(
+                videoId = videoId,
+                url = "https://media.example/audio",
+                headers = emptyMap(),
+                bitrateKbps = 128,
+                mimeType = "audio/mp4",
+                profileId = "fallback-test",
+            )
+        }
+
+        val stream = AudioResolutionChain(primary, fallback).resolveAudio("abc12345678")
+
+        assertTrue(fallbackCalled)
+        assertEquals("fallback-test", stream?.profileId)
     }
 }
 

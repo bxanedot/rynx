@@ -2,7 +2,7 @@
 
 An independently authored Kotlin Multiplatform music application by **bxane**. Android phones are the active target; the existing desktop target also provides the headless Compose test harness.
 
-The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through Excor, an independently obtained NewPipe fallback, favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
+The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through eXcor, an independently obtained NewPipe fallback, favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
 
 This is a development build. Spotify, downloads/offline management, advanced DSP/DJ, recognition, social/backend features and complete reference screen/motion parity are not finished. No production readiness, audible audio quality, benchmark or 95% visual-parity result is claimed. Apple discovery includes real genres, global/regional/city charts, release/tour collections and original local recommendations; see [discovery sources](docs/parity/APPLE_DISCOVERY.md).
 

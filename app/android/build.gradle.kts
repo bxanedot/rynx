@@ -1,4 +1,10 @@
 plugins { id("com.android.application"); kotlin("plugin.compose"); id("org.jetbrains.compose") }
+
+fun buildConfigString(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+val lastFmApiKey = providers.gradleProperty("rynxLastFmApiKey")
+    .orElse(providers.environmentVariable("LASTFM_API_KEY")).getOrElse("")
+val lastFmSharedSecret = providers.gradleProperty("rynxLastFmSharedSecret")
+    .orElse(providers.environmentVariable("LASTFM_SHARED_SECRET")).getOrElse("")
 abstract class PackageLicenseAssets:DefaultTask() {
     @get:InputFiles @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val licenseFiles:ConfigurableFileCollection
@@ -29,8 +35,10 @@ android {
         versionCode = 1
         versionName = "0.1.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "LASTFM_API_KEY", buildConfigString(lastFmApiKey))
+        buildConfigField("String", "LASTFM_SHARED_SECRET", buildConfigString(lastFmSharedSecret))
     }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

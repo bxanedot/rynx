@@ -9,9 +9,15 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.PasswordVisualTransformation
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,16 +31,19 @@ import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.bxane.rynx.design.RynxAppearance
 import dev.bxane.rynx.design.RynxMaterialMode
 import dev.bxane.rynx.ui.material.LocalRynxReducedMotion
+import dev.bxane.rynx.playback.scrobble.ScrobbleProvider
 
 /** iOS-style grouped settings for capabilities Rynx currently implements. */
 @Composable
 internal fun SettingsPage(
     state: PlayerUiState,
+    actions: PlayerActions,
     appearance: RynxAppearance,
     onAppearanceChange: (RynxAppearance) -> Unit,
     onOpenAppearance: () -> Unit,
@@ -53,6 +62,7 @@ internal fun SettingsPage(
     val ink = if (dark) Color.White else Color(0xFF1C1C1E)
     val secondary = if (dark) Color(0xFF98989E) else Color(0xFF6D6D72)
     val divider = if (dark) Color(0xFF38383A) else Color(0xFFE1E1E5)
+    var listenBrainzToken by remember { mutableStateOf("") }
 
     Column(
         Modifier.fillMaxSize()
@@ -149,6 +159,101 @@ internal fun SettingsPage(
                             onClick = onExportPlaylistBackup,
                         )
                     }
+                }
+            }
+
+            SettingsGroup("SCROBBLING", card, secondary, divider) {
+                val lastFm = state.scrobbling.lastFm
+                if (lastFm.connected) {
+                    SettingsInfoRow("Last.fm", lastFm.username ?: "Connected", ink, secondary)
+                    SettingsDivider(divider)
+                    SettingsToggleRow(
+                        title = "Scrobble to Last.fm",
+                        checked = lastFm.enabled,
+                        enabled = true,
+                        ink = ink,
+                        onChange = { actions.setScrobblingEnabled(ScrobbleProvider.LastFm, it) },
+                    )
+                    SettingsDivider(divider)
+                    SettingsRow("Disconnect Last.fm", ink = ink, secondary = secondary, onClick = actions::disconnectLastFm)
+                } else {
+                    SettingsRow(
+                        title = if (lastFm.pendingApproval) "Finish Last.fm login" else "Connect Last.fm",
+                        value = if (state.scrobbling.lastFmConfigured) null else "Setup required",
+                        ink = ink,
+                        secondary = secondary,
+                        enabled = state.scrobbling.lastFmConfigured,
+                        onClick = if (lastFm.pendingApproval) actions::finishLastFmLogin else actions::beginLastFmLogin,
+                    )
+                    if (!state.scrobbling.lastFmConfigured) {
+                        BasicText(
+                            "Last.fm requires Rynx app credentials configured at build time.",
+                            Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
+                            style = TextStyle(color = secondary, fontSize = 13.sp),
+                        )
+                    }
+                }
+                lastFm.error?.let { error ->
+                    BasicText(error, Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = TextStyle(color = Color(0xFFFF453A), fontSize = 13.sp))
+                }
+
+                SettingsDivider(divider)
+                val listenBrainz = state.scrobbling.listenBrainz
+                if (listenBrainz.connected) {
+                    SettingsInfoRow("ListenBrainz", listenBrainz.username ?: "Connected", ink, secondary)
+                    SettingsDivider(divider)
+                    SettingsToggleRow(
+                        title = "Scrobble to ListenBrainz",
+                        checked = listenBrainz.enabled,
+                        enabled = true,
+                        ink = ink,
+                        onChange = { actions.setScrobblingEnabled(ScrobbleProvider.ListenBrainz, it) },
+                    )
+                    SettingsDivider(divider)
+                    SettingsRow("Disconnect ListenBrainz", ink = ink, secondary = secondary, onClick = actions::disconnectListenBrainz)
+                } else {
+                    SettingsRow(
+                        title = if (listenBrainz.pendingApproval) "Open ListenBrainz settings" else "Connect ListenBrainz",
+                        ink = ink,
+                        secondary = secondary,
+                        onClick = actions::beginListenBrainzLogin,
+                    )
+                    if (listenBrainz.pendingApproval) {
+                        BasicText(
+                            "Create a personal token in ListenBrainz settings, then paste it here.",
+                            Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 4.dp),
+                            style = TextStyle(color = secondary, fontSize = 13.sp),
+                        )
+                        BasicTextField(
+                            value = listenBrainzToken,
+                            onValueChange = { listenBrainzToken = it },
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                            singleLine = true,
+                            textStyle = TextStyle(color = ink, fontSize = 15.sp),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            visualTransformation = PasswordVisualTransformation(),
+                            decorationBox = { inner ->
+                                Box {
+                                    if (listenBrainzToken.isEmpty()) BasicText("Personal token", style = TextStyle(color = secondary, fontSize = 15.sp))
+                                    inner()
+                                }
+                            },
+                        )
+                        SettingsRow(
+                            title = "Verify and connect",
+                            ink = ink,
+                            secondary = secondary,
+                            enabled = listenBrainzToken.isNotBlank(),
+                            onClick = {
+                                val token = listenBrainzToken.trim()
+                                listenBrainzToken = ""
+                                actions.connectListenBrainz(token)
+                            },
+                        )
+                    }
+                }
+                listenBrainz.error?.let { error ->
+                    BasicText(error, Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = TextStyle(color = Color(0xFFFF453A), fontSize = 13.sp))
                 }
             }
 

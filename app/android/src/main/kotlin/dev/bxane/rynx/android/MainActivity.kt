@@ -2,6 +2,7 @@ package dev.bxane.rynx.android
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Build
 import android.media.AudioManager
@@ -58,6 +59,9 @@ import dev.bxane.rynx.playback.toggleFavoriteId
 import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.playback.audio.AudioDspSettings
 import dev.bxane.rynx.playback.audio.AudioSignalInfo
+import dev.bxane.rynx.playback.scrobble.LastFmClient
+import dev.bxane.rynx.playback.scrobble.ListenBrainzClient
+import dev.bxane.rynx.playback.scrobble.ScrobbleProvider
 import dev.bxane.rynx.library.PlaylistArchive
 import dev.bxane.rynx.ui.*
 import dev.bxane.rynx.apple.AppleMetadataClient
@@ -67,6 +71,7 @@ import dev.bxane.rynx.innertubex.createInnerTubeXMusicPlaybackCatalog
 import dev.bxane.rynx.innertubex.createInnerTubeXFallbackAudioResolver
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -107,6 +112,26 @@ class MainActivity : ComponentActivity() {
     }}
     private val appearanceStore by lazy {AndroidAppearanceStore(applicationContext)}
     private val audioDspStore by lazy {AndroidAudioDspSettingsStore(applicationContext)}
+    private val scrobbleHttpClient = lazy(LazyThreadSafetyMode.NONE) {
+        HttpClient(OkHttp) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 15_000
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 15_000
+            }
+        }
+    }
+    private val lastFmClient by lazy(LazyThreadSafetyMode.NONE) {
+        LastFmClient(scrobbleHttpClient.value, BuildConfig.LASTFM_API_KEY, BuildConfig.LASTFM_SHARED_SECRET)
+    }
+    private val listenBrainzClient by lazy(LazyThreadSafetyMode.NONE) { ListenBrainzClient(scrobbleHttpClient.value) }
+    private val scrobbleAccountStore by lazy(LazyThreadSafetyMode.NONE) {
+        AndroidScrobbleAccountStore(applicationContext, lastFmClient.configured)
+    }
+    private val scrobbleAccountPreferences by lazy { getSharedPreferences("scrobbling-accounts", MODE_PRIVATE) }
+    private val scrobbleAccountListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "lastfm.error" || key == "listenbrainz.error") lifecycleScope.launch { refreshScrobblingState() }
+    }
     private var renderingMonitor:AndroidRenderingMonitor?=null
     private var outputDeviceCallback:AudioDeviceCallback?=null
     private var availableAudioRoutes:List<String> = emptyList()
@@ -192,6 +217,8 @@ class MainActivity : ComponentActivity() {
         }.also { audioManager.registerAudioDeviceCallback(it,Handler(mainLooper)) }
         state.update {it.copy(appearance=appearanceStore.load())}
         state.update {it.copy(audioDspSettings=audioDspStore.load())}
+        lifecycleScope.launch { refreshScrobblingState() }
+        scrobbleAccountPreferences.registerOnSharedPreferenceChangeListener(scrobbleAccountListener)
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
         val innertubexClient = HttpClient(OkHttp)
         val innertubex = createInnerTubeXFallbackAudioResolver(innertubexClient)
@@ -388,6 +415,20 @@ class MainActivity : ComponentActivity() {
                 val stamp=SimpleDateFormat("yyyyMMdd-HHmm",Locale.ROOT).format(Date())
                 playlistExportPicker.launch("rynx-playlists-$stamp.json")
             }
+            override fun beginLastFmLogin() = beginLastFmAuthorization()
+            override fun finishLastFmLogin() = finishLastFmAuthorization()
+            override fun disconnectLastFm() = runScrobbleAction(ScrobbleProvider.LastFm) { scrobbleAccountStore.disconnectLastFm() }
+            override fun setScrobblingEnabled(provider:ScrobbleProvider,enabled:Boolean) = runScrobbleAction(provider) {
+                scrobbleAccountStore.setEnabled(provider,enabled)
+            }
+            override fun beginListenBrainzLogin() = beginListenBrainzAuthorization()
+            override fun connectListenBrainz(token:String) = runScrobbleAction(ScrobbleProvider.ListenBrainz) {
+                val account=listenBrainzClient.validateToken(token)
+                scrobbleAccountStore.connectListenBrainz(account,token)
+            }
+            override fun disconnectListenBrainz() = runScrobbleAction(ScrobbleProvider.ListenBrainz) {
+                scrobbleAccountStore.disconnectListenBrainz()
+            }
         }
         setContent {
             val current by state.collectAsStateWithLifecycle()
@@ -432,6 +473,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onStart() {
         super.onStart()
+        lifecycleScope.launch { refreshScrobblingState() }
         renderingMonitor?.start()
         val future = MediaController.Builder(this,SessionToken(this,ComponentName(this,PlaybackService::class.java))).buildAsync()
         connection = future
@@ -458,6 +500,7 @@ class MainActivity : ComponentActivity() {
         lyricsJob?.cancel()
         playlistObservation?.cancel()
         if(libraryDatabase.isInitialized())libraryDatabase.value.close()
+        scrobbleAccountPreferences.unregisterOnSharedPreferenceChangeListener(scrobbleAccountListener)
         val ready=if(::catalogReady.isInitialized)catalogReady else null
         ready?.cancel()
         if(::catalog.isInitialized) {val owned=catalog;AndroidResourceCloser.close {ready?.join();owned.close()}}
@@ -465,7 +508,72 @@ class MainActivity : ComponentActivity() {
         innertubexResolver = null
         innertubexHttpClient?.close()
         innertubexHttpClient = null
+        if(scrobbleHttpClient.isInitialized()) scrobbleHttpClient.value.close()
         super.onDestroy()
+    }
+
+    private suspend fun refreshScrobblingState() {
+        val current=scrobbleAccountStore.load()
+        state.update {it.copy(scrobbling=current)}
+    }
+
+    private fun runScrobbleAction(provider:ScrobbleProvider,action:suspend ()->Unit) {
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) { action() }
+                refreshScrobblingState()
+            } catch(cancelled:CancellationException) {
+                throw cancelled
+            } catch(failure:Exception) {
+                val message=failure.message?.takeIf(String::isNotBlank) ?: "The account request failed. Try again."
+                state.update {current ->
+                    val scrobbling=current.scrobbling
+                    val updated=when(provider) {
+                        ScrobbleProvider.LastFm -> scrobbling.copy(lastFm=scrobbling.lastFm.copy(error=message))
+                        ScrobbleProvider.ListenBrainz -> scrobbling.copy(listenBrainz=scrobbling.listenBrainz.copy(error=message))
+                    }
+                    current.copy(scrobbling=updated)
+                }
+            }
+        }
+    }
+
+    private fun beginLastFmAuthorization() {
+        lifecycleScope.launch {
+            try {
+                val approvalUrl=withContext(Dispatchers.IO) {
+                    val token=lastFmClient.requestAuthorizationToken()
+                    scrobbleAccountStore.beginLastFmApproval(token)
+                    lastFmClient.authorizationUrl(token)
+                }
+                refreshScrobblingState()
+                startActivity(Intent(Intent.ACTION_VIEW,approvalUrl.toUri()))
+            } catch(cancelled:CancellationException) {
+                throw cancelled
+            } catch(failure:Exception) {
+                val message=failure.message?.takeIf(String::isNotBlank) ?: "Last.fm authorization could not be started."
+                state.update {it.copy(scrobbling=it.scrobbling.copy(lastFm=it.scrobbling.lastFm.copy(error=message)))}
+            }
+        }
+    }
+
+    private fun finishLastFmAuthorization() = runScrobbleAction(ScrobbleProvider.LastFm) {
+        val token=scrobbleAccountStore.pendingLastFmToken()
+            ?: throw IllegalStateException("Start Last.fm approval in your browser, then return here to finish login.")
+        val session=lastFmClient.completeAuthorization(token)
+        scrobbleAccountStore.connectLastFm(session)
+    }
+
+    private fun beginListenBrainzAuthorization() {
+        scrobbleAccountStore.beginListenBrainzTokenEntry()
+        lifecycleScope.launch { refreshScrobblingState() }
+        runCatching {
+            startActivity(Intent(Intent.ACTION_VIEW,"https://listenbrainz.org/settings/".toUri()))
+        }.onFailure {
+            state.update {current->current.copy(scrobbling=current.scrobbling.copy(listenBrainz=current.scrobbling.listenBrainz.copy(
+                error="No browser can open ListenBrainz settings.",
+            )))}
+        }
     }
 
     private fun searchCatalog(query: String) {

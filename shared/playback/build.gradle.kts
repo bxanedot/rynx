@@ -6,7 +6,13 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     sourceSets {
-        commonMain.dependencies { implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0") }
-        commonTest.dependencies { implementation(kotlin("test")) }
+        commonMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
+            implementation("io.ktor:ktor-client-core:3.6.0")
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation("io.ktor:ktor-client-mock:3.6.0")
+        }
     }
 }

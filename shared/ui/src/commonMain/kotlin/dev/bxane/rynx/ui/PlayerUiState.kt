@@ -7,6 +7,8 @@ import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.library.Playlist
 import dev.bxane.rynx.playback.audio.AudioDspSettings
 import dev.bxane.rynx.playback.audio.AudioSignalInfo
+import dev.bxane.rynx.playback.scrobble.ScrobbleProvider
+import dev.bxane.rynx.playback.scrobble.ScrobbleSettingsState
 
 data class TrackItem(
     val id: String,
@@ -66,6 +68,7 @@ data class PlayerUiState(
     val discovery:DiscoveryState = DiscoveryState(),
     val discoverySelection:HomeSection?=null,
     val discoverySelectionLoading:Boolean=false,
+    val scrobbling:ScrobbleSettingsState=ScrobbleSettingsState(),
 ) { val current: TrackItem? get() = currentTrack ?: tracks.firstOrNull { it.id == currentId } }
 
 interface PlayerActions {
@@ -108,4 +111,11 @@ interface PlayerActions {
     fun movePlaylistEntry(playlistId:Long,entryId:Long,toIndex:Int) = Unit
     fun importPlaylistBackup() = Unit
     fun exportPlaylistBackup() = Unit
+    fun beginLastFmLogin() = Unit
+    fun finishLastFmLogin() = Unit
+    fun disconnectLastFm() = Unit
+    fun setScrobblingEnabled(provider:ScrobbleProvider,enabled:Boolean) = Unit
+    fun beginListenBrainzLogin() = Unit
+    fun connectListenBrainz(token:String) = Unit
+    fun disconnectListenBrainz() = Unit
 }

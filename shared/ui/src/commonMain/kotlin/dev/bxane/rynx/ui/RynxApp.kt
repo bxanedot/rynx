@@ -195,6 +195,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             if(state.discoverySelection!=null)DiscoveryDetail(state,actions)
             if(settingsOpen) SettingsPage(
                 state=state,
+                actions=actions,
                 appearance=appearance,
                 onAppearanceChange=::updateAppearance,
                 onOpenAppearance={appearanceOpen=true},

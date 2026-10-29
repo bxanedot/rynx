@@ -25,12 +25,19 @@ import dev.bxane.rynx.playback.PlaybackResumeCodec
 import dev.bxane.rynx.playback.PlaybackResumeSnapshot
 import dev.bxane.rynx.playback.PlaybackResumeTrack
 import dev.bxane.rynx.playback.RepeatMode
+import dev.bxane.rynx.playback.scrobble.LastFmClient
+import dev.bxane.rynx.playback.scrobble.ListenBrainzClient
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 
 /** Owns audio independently of the activity and supplies Media3's media notification. */
 @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
     private var listening:AndroidListeningRecorder?=null
+    private var scrobbling:AndroidScrobblingRecorder?=null
+    private var scrobbleHttpClient:HttpClient?=null
     private var audioSettingsStore:AndroidAudioDspSettingsStore?=null
     private var audioSettingsObservation:AutoCloseable?=null
     private var audioProcessor:RynxMedia3AudioProcessor?=null
@@ -91,6 +98,24 @@ class PlaybackService : MediaSessionService() {
         })
         checkpointHandler.postDelayed(checkpointTask,2_000)
         listening=AndroidListeningRecorder(applicationContext,player)
+        val scrobbleHttp=HttpClient(OkHttp) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 15_000
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 15_000
+            }
+        }
+        scrobbleHttpClient=scrobbleHttp
+        scrobbling=AndroidScrobblingRecorder(
+            context=applicationContext,
+            player=player,
+            accountStore=AndroidScrobbleAccountStore(
+                applicationContext,
+                BuildConfig.LASTFM_API_KEY.isNotBlank() && BuildConfig.LASTFM_SHARED_SECRET.isNotBlank(),
+            ),
+            lastFm=LastFmClient(scrobbleHttp,BuildConfig.LASTFM_API_KEY,BuildConfig.LASTFM_SHARED_SECRET),
+            listenBrainz=ListenBrainzClient(scrobbleHttp),
+        )
         val activity = PendingIntent.getActivity(this,0,Intent(this,MainActivity::class.java),PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         session = MediaSession.Builder(this, player).setSessionActivity(activity)
             .setCallback(QueueSessionCallback(packageName)).build()
@@ -100,6 +125,8 @@ class PlaybackService : MediaSessionService() {
         checkpointHandler.removeCallbacks(checkpointTask)
         persistCheckpoint()
         listening?.close();listening=null
+        scrobbling?.close();scrobbling=null
+        scrobbleHttpClient?.close();scrobbleHttpClient=null
         audioSettingsObservation?.close();audioSettingsObservation=null
         audioProcessor=null;audioSettingsStore=null
         session?.let { it.player.release(); it.release() }

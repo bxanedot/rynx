@@ -100,6 +100,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val dark=appearance.darkTheme || appearance.material==RynxMaterialMode.Amoled
     val effectiveState=state.copy(appearance=appearance,reduceMotion=appearance.reducedMotion(state.reduceMotion))
     var appearanceOpen by rememberSaveable {mutableStateOf(false)}
+    var settingsOpen by rememberSaveable {mutableStateOf(false)}
     val backdrop=rememberHazeState()
     var query by rememberSaveable { mutableStateOf("") }
     var activeTab by rememberSaveable { mutableStateOf(AppTab.ListenNow) }
@@ -120,6 +121,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val player=rememberPlayerPresentation()
     val playerVisible by remember {derivedStateOf {player.visible}}
     RynxPlatformBackHandler(enabled=activeTab==AppTab.Search && !appearanceOpen && state.discoverySelection==null,onBack=::closeSearch)
+    RynxPlatformBackHandler(enabled=settingsOpen && !appearanceOpen && !state.audioSettingsOpen,onBack={settingsOpen=false})
     LaunchedEffect(playerVisible) {onPlayerVisibleChanged(playerVisible)}
     var previousTrackId by remember {mutableStateOf(state.currentId)}
     LaunchedEffect(state.currentId) {
@@ -138,7 +140,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             val wide=windowPolicy.sideNavigation
             val searching = activeTab == AppTab.Search
             Row(Modifier.fillMaxSize().rynxBackdropSource(1f).graphicsLayer { scaleX=1f-.025f*player.progress;scaleY=scaleX }
-                .semantics { if(playerVisible || appearanceOpen || state.discoverySelection!=null) hideFromAccessibility() }) {
+                .semantics { if(playerVisible || settingsOpen || appearanceOpen || state.discoverySelection!=null) hideFromAccessibility() }) {
                 if(wide) Column(Modifier.width(216.dp).fillMaxHeight().background(palette.surface).padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                     Label("rynx",28,bold=true,modifier=Modifier.padding(bottom=30.dp))
                     AppTab.entries.forEach { tab -> NavItem(tab.title,tab.glyph,activeTab==tab){selectTab(tab)} }
@@ -149,8 +151,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     Row(Modifier.fillMaxWidth().padding(horizontal=if(wide)32.dp else 24.dp,vertical=20.dp),verticalAlignment=Alignment.CenterVertically) {
                         if(searching) IconButton(Glyph.Previous,"Return to ${previousTab.title}",onClick=::closeSearch)
                         Label(activeTab.title,32,bold=true,modifier=Modifier.weight(1f))
-                        IconButton(if(dark) Glyph.Sun else Glyph.Moon,if(appearance.material==RynxMaterialMode.Amoled)"Theme fixed by True AMOLED" else "Switch to ${if(dark) "light" else "dark"} theme",enabled=appearance.material!=RynxMaterialMode.Amoled){updateAppearance(appearance.copy(darkTheme=!appearance.darkTheme))}
-                        IconButton(Glyph.Appearance,"Appearance"){appearanceOpen=true}
+                        IconButton(Glyph.Appearance,"Settings"){settingsOpen=true}
                         if(activeTab==AppTab.Library) IconButton(Glyph.Add,"Import audio files",onClick=actions::importFiles)
                     }
                     NavigationSearchTransition(
@@ -181,10 +182,10 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     if(!wide) Spacer(Modifier.height(if(state.current!=null)74.dp else NavigationDockHeight.dp))
                 }
             }
-            Box(Modifier.fillMaxSize().semantics {if(appearanceOpen || state.audioSettingsOpen || state.discoverySelection!=null)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
+            Box(Modifier.fillMaxSize().semantics {if(settingsOpen || appearanceOpen || state.audioSettingsOpen || state.discoverySelection!=null)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
             if(!wide) FloatingNavigation(
                 hasTrack=state.current!=null,player=player,activeTab=activeTab,reduced=effectiveState.reduceMotion,
-                blocked=appearanceOpen || state.audioSettingsOpen || state.discoverySelection!=null,expanded=navigationExpanded,
+                blocked=settingsOpen || appearanceOpen || state.audioSettingsOpen || state.discoverySelection!=null,expanded=navigationExpanded,
                 onExpansionChange={navigationExpanded=it},viewportWidth=maxWidth.value,viewportHeight=maxHeight.value,
                 modifier=Modifier.align(Alignment.BottomCenter),
             ) {tab->
@@ -192,6 +193,19 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                 if(playerVisible)player.close(effectiveState.reduceMotion)
             }
             if(state.discoverySelection!=null)DiscoveryDetail(state,actions)
+            if(settingsOpen) SettingsPage(
+                state=state,
+                appearance=appearance,
+                onAppearanceChange=::updateAppearance,
+                onOpenAppearance={appearanceOpen=true},
+                onOpenAudio=actions::openAudioSettings,
+                onShowAudioOutput=actions::showAudioOutput,
+                onImportFiles=actions::importFiles,
+                onOpenLibrary={settingsOpen=false;selectTab(AppTab.Library)},
+                onImportPlaylistBackup=actions::importPlaylistBackup,
+                onExportPlaylistBackup=actions::exportPlaylistBackup,
+                onClose={settingsOpen=false},
+            )
             if(appearanceOpen) AppearanceSheet(appearance,::updateAppearance,{appearanceOpen=false;actions.openAudioSettings()}){appearanceOpen=false}
             if(state.audioSettingsOpen) AudioDspSheet(state.audioDspSettings,state.audioSignalInfo,state.audioClipCount,
                 actions::updateAudioDsp,actions::closeAudioSettings)

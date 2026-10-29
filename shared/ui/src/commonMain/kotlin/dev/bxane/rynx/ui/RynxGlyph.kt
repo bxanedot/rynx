@@ -13,11 +13,24 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
 
-/** Original geometric vectors. No Apple SF Symbols artwork is bundled. */
-enum class Glyph { Play, Pause, Next, Previous, MoveUp, MoveDown, Search, Add, Edit, Library, Queue, Close, Note, Sun, Moon, Repeat, Heart, HeartFill, Home, Browse, Radio, Star, StarFill, More, SpeakerQuiet, SpeakerLoud, Output, Lyrics, Shuffle, Reorder, Equalizer, Infinity, AutoMix, Appearance }
+/** Semantic glyph registry. Apple glyph names are resolved through GlyphStudio on Apple targets. */
+enum class Glyph(val symbolName: String) {
+    Play("play.fill"), Pause("pause.fill"), Next("forward.end.fill"), Previous("backward.end.fill"),
+    MoveUp("arrow.up"), MoveDown("arrow.down"), Search("magnifyingglass"), Add("plus"), Edit("pencil"),
+    Library("books.vertical"), Queue("list.bullet"), Close("xmark"), Note("music.note"),
+    Sun("sun.max.fill"), Moon("moon.fill"), Repeat("repeat"), Heart("heart"), HeartFill("heart.fill"),
+    Home("house"), Browse("safari"), Radio("dot.radiowaves.left.and.right"), Star("star"), StarFill("star.fill"),
+    More("ellipsis"), SpeakerQuiet("speaker"), SpeakerLoud("speaker.wave.2.fill"), Output("airplayaudio"),
+    Lyrics("quote.bubble"), Shuffle("shuffle"), Reorder("line.3.horizontal"), Equalizer("slider.horizontal.3"),
+    Infinity("infinity"), AutoMix("waveform"), Appearance("gearshape"), ChevronRight("chevron.right"),
+}
+
+@Composable
+internal expect fun drawGlyphStudioSymbol(glyph: Glyph, tint: Color, modifier: Modifier): Boolean
 
 @Composable
 fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
+    if (drawGlyphStudioSymbol(glyph, tint, modifier)) return
     Canvas(modifier.size(22.dp)) {
         scale(size.width / 24f, size.height / 24f, pivot = Offset.Zero) {
             fun line(x: Float, y: Float, x2: Float, y2: Float) = drawLine(tint, Offset(x,y), Offset(x2,y2), 1.8f, StrokeCap.Round)
@@ -74,6 +87,7 @@ fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
                     line(18f,3f,21f,6f);line(18f,9f,21f,6f);line(18f,15f,21f,18f);line(18f,21f,21f,18f)
                 }
                 Glyph.Reorder -> for(y in listOf(7f,12f,17f)) line(4f,y,20f,y)
+                Glyph.ChevronRight -> { line(9f,5f,16f,12f);line(16f,12f,9f,19f) }
                 Glyph.Equalizer -> {line(5f,4f,5f,20f);line(12f,4f,12f,20f);line(19f,4f,19f,20f);drawCircle(tint,2.3f,Offset(5f,9f));drawCircle(tint,2.3f,Offset(12f,15f));drawCircle(tint,2.3f,Offset(19f,7f))}
                 Glyph.Infinity -> drawPath(Path().apply {moveTo(12f,12f);cubicTo(7f,2f,1f,6f,2f,12f);cubicTo(3f,19f,7f,21f,12f,12f);cubicTo(17f,3f,22f,5f,22f,12f);cubicTo(22f,19f,17f,22f,12f,12f)},tint,style=Stroke(1.8f,cap=StrokeCap.Round))
                 Glyph.AutoMix -> {drawCircle(tint.copy(alpha=.4f),6f,Offset(8f,12f));drawCircle(tint,6f,Offset(16f,12f));drawCircle(Color.Transparent,2f,Offset(16f,12f));drawCircle(tint.copy(alpha=.45f),2f,Offset(16f,12f))}

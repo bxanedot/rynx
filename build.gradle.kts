@@ -8,3 +8,18 @@ plugins {
 }
 group = "dev.bxane.rynx"
 version = "0.1.0-dev"
+
+// Rynx consumes GlyphStudio's dynamic SfSymbol/SfSymbolIcon API. Omit its optional 14k generated
+// per-symbol wrapper source files; the dynamic catalog and full SF geometry data remain intact.
+subprojects {
+    if (path == ":glyphstudioSfsymbols") {
+        plugins.withId("org.jetbrains.kotlin.multiplatform") {
+            extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension> {
+                sourceSets.named("commonMain") {
+                    kotlin.exclude("com/composables/sfsymbols/dualtone/**")
+                    kotlin.exclude("com/composables/sfsymbols/monochrome/**")
+                }
+            }
+        }
+    }
+}

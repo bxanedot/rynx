@@ -5,13 +5,13 @@
 | NewPipeExtractor | v0.26.5 | Android-only last audio-resolution fallback after Excor and InnerTubeX | JitPack dependency, public API integration compiles; GPL-3.0-or-later release obligation documented |
 | InnerTubeX | v0.11.2 / c863ddf15be01a1abfa4630329bdc0a1e95f1531 | KMP audio-resolution fallback after Excor and before NewPipe | Pinned JitPack dependency resolved; KMP/JVM and Android debug builds pass. Live extraction/device playback remain unverified. GPL-3.0 source license retained |
 | QuackJS | 0.1.2 / 5af5261d31e50b578e4c81434f6fce8dfd81db93 | InnerTubeX's transitive Kotlin player-transform dependency | JitPack transitive dependency; GPL-3.0 license and upstream third-party notice retained. Full dependency/artifact attribution audit remains open |
-| GlyphStudio | v1.0.0 / pinned submodule commit | sfsymbols | Apache implementation per owner; Apple SF artwork terms separately restrict use; not linked into Android runtime, which uses original Rynx vectors |
+| GlyphStudio | v1.0.0 / pinned submodule commit | `shared:ui:iosMain` dynamic semantic-symbol renderer; Android/JVM retain original Rynx vectors | Apache implementation per owner; Apple SF artwork terms remain a separate per-platform review gate; Apple source set is not built on this Linux host |
 | Kotlin Multiplatform | 2.4.21 | Shared application code | Root build |
 | Gradle | 9.8.2 | Reproducible build | Wrapper retained from approved engine |
 | JDK | 27 | JVM 26 provider and desktop target | Required by Excor; tests and Linux uber-JAR package pass |
 
 Excor upstream declares Kotlin 2.4.21, JDK toolchain 27/JVM target 26, AGP 9.4.1, Android API 37/min 26; Ktor 3.6.0, coroutines 1.11.0, serialization 1.12.0, QuickJS 1.0.15. Its JVM artifact and documented search APIs compile through the Rynx adapter; Android integration and all live extraction/download features remain unverified.
-GlyphStudio declares Kotlin 2.4.20, Compose 1.12.1, AGP 9.2.1, Android API 37. Do not silently rewrite upstream builds or downgrade dependencies.
+GlyphStudio declares Kotlin 2.4.20, Compose 1.12.1, AGP 9.2.1, Android API 37. Rynx includes the pinned `sfsymbols` module as `:glyphstudioSfsymbols`, aligned through the root version catalog; its optional generated per-symbol wrappers are excluded while the dynamic catalog API is retained. The shared UI's Apple renderer resolves names from the semantic Rynx registry. Do not silently rewrite upstream source or claim an iOS build until verified on an Apple toolchain.
 Full transitive license/security audit and dependency locking remain open, including for newly linked InnertubeX/QuackJS artifacts.
 
 Current desktop runtime links Compose Multiplatform 1.12.1 (including Skiko 0.150.1 via Compose Desktop), coroutines 1.11.0, the Excor 1.0.0 composite artifact, and OkHttp 5.5.0, in addition to Kotlin stdlib/test and Excor transitives. The full OpenJDK Temurin 27.0.1 is external tooling, not committed. Source dependency pins remain unchanged. `./gradlew :apps:desktop:dependencies --configuration jvmRuntimeClasspath` lists the desktop runtime graph. Full redistribution notices/transitive audit remain pending.

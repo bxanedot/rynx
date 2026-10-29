@@ -19,6 +19,8 @@ kotlin {
             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
         }
     }
+    iosArm64()
+    iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
             api("app.cash.sqldelight:runtime:2.4.1")

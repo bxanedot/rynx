@@ -3,5 +3,7 @@ kotlin {
     jvmToolchain(27)
     android { namespace = "dev.bxane.rynx.playback"; compileSdk = 37; minSdk = 26; compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
     jvm { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21 } }
+    iosArm64()
+    iosSimulatorArm64()
     sourceSets { commonTest.dependencies { implementation(kotlin("test")) } }
 }

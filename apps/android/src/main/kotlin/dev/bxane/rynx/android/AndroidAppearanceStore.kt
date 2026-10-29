@@ -14,7 +14,7 @@ internal class AndroidAppearanceStore(context:Context) {
         fun text(key:String)=try {preferences.getString(key,null)} catch(_:ClassCastException){null}
         return RynxAppearance(
             material=RynxMaterialMode.entries.firstOrNull {it.name==text("material")} ?: defaults.material,
-            darkTheme=flag("dark",false),transparency=value("transparency",defaults.transparency),
+            darkTheme=flag("dark",defaults.darkTheme),transparency=value("transparency",defaults.transparency),
             blurStrength=value("blur",defaults.blurStrength),refractionIntensity=value("refraction",defaults.refractionIntensity),
             highlightIntensity=value("highlight",defaults.highlightIntensity),tintStrength=value("tint",defaults.tintStrength),
             borderBrightness=value("border",defaults.borderBrightness),vibrancy=value("vibrancy",defaults.vibrancy),

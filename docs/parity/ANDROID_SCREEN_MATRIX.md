@@ -13,6 +13,7 @@ Apple Music public screenshots and guides are the user-authorized reference. No 
 | Queue | Real playback-order indexes, shuffle/repeat, drag and accessibility reorder, swipe remove, clear upcoming | Native session instrumentation and exact visual comparison |
 | Lyrics | Real imported timed/enhanced LRC, word progress, seek, follow and scroll recovery | Native picker/recreation test and provider/translation features |
 | Appearance | Glass/Solid/AMOLED, live preview, all optical/motion settings and Android storage | Actual device persistence/performance and optical acceptance |
+| Settings | iOS-style grouped playback, appearance, library and About sections; dark appearance is the default and changes immediately | Device comparison against Apple Music for iOS and Android accessibility/device validation |
 | Radio | Explicit unavailable state and working Search action | Radio implementation |
 | Audio settings / EQ | Shared 10/31-band and parametric DSP controls, presets, Pure Mode, headroom, bass/treble, width, balance, crossfeed, compressor and limiter controls connected to Media3 | Audible response, device route/rate reporting and DSP performance need device verification |
 | Artist / album detail, accounts and remaining settings | Not yet implemented | Functional implementation and tests |

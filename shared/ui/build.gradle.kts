@@ -7,6 +7,8 @@ kotlin {
     jvmToolchain(27)
     android { namespace = "dev.bxane.rynx.ui"; compileSdk = 37; minSdk = 26; compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
     jvm { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21 } }
+    iosArm64()
+    iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -23,5 +25,6 @@ kotlin {
         }
         jvmTest.dependencies { implementation(kotlin("test"));implementation(compose.desktop.currentOs) }
         androidMain.dependencies { implementation("androidx.activity:activity-compose:1.13.0") }
+        iosMain.dependencies { implementation(project(":glyphstudioSfsymbols")) }
     }
 }

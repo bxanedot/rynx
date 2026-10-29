@@ -1,7 +1,7 @@
 # License audit
 Excor includes Apache-2.0 LICENSE and third-party NOTICE/provenance. Preserve them when distributing its artifacts; inspect transitive bundled EJS/QuickJS notices before release.
-User follow-up confirms GlyphStudio implementation is Apache licensed. The pinned checkout's implementation license evidence is the owner's statement. Its README identifies SF Symbols as Apple artwork; the Apple artwork terms are separate and must be satisfied per target. Android currently uses original Rynx vector artwork and does not link GlyphStudio's SF vectors.
-No Apple symbol artwork, third-party album art or reference screenshots have been copied into Rynx application resources.
+User follow-up confirms GlyphStudio implementation is Apache licensed. The pinned checkout's implementation license evidence is the owner's statement. Its README identifies SF Symbols as Apple artwork; the Apple artwork terms are separate and must be reviewed for each distribution target. `shared:ui:iosMain` now uses GlyphStudio's dynamic renderer, but iOS target compilation and artwork eligibility remain unverified. Android and JVM use original Rynx vectors and do not link SF artwork.
+No Apple symbol artwork, third-party album art or reference screenshots have been copied into Rynx application resources. The pinned GlyphStudio module remains an approved dependency source; its artwork distribution is subject to the review above.
 Rynx application-specific code and original vectors are licensed GPL-3.0-or-later (LICENSE and NOTICE). This implements the user's requested NewPipe fallback with compatible distribution terms; existing third-party licenses remain unchanged.
 Gradle wrapper tooling is Apache-2.0; preserve Gradle attribution/license with distribution.
 

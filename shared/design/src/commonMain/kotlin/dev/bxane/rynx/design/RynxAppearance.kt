@@ -5,7 +5,7 @@ enum class RynxMotionPreference { FollowSystem, Full, Reduced }
 
 data class RynxAppearance(
     val material: RynxMaterialMode = RynxMaterialMode.LiquidGlass,
-    val darkTheme: Boolean = false,
+    val darkTheme: Boolean = true,
     val transparency: Float = .64f,
     val blurStrength: Float = .62f,
     val refractionIntensity: Float = .38f,

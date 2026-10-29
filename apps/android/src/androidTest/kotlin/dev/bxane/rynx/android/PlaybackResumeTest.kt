@@ -76,6 +76,7 @@ class PlaybackResumeTest {
                 }
             }
         } finally {
+            stopExistingPlaybackService(context)
             store.clear()
             context.contentResolver.delete(first,null,null)
             context.contentResolver.delete(second,null,null)

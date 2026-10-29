@@ -31,7 +31,7 @@ PY
     for device_log in "$destination/rynx-process.log" "$destination/logcat.txt"; do
       if test -f "$device_log"; then
         printf 'ANDROID SERVICE DIAGNOSTIC (%s):\n' "$(basename "$device_log")"
-        rg 'RynxResume' "$device_log" | tail -80 || true
+        grep -F 'RynxResume' "$device_log" | tail -80 || true
       fi
     done
     python3 - <<'PY'

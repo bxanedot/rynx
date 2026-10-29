@@ -61,12 +61,11 @@ Local rebased worktree at time of handoff: /tmp/rynx-pr5
 Latest follow-up diagnostic commit: 01c0b4210b844ff1a1e929697c1590ec519ad759
 Current branch head: `daaf075`. Its test-only recovery relaunches Rynx after a
 hosted run found Android's launcher, rather than Rynx, foreground during
-navigation. Latest Verify run 40968632064 and phone run 40968631913 are currently
-in progress. Immediately prior, Verify run 40967326940 and API 36 hosted phone
-run 40967327024 both passed on `01c0b42`. The diagnostic snapshot and foreground
-recovery are test-only changes. Earlier, a test called Instrumentation.runOnMainSync
-from inside runOnMainSync; that nested call was removed. Keep PR #5 open unless
-the owner asks to merge.
+navigation. Exact-head Verify run 40968632064 and API 36 phone run 40968631913
+both passed. The diagnostic snapshot and foreground recovery are test-only
+changes. Earlier, a test called Instrumentation.runOnMainSync from inside
+runOnMainSync; that nested call was removed. Keep PR #5 open unless the owner
+asks to merge.
 
 PR #7 — Last.fm and ListenBrainz integration
 https://github.com/bxanedot/rynx/pull/7
@@ -85,9 +84,11 @@ requires synchronous completion. Commits f2b1642, bdf9e3b, and 8718a0f fix these
 issues. Verify run 40967462478 passes on `8718a0f`. Android phone run 40967462418
 failed because Android Launcher was the foreground window while the Search/Library
 test was trying to navigate. Commit `b006a6f` adds test-only foreground recovery
-and an accessibility snapshot. Later documentation-only commits trigger fresh
-checks; always inspect `gh pr view 7 --json headRefOid,statusCheckRollup,url` for
-the current exact-head result. Keep PR #7 open unless the owner asks to merge.
+and an accessibility snapshot. Later code-equivalent PR head `fa21cc2` passes
+Verify run 40969216416 and API 36 phone run 40969216328. Documentation-only
+follow-up commits may trigger fresh checks; inspect `gh pr view 7 --json
+headRefOid,statusCheckRollup,url` for live state. Keep PR #7 open unless the owner
+asks to merge.
 
 To check status/logs:
   gh pr view 5 --json headRefOid,mergeable,statusCheckRollup,url
@@ -146,9 +147,9 @@ CURRENT WORKTREES
 
 NEXT STEPS
 ==========
-1. Check the in-progress exact-head PR #5 and #7 Verify + Android phone jobs;
-   inspect exact failed-step logs if any; implement fixes and rerun the relevant
-   workflow.
+1. Check the current PR #7 Verify and Android phone jobs; inspect exact
+   failed-step logs if any; implement fixes and rerun the relevant workflow.
+   PR #5's exact-head checks now both pass.
 2. Keep `docs/IMPLEMENTATION_STATUS.md`, `docs/parity/BLOCKERS.md`, and this file
    accurate. Distinguish compilation, hosted emulator, physical phone, live
    provider, and visual comparison evidence.
@@ -189,19 +190,20 @@ LOCAL ENVIRONMENT LIMITATIONS
 - No Last.fm credentials, ListenBrainz test token, Spotify test app/account,
   physical Android device, or owner's release signing key were available.
 
-Latest completed PR #7 debug APK (a newer workflow is currently building):
-https://github.com/bxanedot/rynx/actions/runs/40967462418/artifacts/12938144379
-This is a debug APK built from PR #7 production code at `8718a0f`, including the
-scrobbling slice; its hosted runtime test failed because Android Launcher was in
-the foreground during navigation. Its production app code is the same as
-`b006a6f` (only Android test code differs). It is not a production release.
+Latest completed PR #7 debug APK:
+https://github.com/bxanedot/rynx/actions/runs/40969216328/artifacts/12940360138
+This is a debug APK built with the scrobbling slice; the associated hosted API 36
+phone suite passed. Its production code is at `8718a0f`; later PR commits only
+adjust tests and documentation. It is not a production release.
 Download the ZIP in a browser, extract the APK, then install it with Android's
 package installer or `adb install -r <apk>`. The owner previously could not open
 large in-app previews, so use the GitHub artifact page rather than an inline APK
 preview. PR #7 device test results are artifact
-https://github.com/bxanedot/rynx/actions/runs/40967462418/artifacts/12938263313
+https://github.com/bxanedot/rynx/actions/runs/40969216328/artifacts/12940386433
 PR #5 device test results are artifact
-https://github.com/bxanedot/rynx/actions/runs/40967327024/artifacts/12939206392
+https://github.com/bxanedot/rynx/actions/runs/40968631913/artifacts/12939452834
+Latest PR #5 debug APK:
+https://github.com/bxanedot/rynx/actions/runs/40968631913/artifacts/12939736137
 
 HANDOFF INSTRUCTION FOR THE NEXT SESSION
 ========================================

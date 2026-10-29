@@ -5,8 +5,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Build
 import android.media.AudioManager
+import android.media.AudioTrack
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
 import android.provider.Settings
 import android.provider.OpenableColumns
+import android.os.Handler
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
@@ -29,24 +35,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.core.view.WindowCompat
 import kotlin.math.roundToInt
+import dev.bxane.rynx.library.PlaylistEntryDraft
+import dev.bxane.rynx.library.InvalidPlaylistName
+import dev.bxane.rynx.library.PlaylistRepository
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import dev.bxane.rynx.playback.catalog.AudioResolutionChain
 import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogProvider
+import dev.bxane.rynx.playback.catalog.MusicPlaybackCatalog
 import dev.bxane.rynx.playback.toggleFavoriteId
 import dev.bxane.rynx.playback.discovery.*
+import dev.bxane.rynx.playback.audio.AudioDspSettings
+import dev.bxane.rynx.playback.audio.AudioSignalInfo
+import dev.bxane.rynx.library.PlaylistArchive
 import dev.bxane.rynx.ui.*
-import dev.bxane.rynx.excor.ExcorMusicCatalog
-import dev.bxane.rynx.excor.createLoggedOutExcorMusicCatalog
+import dev.bxane.rynx.apple.AppleMetadataClient
 import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
+import dev.bxane.rynx.innertubex.InnerTubeXFallbackAudioResolver
+import dev.bxane.rynx.innertubex.createInnerTubeXMusicPlaybackCatalog
+import dev.bxane.rynx.innertubex.createInnerTubeXFallbackAudioResolver
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -54,18 +74,29 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** Phone host for the shared Compose UI; the service owns all audio resources. */
+@UnstableApi
 class MainActivity : ComponentActivity() {
     private val state = MutableStateFlow(PlayerUiState(catalogSearchEnabled=true,catalogPlaybackEnabled=true,
-        volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true))
+        volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true,
+        playlistBackupAvailable=true))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
-    private lateinit var catalog: ExcorMusicCatalog
+    private lateinit var catalog: MusicPlaybackCatalog
     private lateinit var audioResolver: AudioResolutionChain
+    private var innertubexHttpClient: HttpClient? = null
+    private var innertubexResolver: InnerTubeXFallbackAudioResolver? = null
     private lateinit var playbackPreparer: MusicPlaybackPreparer
     private lateinit var catalogReady: Deferred<Boolean>
     private var searchJob: Job? = null
@@ -75,7 +106,13 @@ class MainActivity : ComponentActivity() {
         state.update {it.copy(busy=pending || controller?.playbackState==Player.STATE_BUFFERING)}
     }}
     private val appearanceStore by lazy {AndroidAppearanceStore(applicationContext)}
+    private val audioDspStore by lazy {AndroidAudioDspSettingsStore(applicationContext)}
     private var renderingMonitor:AndroidRenderingMonitor?=null
+    private var outputDeviceCallback:AudioDeviceCallback?=null
+    private var availableAudioRoutes:List<String> = emptyList()
+    private val libraryDatabase=lazy(LazyThreadSafetyMode.NONE){AndroidLibraryDatabase(applicationContext)}
+    private val playlistRepository:PlaylistRepository get()=libraryDatabase.value.playlists
+    private var playlistObservation:Job?=null
     private val preferences by lazy { getSharedPreferences("library", MODE_PRIVATE) }
     private val audioManager by lazy { getSystemService(AudioManager::class.java) }
     private val lyricsStore by lazy { AndroidTimedLyricsStore(applicationContext) }
@@ -92,6 +129,32 @@ class MainActivity : ComponentActivity() {
             catch(_:Exception) { state.update { it.copy(error="Choose a timed lyrics (.lrc) file smaller than 256K characters.") } }
         }
     }
+    private val playlistImportPicker=registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if(uri!=null) lifecycleScope.launch {
+            try {
+                val drafts=withContext(Dispatchers.IO) {
+                    contentResolver.openInputStream(uri)?.use(::readPlaylistArchive)
+                        ?:throw IllegalStateException("The selected file could not be opened")
+                }
+                playlistRepository.importPlaylists(PlaylistArchive.decode(drafts))
+                state.update {it.copy(error=null)}
+            } catch(cancelled:CancellationException) {throw cancelled}
+            catch(_:Exception) {state.update {it.copy(error="That playlist backup could not be imported. Check that it is a valid Rynx JSON backup.")}}
+        }
+    }
+    private val playlistExportPicker=registerForActivityResult(ActivityResultContracts.CreateDocument(PlaylistArchive.MIME_TYPE)) { uri ->
+        if(uri!=null) lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val archive=PlaylistArchive.encode(playlistRepository.getPlaylists(),System.currentTimeMillis())
+                    val output=contentResolver.openOutputStream(uri,"wt")?:error("The selected destination could not be opened")
+                    output.bufferedWriter(Charsets.UTF_8).use {it.write(archive)}
+                }
+                state.update {it.copy(error=null)}
+            } catch(cancelled:CancellationException) {throw cancelled}
+            catch(_:Exception) {state.update {it.copy(error="The playlist backup could not be saved. Choose another location and try again.")}}
+        }
+    }
     private val picker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         val saved = preferences.getStringSet("uris", emptySet()).orEmpty().toMutableSet()
         uris.forEach { uri ->
@@ -104,6 +167,11 @@ class MainActivity : ComponentActivity() {
         }
         preferences.edit { putStringSet("uris", saved) }
         restoreLibrary()
+        playlistObservation=lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                playlistRepository.observePlaylists().collect { playlists -> state.update { it.copy(playlists=playlists) } }
+            }
+        }
     }
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
@@ -114,12 +182,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingLyricsTrackId=savedInstanceState?.getString("pending-lyrics-track")
+        state.update { it.copy(reduceMotion=Settings.Global.getFloat(contentResolver,Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f) }
         enableEdgeToEdge()
         title = "rynx"
+        refreshAvailableAudioRoutes()
+        outputDeviceCallback=object:AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices:Array<out AudioDeviceInfo>)=refreshAvailableAudioRoutes()
+            override fun onAudioDevicesRemoved(removedDevices:Array<out AudioDeviceInfo>)=refreshAvailableAudioRoutes()
+        }.also { audioManager.registerAudioDeviceCallback(it,Handler(mainLooper)) }
         state.update {it.copy(appearance=appearanceStore.load())}
+        state.update {it.copy(audioDspSettings=audioDspStore.load())}
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
-        catalog = createLoggedOutExcorMusicCatalog()
-        audioResolver = AudioResolutionChain(catalog, NewPipeFallbackAudioResolver)
+        val innertubexClient = HttpClient(OkHttp)
+        val innertubex = createInnerTubeXFallbackAudioResolver(innertubexClient)
+        catalog = createInnerTubeXMusicPlaybackCatalog(
+            innertubexClient,
+            AppleMetadataClient(HttpClient(OkHttp),DiskAppleCache(File(cacheDir,"apple-catalog-metadata"))),
+        )
+        innertubexHttpClient = innertubexClient
+        innertubexResolver = innertubex
+        audioResolver = AudioResolutionChain(innertubex, NewPipeFallbackAudioResolver)
         playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver) { state.value.discovery.region }
         catalogReady = lifecycleScope.async(Dispatchers.IO) {
             try {
@@ -171,7 +253,10 @@ class MainActivity : ComponentActivity() {
                     val tracks = state.value.tracks
                     val selected = tracks.indexOfFirst { it.id == id }
                     if(selected < 0) {
-                        val saved=(state.value.favoriteTracks+state.value.recentTracks).firstOrNull { it.id==id }
+                        val snapshot=state.value
+                        val saved=(snapshot.favoriteTracks+snapshot.recentTracks+snapshot.playlists.flatMap { playlist ->
+                            playlist.entries.map { entry -> TrackItem(entry.mediaId,entry.title,entry.artist,entry.artworkUrl) }
+                        }).firstOrNull { it.id==id }
                         if(saved!=null && id.startsWith("yt:")) {
                             playCatalogItem(CatalogItem(
                                 provider=CatalogProvider.YouTubeMusic,
@@ -181,6 +266,12 @@ class MainActivity : ComponentActivity() {
                                 artist=saved.subtitle,
                                 artworkUrl=saved.artworkUrl,
                             ))
+                        } else if(saved!=null && id.startsWith("content://")) {
+                            output.setMediaItem(MediaItem.Builder().setMediaId(saved.id).setUri(saved.id).setMediaMetadata(
+                                MediaMetadata.Builder().setTitle(saved.title).setArtist(saved.subtitle)
+                                    .apply { saved.artworkUrl?.let { setArtworkUri(it.toUri()) } }.build(),
+                            ).build())
+                            output.prepare();output.play()
                         }
                         return
                     }
@@ -210,6 +301,13 @@ class MainActivity : ComponentActivity() {
                 val action=if(Build.VERSION.SDK_INT>=29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS
                 startActivity(Intent(action))
             }
+            override fun updateAudioDsp(settings:AudioDspSettings) {
+                val safe=settings.normalized()
+                audioDspStore.save(safe)
+                state.update {it.copy(audioDspSettings=safe)}
+            }
+            override fun openAudioSettings() {state.update {it.copy(audioSettingsOpen=true)}}
+            override fun closeAudioSettings() {state.update {it.copy(audioSettingsOpen=false)}}
             override fun moveInQueue(id:String,toIndex:Int) {
                 controller?.let { output ->
                     val destination=state.value.queue.getOrNull(toIndex)?.id ?: return
@@ -258,22 +356,76 @@ class MainActivity : ComponentActivity() {
                 }
                 state.update { it.copy(favoriteIds=favorites,favoriteTracks=favoriteTracks) }
             }
+            override fun createPlaylist(name:String) {
+                launchLibraryMutation("Playlist could not be created.") { playlistRepository.createPlaylist(name) }
+            }
+            override fun renamePlaylist(id:Long,name:String) {
+                launchLibraryMutation("Playlist could not be renamed.") { playlistRepository.renamePlaylist(id,name) }
+            }
+            override fun deletePlaylist(id:Long) {
+                launchLibraryMutation("Playlist could not be deleted.") { playlistRepository.deletePlaylist(id) }
+            }
+            override fun addTrackToPlaylist(playlistId:Long,track:TrackItem) {
+                val localUri=track.id.takeIf { it.startsWith("content://") }
+                val draft=PlaylistEntryDraft(
+                    mediaId=track.id,
+                    title=track.title,
+                    artist=track.subtitle,
+                    artworkUrl=track.artworkUrl,
+                    source=if(track.id.startsWith("yt:")) "youtube-music" else "local",
+                    localUri=localUri,
+                )
+                launchLibraryMutation("Song could not be added to the playlist.") { playlistRepository.addEntry(playlistId,draft) }
+            }
+            override fun removePlaylistEntry(playlistId:Long,entryId:Long) {
+                launchLibraryMutation("Song could not be removed from the playlist.") { playlistRepository.removeEntry(playlistId,entryId) }
+            }
+            override fun movePlaylistEntry(playlistId:Long,entryId:Long,toIndex:Int) {
+                launchLibraryMutation("Playlist order could not be changed.") { playlistRepository.moveEntry(playlistId,entryId,toIndex) }
+            }
+            override fun importPlaylistBackup() = playlistImportPicker.launch(arrayOf(PlaylistArchive.MIME_TYPE))
+            override fun exportPlaylistBackup() {
+                val stamp=SimpleDateFormat("yyyyMMdd-HHmm",Locale.ROOT).format(Date())
+                playlistExportPicker.launch("rynx-playlists-$stamp.json")
+            }
         }
         setContent {
             val current by state.collectAsStateWithLifecycle()
             var immersivePlayer by remember { mutableStateOf(false) }
+            var startupSplashVisible by remember { mutableStateOf(savedInstanceState == null) }
             SideEffect {
                 WindowCompat.getInsetsController(window,window.decorView).apply {
-                    val dark=current.appearance.darkTheme || current.appearance.material==dev.bxane.rynx.design.RynxMaterialMode.Amoled || immersivePlayer
+                    val dark=startupSplashVisible || current.appearance.darkTheme || current.appearance.material==dev.bxane.rynx.design.RynxMaterialMode.Amoled || immersivePlayer
                     isAppearanceLightStatusBars=!dark
                     isAppearanceLightNavigationBars=!dark
                 }
             }
-            Box(Modifier.fillMaxSize().background(if(immersivePlayer && current.appearance.material!=dev.bxane.rynx.design.RynxMaterialMode.Amoled)Color(0xFF142430) else Color(current.appearance.policy().backgroundArgb)).safeDrawingPadding()) {
-                RynxApp(current,actions,onPlayerVisibleChanged={immersivePlayer=it})
+            Box(Modifier.fillMaxSize().background(
+                if(startupSplashVisible) Color.Black
+                else if(immersivePlayer && current.appearance.material!=dev.bxane.rynx.design.RynxMaterialMode.Amoled) Color(0xFF142430)
+                else Color(current.appearance.policy().backgroundArgb),
+            )) {
+                Box(Modifier.fillMaxSize().safeDrawingPadding().then(
+                    if(startupSplashVisible) Modifier.clearAndSetSemantics {} else Modifier,
+                )) {
+                    RynxApp(current,actions,onPlayerVisibleChanged={immersivePlayer=it})
+                }
+                if(startupSplashVisible) {
+                    RynxStartupSplash(
+                        reduceMotion=current.appearance.reducedMotion(current.reduceMotion),
+                        onPulse={vibrateStartupPulse()},
+                        onFinished={startupSplashVisible=false},
+                    )
+                }
             }
         }
     }
+
+    private fun vibrateStartupPulse() {
+        val vibrator=getSystemService(Vibrator::class.java) ?: return
+        if(vibrator.hasVibrator()) vibrator.vibrate(VibrationEffect.createOneShot(38,VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
     override fun onSaveInstanceState(outState:Bundle) {
         outState.putString("pending-lyrics-track",pendingLyricsTrackId)
         super.onSaveInstanceState(outState)
@@ -298,13 +450,21 @@ class MainActivity : ComponentActivity() {
         super.onStop()
     }
     override fun onDestroy() {
+        outputDeviceCallback?.let(audioManager::unregisterAudioDeviceCallback)
+        outputDeviceCallback=null
         searchJob?.cancel()
         if(::discovery.isInitialized)discovery.close()
         playbackRequests.cancel()
         lyricsJob?.cancel()
+        playlistObservation?.cancel()
+        if(libraryDatabase.isInitialized())libraryDatabase.value.close()
         val ready=if(::catalogReady.isInitialized)catalogReady else null
         ready?.cancel()
         if(::catalog.isInitialized) {val owned=catalog;AndroidResourceCloser.close {ready?.join();owned.close()}}
+        innertubexResolver?.close()
+        innertubexResolver = null
+        innertubexHttpClient?.close()
+        innertubexHttpClient = null
         super.onDestroy()
     }
 
@@ -438,6 +598,8 @@ class MainActivity : ComponentActivity() {
             busy=output.playbackState==Player.STATE_BUFFERING || playbackRequests.isPending,
             positionMillis=output.currentPosition.coerceAtLeast(0),
             durationMillis=output.duration.coerceAtLeast(0),
+            audioSignalInfo=readAudioSignalInfo(output),
+            audioClipCount=AudioEngineDiagnostics.clippingCount,
             repeatLabel=when(output.repeatMode){Player.REPEAT_MODE_ALL->"All";Player.REPEAT_MODE_ONE->"One";else->"Off"},
             shuffleEnabled=output.shuffleModeEnabled,
             queueOrder=playbackOrder(output.currentTimeline,output.shuffleModeEnabled),
@@ -455,6 +617,34 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun readAudioSignalInfo(output:MediaController):AudioSignalInfo {
+        val selected=output.currentTracks.groups.firstOrNull { it.type==C.TRACK_TYPE_AUDIO && it.isSelected }
+        val format=selected?.let { group ->
+            (0 until group.length).firstOrNull(group::isTrackSelected)?.let(group::getTrackFormat)
+        }
+        val encoding=format?.pcmEncoding
+        val bitDepth=when(encoding) {
+            C.ENCODING_PCM_8BIT->8
+            C.ENCODING_PCM_16BIT,C.ENCODING_PCM_16BIT_BIG_ENDIAN->16
+            C.ENCODING_PCM_24BIT,C.ENCODING_PCM_24BIT_BIG_ENDIAN->24
+            C.ENCODING_PCM_32BIT,C.ENCODING_PCM_32BIT_BIG_ENDIAN->32
+            C.ENCODING_PCM_FLOAT,C.ENCODING_PCM_FLOAT_BIG_ENDIAN->32
+            else->null
+        }
+        val nativeRate=AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC).takeIf {it>0}
+        return AudioSignalInfo(
+            sourceSampleRateHz=format?.sampleRate?.takeIf {it>0},
+            sourceBitDepth=bitDepth,
+            sourceEncoding=format?.sampleMimeType,
+            primaryOutputNativeRateHz=nativeRate,
+            availableOutputRoutes=availableAudioRoutes,
+        )
+    }
+    private fun refreshAvailableAudioRoutes() {
+        availableAudioRoutes=audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            .mapNotNull {it.productName?.toString()?.takeIf(String::isNotBlank)}.distinct()
+    }
     private fun trackFor(item: MediaItem, tracks: List<TrackItem>): TrackItem =
         tracks.firstOrNull { it.id==item.mediaId } ?: TrackItem(
             id=item.mediaId,
@@ -463,4 +653,33 @@ class MainActivity : ComponentActivity() {
             artworkUrl=item.mediaMetadata.artworkUri?.toString(),
             metadataSourceUrl=item.mediaMetadata.extras?.getString("rynx.metadata-source"),
         )
+
+    private fun launchLibraryMutation(fallback:String,operation:suspend ()->Any?) {
+        lifecycleScope.launch {
+            try {
+                operation()
+            } catch(cancelled:CancellationException) {
+                throw cancelled
+            } catch(failure:Exception) {
+                val message=(failure as? InvalidPlaylistName)?.message ?: fallback
+                state.update { it.copy(error=message) }
+            }
+        }
+    }
+}
+
+private fun readPlaylistArchive(input:InputStream):String {
+    val output=ByteArrayOutputStream()
+    val buffer=ByteArray(8_192)
+    var total=0
+    while(true) {
+        val count=input.read(buffer)
+        if(count<0)break
+        if(count==0)continue
+        total+=count
+        if(total>PlaylistArchive.MAX_ARCHIVE_BYTES)
+            throw dev.bxane.rynx.library.InvalidPlaylistArchive("Playlist archive exceeds size limit")
+        output.write(buffer,0,count)
+    }
+    return output.toByteArray().toString(Charsets.UTF_8)
 }

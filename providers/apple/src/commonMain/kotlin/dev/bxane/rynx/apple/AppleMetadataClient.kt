@@ -53,6 +53,16 @@ class AppleMetadataClient(
     suspend fun lookup(ids:List<String>,region:String):List<MusicMetadata> = ids.distinct().filter {it.isNotBlank()&&it.all(Char::isDigit)}.chunked(50).flatMap {batch->
         if(batch.isEmpty())emptyList() else ApplePayloads.lookup(document("https://itunes.apple.com/lookup?id=${batch.joinToString(",")}&country=${country(region)}",86_400_000L))
     }
+    suspend fun searchSongs(query:String,region:String="us",limit:Int=30):List<MusicMetadata> {
+        require(query.isNotBlank()) {"Apple Music search query must not be empty"}
+        val target=URLBuilder("https://itunes.apple.com/search").apply {
+            parameters.append("term",query)
+            parameters.append("entity","song")
+            parameters.append("country",country(region))
+            parameters.append("limit",limit.coerceIn(1,200).toString())
+        }.buildString()
+        return ApplePayloads.search(document(target,6*60*60*1000L))
+    }
     suspend fun playlist(link:ApplePlaylistLink,region:String):ChartCollection {
         val playlist=ApplePayloads.playlist(document(link.url),link.id,link.url)
         val metadata=lookup(playlist.tracks.map {it.id.removePrefix("apple:")},region).associateBy {it.id}

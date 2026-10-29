@@ -7,6 +7,8 @@ kotlin {
     jvmToolchain(27)
     android { namespace = "dev.bxane.rynx.ui"; compileSdk = 37; minSdk = 26; compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
     jvm { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21 } }
+    iosArm64()
+    iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -14,7 +16,9 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.animation)
             implementation(compose.components.resources)
-            implementation(project(":shared:playback"))
+            implementation(project(":glyphstudioSfsymbols"))
+            api(project(":shared:playback"))
+            api(project(":shared:library"))
             api(project(":shared:design"))
             implementation("dev.chrisbanes.haze:haze-glass:2.0.1")
             implementation("io.coil-kt.coil3:coil-compose:3.6.3")

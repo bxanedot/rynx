@@ -3,6 +3,7 @@ package dev.bxane.rynx.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -12,12 +13,49 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
+import com.composables.sfsymbols.SfRenderingMode
+import com.composables.sfsymbols.SfSymbol
+import com.composables.sfsymbols.SfSymbolEffect
+import com.composables.sfsymbols.SfSymbolIcon
+import com.composables.sfsymbols.SfWeight
 
-/** Original geometric vectors. No Apple SF Symbols artwork is bundled. */
-enum class Glyph { Play, Pause, Next, Previous, Search, Add, Library, Queue, Close, Note, Sun, Moon, Repeat, Heart, HeartFill, Home, Browse, Radio, Star, StarFill, More, SpeakerQuiet, SpeakerLoud, Output, Lyrics, Shuffle, Reorder, Infinity, AutoMix, Appearance }
+/** Semantic glyph registry. GlyphStudio supplies the shared KMP glyph artwork on every target. */
+internal enum class Glyph(val symbolName: String) {
+    Play("play.fill"), Pause("pause.fill"), Next("forward.end.fill"), Previous("backward.end.fill"),
+    MoveUp("arrow.up"), MoveDown("arrow.down"), Search("magnifyingglass"), Add("plus"), Edit("pencil"),
+    Library("books.vertical"), Queue("list.bullet"), Close("xmark"), Note("music.note"),
+    Sun("sun.max.fill"), Moon("moon.fill"), Repeat("repeat"), Heart("heart"), HeartFill("heart.fill"),
+    Home("house"), Browse("safari"), Radio("dot.radiowaves.left.and.right"), Star("star"), StarFill("star.fill"),
+    More("ellipsis"), SpeakerQuiet("speaker"), SpeakerLoud("speaker.wave.2.fill"), Output("airplayaudio"),
+    Lyrics("quote.bubble"), Shuffle("shuffle"), Reorder("line.3.horizontal"), Equalizer("slider.horizontal.3"),
+    Infinity("infinity"), AutoMix("waveform"), Appearance("gearshape"), ChevronRight("chevron.right"),
+}
 
 @Composable
-fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
+internal fun RynxGlyph(
+    glyph: Glyph,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    effect: SfSymbolEffect? = null,
+    trigger: Any? = null,
+    active: Boolean = true,
+) {
+    val symbol = remember(glyph) { SfSymbol.named(glyph.symbolName) }
+    if (symbol != null) {
+        SfSymbolIcon(
+            symbol = symbol,
+            modifier = modifier,
+            size = 22.dp,
+            weight = SfWeight.Medium,
+            mode = SfRenderingMode.Monochrome,
+            tint = tint,
+            effect = effect,
+            trigger = trigger,
+            active = active,
+            contentDescription = null,
+        )
+        return
+    }
     Canvas(modifier.size(22.dp)) {
         scale(size.width / 24f, size.height / 24f, pivot = Offset.Zero) {
             fun line(x: Float, y: Float, x2: Float, y2: Float) = drawLine(tint, Offset(x,y), Offset(x2,y2), 1.8f, StrokeCap.Round)
@@ -29,8 +67,11 @@ fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
                 Glyph.Pause -> { drawRect(tint,Offset(6f,5f),androidx.compose.ui.geometry.Size(4f,14f)); drawRect(tint,Offset(14f,5f),androidx.compose.ui.geometry.Size(4f,14f)) }
                 Glyph.Next -> { triangle(3f,12f); triangle(12f,21f) }
                 Glyph.Previous -> { triangle(21f,12f); triangle(12f,3f) }
+                Glyph.MoveUp -> { line(12f,20f,12f,5f);line(6f,11f,12f,5f);line(18f,11f,12f,5f) }
+                Glyph.MoveDown -> { line(12f,4f,12f,19f);line(6f,13f,12f,19f);line(18f,13f,12f,19f) }
                 Glyph.Search -> { drawCircle(tint,7f,Offset(10f,10f),style=Stroke(1.8f));line(15f,15f,21f,21f) }
                 Glyph.Add -> { line(12f,4f,12f,20f);line(4f,12f,20f,12f) }
+                Glyph.Edit -> { drawPath(Path().apply{moveTo(4f,17.5f);lineTo(15.8f,5.7f);lineTo(18.3f,8.2f);lineTo(6.5f,20f);lineTo(3.5f,20.5f);close()},tint,style=Stroke(1.7f,join=androidx.compose.ui.graphics.StrokeJoin.Round));line(14f,7.5f,16.5f,10f);line(3.5f,20.5f,9f,19f) }
                 Glyph.Close -> { line(6f,6f,18f,18f);line(18f,6f,6f,18f) }
                 Glyph.Queue -> { for(y in listOf(6f,12f,18f)) { drawCircle(tint,1.2f,Offset(3f,y));line(8f,y,21f,y) } }
                 Glyph.Library -> { for(x in listOf(4f,10f,17f)) line(x,4f,x,20f);line(17f,4f,21f,19f) }
@@ -71,6 +112,8 @@ fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
                     line(18f,3f,21f,6f);line(18f,9f,21f,6f);line(18f,15f,21f,18f);line(18f,21f,21f,18f)
                 }
                 Glyph.Reorder -> for(y in listOf(7f,12f,17f)) line(4f,y,20f,y)
+                Glyph.ChevronRight -> { line(9f,5f,16f,12f);line(16f,12f,9f,19f) }
+                Glyph.Equalizer -> {line(5f,4f,5f,20f);line(12f,4f,12f,20f);line(19f,4f,19f,20f);drawCircle(tint,2.3f,Offset(5f,9f));drawCircle(tint,2.3f,Offset(12f,15f));drawCircle(tint,2.3f,Offset(19f,7f))}
                 Glyph.Infinity -> drawPath(Path().apply {moveTo(12f,12f);cubicTo(7f,2f,1f,6f,2f,12f);cubicTo(3f,19f,7f,21f,12f,12f);cubicTo(17f,3f,22f,5f,22f,12f);cubicTo(22f,19f,17f,22f,12f,12f)},tint,style=Stroke(1.8f,cap=StrokeCap.Round))
                 Glyph.AutoMix -> {drawCircle(tint.copy(alpha=.4f),6f,Offset(8f,12f));drawCircle(tint,6f,Offset(16f,12f));drawCircle(Color.Transparent,2f,Offset(16f,12f));drawCircle(tint.copy(alpha=.45f),2f,Offset(16f,12f))}
                 Glyph.Heart, Glyph.HeartFill -> {

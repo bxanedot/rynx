@@ -1,6 +1,3 @@
-[submodule "dependencies/eXcor"]
-	path = dependencies/eXcor
-	url = https://github.com/bxanedot/eXcor.git
 [submodule "dependencies/GlyphStudio"]
 	path = dependencies/GlyphStudio
 	url = https://github.com/bxanedot/GlyphStudio

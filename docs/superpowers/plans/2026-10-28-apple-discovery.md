@@ -1,5 +1,7 @@
 # Apple-first discovery and local recommendations
 
+> Historical plan; provider steps mentioning eXcor were superseded on 2026-10-29. Use `docs/parity/PROVIDER_UPDATES.md` and `docs/archive/EXCOR.md` for the current state.
+
 Continue the functioning Android/material checkpoint; no prohibited source references. User requests Apple-first metadata, YouTube Music fallback, real Apple-derived Explore genres and Home discovery (global/region/neighbors Daily 100, best new songs, new this week, recent plays, trending, city charts and tour content). No fake chart geography, recommendations, artwork rights or unavailable feeds.
 
 1. Verify official Apple public metadata/feed/genre and authorised MusicKit contracts; retain actual endpoint evidence. Keep protected feeds explicitly unavailable without required access. Never borrow website tokens or use iTunes previews as full playback.

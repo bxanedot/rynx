@@ -11,6 +11,21 @@ import kotlin.test.*
 
 /** Explicit opt-in live contract checks; deterministic fixtures remain the default CI coverage. */
 class LiveAppleMetadataTest {
+    @Test fun actualAppleSongSearchReturnsCoverArtwork() {
+        assumeTrue(System.getenv("RYNX_APPLE_LIVE")=="1")
+        System.getenv("RYNX_TEST_TRUSTSTORE")?.let {System.setProperty("javax.net.ssl.trustStore",it)}
+        runBlocking {
+            val http=HttpClient(OkHttp) {engine {System.getenv("HTTPS_PROXY")?.takeIf {it.isNotBlank()}?.let {proxy=ProxyBuilder.http(Url(it))}}}
+            val client=AppleMetadataClient(http)
+            try {
+                val result=client.searchSongs("Daft Punk Get Lucky","us",10).firstOrNull {it.title.equals("Get Lucky",true) && it.artworkUrl!=null}
+                assertNotNull(result,"Apple search should return Get Lucky with cover artwork")
+                assertTrue(result.artworkUrl!!.startsWith("https://"))
+                println("LIVE APPLE ARTWORK: ${result.title} -> ${result.artworkUrl}")
+            } finally {client.close();http.close()}
+        }
+    }
+
     @Test fun actualPublicGenresChartsAndStructuredPlaylists() {
         assumeTrue(System.getenv("RYNX_APPLE_LIVE")=="1")
         System.getenv("RYNX_TEST_TRUSTSTORE")?.let {System.setProperty("javax.net.ssl.trustStore",it)}

@@ -13,7 +13,7 @@ import dev.bxane.rynx.playback.catalog.ResolvedAudioStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Android-only fallback. Excor remains the primary resolver in the app's chain. */
+/** Android-only fallback when the primary InnerTubeX resolver cannot provide a supported stream. */
 object NewPipeFallbackAudioResolver : AudioStreamResolver {
     private val downloader = OkHttpNewPipeDownloader()
 

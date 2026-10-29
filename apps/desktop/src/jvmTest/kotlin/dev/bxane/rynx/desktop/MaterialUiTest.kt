@@ -32,7 +32,10 @@ class MaterialUiTest {
     @Test fun appearanceExposesThreeMaterialsAndMotionControls() {
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(),Actions())}
         try {
-            assertTrue(find(scene,"Appearance").config[SemanticsActions.OnClick].action!!.invoke())
+            click(scene,"Settings")
+            assertNotNull(find(scene,"Sound & EQ"))
+            assertTrue(find(scene,"Interface & Motion").config[SemanticsActions.OnClick].action!!.invoke())
+            settle(scene)
             for(label in listOf("Liquid Glass","Solid","True AMOLED","Follow system motion")) assertNotNull(find(scene,label))
         } finally {scene.close()}
     }
@@ -44,7 +47,8 @@ class MaterialUiTest {
     @Test fun changingMaterialsUpdatesTheLiveScreenAndReachesPersistence() {
         val actions=Actions();val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(),actions)}
         try {
-            click(scene,"Appearance")
+            click(scene,"Settings")
+            click(scene,"Interface & Motion")
             for(mode in RynxMaterialMode.entries) {
                 click(scene,mode.label)
                 assertEquals(mode,actions.appearance!!.material)
@@ -52,7 +56,21 @@ class MaterialUiTest {
             }
             click(scene,"Done")
             assertEquals(RynxMaterialMode.Amoled,actions.appearance!!.material)
+            click(scene,"Close settings")
             capture(scene,"phone-amoled-home")
+        } finally {scene.close()}
+    }
+    @Test fun settingsPageShowsOnlyImplementedControlsAndDarkModeIsTheDefault() {
+        val actions=Actions();val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(),actions)}
+        try {
+            assertTrue(RynxAppearance().darkTheme)
+            click(scene,"Settings")
+            capture(scene,"settings-page-dark")
+            for(label in listOf("Sound & EQ","Audio Output","Dark Appearance","Interface & Motion","Import Music","Manage Library","Application","Developer")) {
+                assertNotNull(find(scene,label))
+            }
+            click(scene,"Dark Appearance")
+            assertEquals(false,actions.appearance!!.darkTheme)
         } finally {scene.close()}
     }
     @Test fun compactPlayerHidesNavigationAndAnExpandedPlayerRestoresItWithoutOverlap() {

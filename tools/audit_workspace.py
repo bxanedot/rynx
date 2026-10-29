@@ -6,7 +6,6 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 APPROVED = {
-    "dependencies/eXcor": ("https://github.com/bxanedot/eXcor", "deb51bafc219645133f3f9145a68719cade7165e"),
     "dependencies/GlyphStudio": ("https://github.com/bxanedot/GlyphStudio", "7db5de2e81c6687f9e3b483eeaac43a145e9704c"),
 }
 
@@ -27,9 +26,12 @@ def main():
             raise ValueError("Unreviewed dependency revision: " + path)
         if git("-C", path, "status", "--porcelain", "--untracked-files=no"):
             raise ValueError("Approved dependency has tracked modifications: " + path)
-    for source, retained in (("LICENSE", "Excor-LICENSE.txt"), ("NOTICE", "Excor-NOTICE.txt"), ("ejs/LICENSE", "Excor-EJS-LICENSE.txt")):
-        if (ROOT / "dependencies/eXcor" / source).read_bytes() != (ROOT / "third_party_licenses" / retained).read_bytes():
-            raise ValueError("Retained Excor notice differs from pinned dependency: " + retained)
+    if (ROOT / "dependencies/eXcor").exists() or (ROOT / "providers/excor").exists():
+        raise ValueError("Archived eXcor must not be present in the active Rynx workspace")
+    for build_file in (ROOT / "settings.gradle.kts", ROOT / "apps/android/build.gradle.kts", ROOT / "apps/desktop/build.gradle.kts"):
+        contents = build_file.read_text()
+        if "providers:excor" in contents or 'includeBuild("dependencies/eXcor")' in contents:
+            raise ValueError("Archived eXcor is still linked from " + str(build_file.relative_to(ROOT)))
     for base in ("apps", "shared", "providers", "services"):
         for file in (ROOT / base).rglob("*"):
             if file.is_symlink() and not file.resolve().is_relative_to(ROOT):

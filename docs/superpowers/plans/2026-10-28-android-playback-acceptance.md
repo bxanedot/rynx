@@ -1,5 +1,7 @@
 # Android Provider-to-Playback Acceptance Plan
 
+> Historical plan only; superseded on 2026-10-29 when the user requested eXcor be archived. Do not execute its eXcor steps. Current provider policy is in `docs/parity/PROVIDER_UPDATES.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Verify and harden the real Android path from Apple Music metadata selection through conservative YouTube Music matching, Excor/NewPipe stream resolution, and the Media3 playback service.

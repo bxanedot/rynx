@@ -228,6 +228,7 @@ internal enum class PlayerPane { Artwork, Queue, Lyrics }
                             PlayerButton(Glyph.Lyrics,if(presentation.pane==PlayerPane.Lyrics)"Hide lyrics" else "Show lyrics",{
                                 presentation.pane=if(presentation.pane==PlayerPane.Lyrics)PlayerPane.Artwork else PlayerPane.Lyrics
                             },enabled=interactive && (state.lyricsImportAvailable || state.lyrics.isNotEmpty()),selected=presentation.pane==PlayerPane.Lyrics,iconSize=23.dp)
+                            PlayerButton(Glyph.Equalizer,"Sound and EQ",actions::openAudioSettings,enabled=interactive,iconSize=25.dp)
                             PlayerButton(Glyph.Output,"Audio output",actions::showAudioOutput,enabled=interactive && state.audioOutputAvailable,iconSize=25.dp)
                             PlayerButton(Glyph.Queue,if(presentation.pane==PlayerPane.Queue)"Hide queue" else "Show queue",{
                                 presentation.pane=if(presentation.pane==PlayerPane.Queue)PlayerPane.Artwork else PlayerPane.Queue

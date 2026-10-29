@@ -5,6 +5,8 @@ import kotlin.test.*
 class AppearanceTest {
     @Test fun glassIsTheDefaultAndAllMaterialsHaveExplicitEffectPolicies() {
         assertEquals(RynxMaterialMode.LiquidGlass,RynxAppearance().material)
+        assertTrue(RynxAppearance().darkTheme)
+        assertEquals(0xFF141417L,RynxAppearance().policy().backgroundArgb)
         assertTrue(RynxAppearance().policy().backdrop)
         val solid=RynxAppearance(material=RynxMaterialMode.Solid).policy()
         assertFalse(solid.backdrop);assertFalse(solid.ambient)

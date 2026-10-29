@@ -1,6 +1,6 @@
 # UI reference change
 
-2026-10-27 — User explicitly stated no Vyon reference exists and authorized Apple Music across all platforms as the visual reference. This supersedes the original Vyon-only/no-Apple-Music-clone visual constraint. The technical scope, rynx branding, bxane credit, clean-room isolation, primary Excor extraction with the subsequently authorized NewPipe fallback and Spotify requirements remain.
+2026-10-27 — User explicitly stated no Vyon reference exists and authorized Apple Music across all platforms as the visual reference. This supersedes the original Vyon-only/no-Apple-Music-clone visual constraint. The technical scope, rynx branding, bxane credit, clean-room isolation, Android InnerTubeX → NewPipeExtractor provider chain, and Spotify requirements remain. eXcor was later archived at the user's request; see `../archive/EXCOR.md`.
 
 Apple public guides/screenshots are now the evidence source. Exact Apple motion timings are unmeasured. No Apple artwork, trademarks or proprietary font files will be shipped. Linux, Android TV and Wear OS need platform adaptations rather than claims of native Apple Music parity.
 
@@ -13,7 +13,7 @@ Follow-up clarification: the user describes Vyon as a literal Apple Music copy a
 
 2026-10-28 — Android phone landscape places artwork/metadata at left and transport at right so controls and app navigation remain reachable. Short screens/large fonts use a scrollable control region. Both preserve the three material modes and shared transition. No corresponding landscape motion recording has been measured.
 
-2026-10-28 — GlyphStudio's implementation license and Apple's artwork license are audited separately. Android currently uses independently authored semantic vector equivalents rather than redistributing SF artwork. Exact SF optical geometry and symbol effects remain unverified.
+2026-10-28 — GlyphStudio's implementation license and Apple's artwork license are audited separately. The shared app now uses GlyphStudio's KMP symbols on all targets per user instruction; complete artwork rights review separately before release. Exact visual matching remains unverified.
 
 
 2026-10-28 — The permitted current Apple Browse by Genre mobile-web capture at 390×844 shows two square tiles (about 165px), roughly 25px outer margins, 10px gutters, small radii and captions below. Rynx now follows that geometry and loads Apple's actual curator categories, with the canonical genre taxonomy as fallback. The reference photos are replaced by original vector illustrations while artwork reuse rights are unresolved. Measured source colors are retained for the first observed categories. This is a documented asset substitution, not a claim of photo or Android-native parity. Reference screenshot SHA-256: af978bb323c15ef4375d3df41d808f26821d6b1cb317bf4fc60c4d87551c22ca ; source https://music.apple.com/us/room/6456176470 .

@@ -4,6 +4,9 @@ import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.LyricLine
 import dev.bxane.rynx.design.RynxAppearance
 import dev.bxane.rynx.playback.discovery.*
+import dev.bxane.rynx.library.Playlist
+import dev.bxane.rynx.playback.audio.AudioDspSettings
+import dev.bxane.rynx.playback.audio.AudioSignalInfo
 
 data class TrackItem(
     val id: String,
@@ -39,10 +42,16 @@ data class PlayerUiState(
     val favoriteIds: Set<String> = emptySet(),
     val favoriteTracks: List<TrackItem> = emptyList(),
     val recentTracks: List<TrackItem> = emptyList(),
+    val playlists: List<Playlist> = emptyList(),
+    val playlistBackupAvailable: Boolean = false,
     val volume: Float = 1f,
     val volumeControlAvailable: Boolean = false,
     val audioOutputAvailable: Boolean = false,
     val audioOutputName: String = "This device",
+    val audioDspSettings: AudioDspSettings = AudioDspSettings(),
+    val audioSignalInfo: AudioSignalInfo = AudioSignalInfo(),
+    val audioClipCount: Long = 0,
+    val audioSettingsOpen: Boolean = false,
     val shuffleEnabled: Boolean = false,
     val shuffleAvailable: Boolean = false,
     val queueEditingAvailable: Boolean = false,
@@ -75,6 +84,9 @@ interface PlayerActions {
     fun toggleFavorite(id: String) = Unit
     fun setVolume(fraction: Float) = Unit
     fun showAudioOutput() = Unit
+    fun updateAudioDsp(settings: AudioDspSettings) = Unit
+    fun openAudioSettings() = Unit
+    fun closeAudioSettings() = Unit
     fun toggleShuffle() = Unit
     fun moveInQueue(id: String, toIndex: Int) = Unit
     fun clearUpcomingQueue() = Unit
@@ -88,4 +100,12 @@ interface PlayerActions {
     fun closeDiscovery() = Unit
     fun playDiscovery(track:MusicMetadata) = Unit
     fun openMusicSource(url:String) = Unit
+    fun createPlaylist(name:String) = Unit
+    fun renamePlaylist(id:Long,name:String) = Unit
+    fun deletePlaylist(id:Long) = Unit
+    fun addTrackToPlaylist(playlistId:Long,track:TrackItem) = Unit
+    fun removePlaylistEntry(playlistId:Long,entryId:Long) = Unit
+    fun movePlaylistEntry(playlistId:Long,entryId:Long,toIndex:Int) = Unit
+    fun importPlaylistBackup() = Unit
+    fun exportPlaylistBackup() = Unit
 }

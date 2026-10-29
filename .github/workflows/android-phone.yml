@@ -1,9 +1,13 @@
 name: Android phone runtime
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: rynx-phone-${{ github.ref }}
+  group: rynx-phone-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   phone:
@@ -24,6 +28,29 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build phone and instrumentation APKs
         run: ./gradlew :apps:android:assembleDebug :apps:android:assembleDebugAndroidTest --console=plain
+      - name: Upload installable debug APK
+        id: debug-apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: rynx-debug-apk
+          path: apps/android/build/outputs/apk/debug/android-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Share debug APK artifact link
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        env:
+          ARTIFACT_URL: ${{ steps.debug-apk.outputs.artifact-url }}
+        run: |
+          set -euo pipefail
+          test -n "$ARTIFACT_URL"
+          echo "Rynx debug APK artifact: $ARTIFACT_URL"
+          {
+            echo "## Installable Rynx debug APK"
+            echo
+            echo "[Download the APK artifact]($ARTIFACT_URL) and extract the ZIP. Install the contained `android-debug.apk`."
+            echo "Source commit: $GITHUB_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Enable Android hardware acceleration
         run: sudo chmod a+rw /dev/kvm
       - name: Run actual phone tests
@@ -39,7 +66,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-phone
+          name: android-phone-test-results
           path: |
-            apps/android/build/outputs/apk/
             apps/android/build/reports/
+            apps/android/build/outputs/androidTest-results/connected/
+          if-no-files-found: ignore

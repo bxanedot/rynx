@@ -10,6 +10,6 @@ Android's adaptive launcher foreground at `apps/android/src/main/res/drawable/ry
 
 ## Other glyphs and assets
 
-`shared/ui/.../RynxGlyph.kt` contains the original Compose Canvas symbols for Play, Pause, Next, Previous, Search, Add, Library, Queue, Close, Note, Sun, Moon, Repeat, Home, Browse, Radio, Star, More, speaker/output controls, Lyrics, Shuffle, Reorder, AutoMix, Appearance and Heart. They are original Rynx geometry, not SF Symbols artwork. Geometry parity, animated symbol effects, hierarchical/palette rendering, RTL mirroring and the remaining platform asset inventory are not yet verified.
+`shared/ui/.../RynxGlyph.kt` owns the semantic registry and resolves symbols through GlyphStudio's dynamic API from common KMP UI. Original Canvas geometry remains as a fallback for catalog misses. The Library selection bounce uses GlyphStudio's by-layer effect. Android/JVM build verification and Apple-toolchain verification are recorded separately; artwork terms, hierarchical/palette rendering, RTL mirroring and the remaining platform asset inventory are not yet verified.
 
 Photographs, album artwork, thumbnails and the supplied liquid finish textures remain raster. Never embed raster in SVG and call it vector. Usage is limited to the owner-provided Rynx marks and finishes; no third-party artwork was added.

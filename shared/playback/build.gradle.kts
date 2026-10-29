@@ -3,5 +3,10 @@ kotlin {
     jvmToolchain(27)
     android { namespace = "dev.bxane.rynx.playback"; compileSdk = 37; minSdk = 26; compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
     jvm { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21 } }
-    sourceSets { commonTest.dependencies { implementation(kotlin("test")) } }
+    iosArm64()
+    iosSimulatorArm64()
+    sourceSets {
+        commonMain.dependencies { implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0") }
+        commonTest.dependencies { implementation(kotlin("test")) }
+    }
 }

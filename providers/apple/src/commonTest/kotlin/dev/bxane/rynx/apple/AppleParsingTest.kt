@@ -1,12 +1,23 @@
 package dev.bxane.rynx.apple
 
+import dev.bxane.rynx.playback.discovery.MusicGenre
 import kotlin.test.*
 
 class AppleParsingTest {
-    @Test fun feedPreservesRankAndGenreFactsWithoutReusingAppleArt() {
+    @Test fun feedPreservesRankAndUsesHighResolutionAppleArtwork() {
         val result=ApplePayloads.feed("""{"feed":{"title":"Top Songs","country":"us","updated":"2026-10-28","results":[{"id":"100","name":"Moonlight","artistName":"bxane","artworkUrl100":"https://example.test/apple.jpg","genres":[{"genreId":"14","name":"Pop"}],"url":"https://music.apple.com/us/song/100"}]}}""","us")
         assertEquals("apple:100",result.tracks.single().id);assertEquals(1,result.tracks.single().chartRank)
-        assertEquals(listOf("14"),result.tracks.single().genreIds);assertNull(result.tracks.single().artworkUrl)
+        assertEquals(listOf("14"),result.tracks.single().genreIds);assertEquals("https://example.test/apple.jpg",result.tracks.single().artworkUrl)
+    }
+    @Test fun normalizesAppleArtworkAndParsesGenreFeedArtwork() {
+        val chart=ApplePayloads.lookup("""{"results":[{"kind":"song","trackId":7,"trackName":"Glass","artistName":"Rynx","artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/abc/100x100bb.jpg"}]}""").single()
+        assertEquals("https://is1-ssl.mzstatic.com/image/thumb/abc/1200x1200bb.jpg",chart.artworkUrl)
+        val genre=ApplePayloads.genreFeed("""{"feed":{"entry":[{"id":{"attributes":{"im:id":"9"}},"im:name":{"label":"Night"},"im:artist":{"label":"Artist"},"im:image":[{"label":"https://is1-ssl.mzstatic.com/image/thumb/night/55x55bb.jpg","attributes":{"height":"55"}},{"label":"https://is1-ssl.mzstatic.com/image/thumb/night/170x170bb.jpg","attributes":{"height":"170"}}]}]}}""","us",MusicGenre("14","Pop"))
+        assertEquals("https://is1-ssl.mzstatic.com/image/thumb/night/1200x1200bb.jpg",genre.tracks.single().artworkUrl)
+    }
+    @Test fun appleSearchPayloadUsesRealArtwork() {
+        val found=ApplePayloads.search("""{"results":[{"kind":"song","trackId":8,"trackName":"Real Song","artistName":"Artist","artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/cover/100x100bb.jpg"}]}""")
+        assertEquals("https://is1-ssl.mzstatic.com/image/thumb/cover/1200x1200bb.jpg",found.single().artworkUrl)
     }
     @Test fun genresComeFromAppleHierarchyAndMalformedNodesAreIgnored() {
         val genres=ApplePayloads.genres("""{"34":{"name":"Music","subgenres":{"14":{"id":"14","name":"Pop","subgenres":{"15":{"id":"15","name":"Dream Pop"}}},"broken":{"id":"","name":""}}}}""")

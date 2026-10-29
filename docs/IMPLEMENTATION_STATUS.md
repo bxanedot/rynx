@@ -13,7 +13,7 @@ Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `
 - eXcor catalog/stream adapter and NewPipe Android fallback adapter, with deterministic mapping, redaction, ordering, cancellation, and build checks.
 - Persistent playlists use SQLDelight with common KMP models, validation/edit rules, transactions and Flow observation; Android supplies the SQLite driver. Library create/rename/add/remove/reorder/delete and playlist detail UI are wired. Shared SQLDelight/rules tests, headless workflows and hosted Android SQLite close/reopen/order instrumentation pass.
 
-Fresh local verification on this combined branch completed successfully: Android debug and instrumentation APK packaging, Android unit tests, lint, desktop/headless Compose, shared playback/library/design/UI suites, eXcor and Apple provider tests, and NewPipe Android compilation. Reports contain 161 cases: 158 passed, three opt-in live-provider checks skipped, and zero failures/errors. Lint has zero errors and two warnings. Hosted Verify run [40838202297](https://github.com/bxanedot/rynx/actions/runs/40838202297) passed the source-boundary audit, debug/instrumentation/minified-release packaging, lint and configured shared/provider checks. Hosted phone run [40838202274](https://github.com/bxanedot/rynx/actions/runs/40838202274) passed debug APK installation and API 36 connected instrumentation. The release APK is unsigned and not installable without bxane's signing key.
+Local verification of the app-source commit `a407e1c` completed successfully: Android debug/instrumentation packaging, Android unit tests, lint, desktop/headless Compose, shared playback/library/design/UI suites, eXcor and Apple provider tests, and NewPipe Android compilation. Reports contain 161 cases: 158 passed, three opt-in live-provider checks skipped, and zero failures/errors. Lint has zero errors and two warnings. On the current test-only follow-up commit `72cbf9a`, hosted Verify run [40844482143](https://github.com/bxanedot/rynx/actions/runs/40844482143) passed the source-boundary audit, debug/instrumentation/minified-release packaging, lint and configured shared/provider checks. Hosted phone run [40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288) passed debug APK installation and API 36 connected instrumentation. The release APK is unsigned and not installable without bxane's signing key.
 
 ## Implemented but unverified at runtime
 
@@ -43,10 +43,10 @@ Remaining advanced audio work includes ReplayGain tag normalization, overlapping
 
 ## Next acceptance gates
 
-1. Repeat the API 36 connected run to confirm the transient Search/navigation test failure on `ab4c09b` does not recur.
-2. Confirm live provider behavior and actual audible playback on a physical Android device without logging secrets.
-3. Integrate download completion with the attribution sidecar and complete Spotify authorization.
-4. Finish remaining Android screens, accessibility, Apple Music reference comparisons and device-level audio/performance tests.
+1. Confirm live provider behavior and actual audible playback on a physical Android device without logging secrets.
+2. Integrate download completion with the attribution sidecar and complete Spotify authorization.
+3. Finish remaining Android screens, accessibility, Apple Music reference comparisons and device-level audio/performance tests.
+4. Re-run the hosted Android suite after future changes to the app or navigation test harness.
 5. Only after the Android completion gate, expand substantially to tablet, desktop, TV, Wear and iOS/iPadOS targets.
 
 For full inventories and evidence see `docs/IMPLEMENTATION_PLAN.md`, `docs/parity/ANDROID_FEATURE_MATRIX.md`, `docs/parity/ANDROID_SCREEN_MATRIX.md`, `docs/parity/PLATFORM_MATRIX.md`, and `docs/parity/BLOCKERS.md`.

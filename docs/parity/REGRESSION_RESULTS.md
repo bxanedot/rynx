@@ -87,3 +87,9 @@ Hosted phone run [40838202274](https://github.com/bxanedot/rynx/actions/runs/408
 The first device run on `4d0400c` exposed that the new playlist test returned a `Boolean`, which JUnit rejects; the test now has a `void` method signature and verifies database reopen/order. A later run on `ab4c09b` passed Verify but the navigation test found the launcher instead of Rynx; the latest run passed. The cause of that intermittent failure is not established. The Android check script now prints sanitized fatal-app logcat excerpts if a connected test fails again.
 
 Install the debug APK with `adb install -r`. A debug APK signed by a different development key cannot update an existing install; uninstalling `dev.bxane.rynx` first removes app data. The release artifact is unsigned, so Android correctly refuses to install it until an owner-controlled signing key is configured.
+
+## Android APK installation and navigation-test follow-up
+
+2026-10-29, current PR commit `72cbf9a`. Verify run [40844482143](https://github.com/bxanedot/rynx/actions/runs/40844482143) and API 36 Pixel 6 phone run [40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288) both passed. The phone run explicitly installed the debug APK and passed connected instrumentation, including Search/back behavior. The app implementation did not change in this follow-up; the instrumentation launcher was made deterministic.
+
+Intermediate device runs documented the test harness issue: `ActivityScenario` intermittently left the launcher as the active accessibility window. A `CLEAR_TASK` retry destroyed the scenario-owned activity, while a `force-stop` shell variant could terminate the instrumentation process and left an empty diagnostic report. The final test uses `am start -W` without force-stopping Rynx; the API 36 connected suite passes. This does not change the separate APK signing status: debug installs; minified release remains unsigned pending an owner-controlled key.

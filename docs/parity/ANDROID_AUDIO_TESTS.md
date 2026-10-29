@@ -6,14 +6,14 @@ Passed local checks include queue/order invariants, synchronized/enhanced LRC pa
 
 Instrumentation:
 
-- `PlaybackSessionTest`: generated silent PCM advances, exposes the expected media metadata, and pauses/resumes through the actual service. Passed in the hosted API 36 connected run for commit `a407e1c`.
-- `ProviderHeaderResolverTest`: verifies URL-scoped provider headers and immutable input `DataSpec`; passed in the hosted API 36 connected run.
+- `PlaybackSessionTest`: generated silent PCM advances, exposes the expected media metadata, and pauses/resumes through the actual service. Passed in hosted API 36 connected run [40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288) for commit `72cbf9a`.
+- `ProviderHeaderResolverTest`: verifies URL-scoped provider headers and immutable input `DataSpec`; passed in the same hosted API 36 connected run.
 - `PlayerDeviceTest`: actual player controls reach system volume and Media3, LRC tap seeks, shuffle/reorder/clear retain correct identity, rendered frames captured.
 - `LocalAudioMetadataTest`: independently generated silent MP3 with original embedded cover/title and fallback metadata.
 - `LyricsImportRecreationTest`: recreates the host while the player is active, then imports a real timed-lyrics file and verifies it attaches to that track. It does not verify a result returning from a picker that remained open through recreation.
 - `AppearancePersistenceTest` and `LaunchTest`: preference normalization and recreation/metadata behavior.
 
-Runtime status: the hosted API 36 Pixel 6 emulator installed the debug APK and passed `connectedDebugAndroidTest` on commit `a407e1c` ([run 40838202274](https://github.com/bxanedot/rynx/actions/runs/40838202274)). This includes the generated-PCM service playback/pause-resume and Android SQLite playlist close/reopen/order tests. The local software emulator still does not boot; no physical phone is attached. Even generated silent-PCM playback passing does not establish audible signal quality.
+Runtime status: the hosted API 36 Pixel 6 emulator installed the debug APK and passed `connectedDebugAndroidTest` on commit `72cbf9a` ([run 40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288)). The suite includes generated-PCM service playback/pause-resume, URL-scoped headers, Search/back navigation, and Android SQLite playlist close/reopen/order tests. The local software emulator still does not boot; no physical phone is attached. Even generated silent-PCM playback passing does not establish audible signal quality.
 
 Still required: process/OS recovery beyond the tested Activity-stop case, focus interruptions, headset changes, notification interaction, live buffering/recovery, audio device changes, long audible sessions, glitches, physical DSP behavior, battery and first-audio latency. No performance numbers or bit-perfect claim are available.
 

@@ -14,7 +14,7 @@ kotlin {
     jvmToolchain(27)
     jvm { compilerOptions { jvmTarget = JvmTarget.JVM_26 } }
     android {
-        namespace = "dev.bxane.rynx.vyonex"
+        namespace = "dev.bxane.rynx.excor"
         compileSdk = 37
         minSdk = 26
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }
@@ -32,7 +32,7 @@ kotlin {
         val jvmCommonMain by getting
         jvmCommonMain.dependencies {
             api(project(":shared:playback"))
-            api("com.vyonex:vyonex:0.2.0")
+            api("com.bxane.excor:excor:1.0.0")
             implementation("com.squareup.okhttp3:okhttp:5.5.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         }

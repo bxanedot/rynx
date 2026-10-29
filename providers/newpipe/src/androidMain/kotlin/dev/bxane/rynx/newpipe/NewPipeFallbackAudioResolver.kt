@@ -13,7 +13,7 @@ import dev.bxane.rynx.playback.catalog.ResolvedAudioStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Android-only fallback. VyonEx remains the primary resolver in the app's chain. */
+/** Android-only fallback. Excor remains the primary resolver in the app's chain. */
 object NewPipeFallbackAudioResolver : AudioStreamResolver {
     private val downloader = OkHttpNewPipeDownloader()
 

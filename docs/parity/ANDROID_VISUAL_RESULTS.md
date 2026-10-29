@@ -6,9 +6,9 @@
 
 2026-10-28: The isolated playback-preparation worktree passed the full local deterministic gate in 10m18s:
 
-`:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :providers:vyonex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --offline --console=plain`
+`:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :providers:excor:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --offline --console=plain`
 
-JUnit reports contain 81 cases: 78 passed, three opt-in live-provider checks skipped, and zero failures/errors. Counts: shared playback 37, design 15, shared UI 7, VyonEx 8 (two live skips), Apple provider 10 (one live skip), and Android local unit tests 4. Android debug, minified unsigned release, and instrumentation APKs were produced. Lint reported zero errors and one warning (`OldTargetApi`, target SDK 36).
+JUnit reports contain 81 cases: 78 passed, three opt-in live-provider checks skipped, and zero failures/errors. Counts: shared playback 37, design 15, shared UI 7, Excor 8 (two live skips), Apple provider 10 (one live skip), and Android local unit tests 4. Android debug, minified unsigned release, and instrumentation APKs were produced. Lint reported zero errors and one warning (`OldTargetApi`, target SDK 36).
 
 Artifacts from this worktree:
 
@@ -16,13 +16,13 @@ Artifacts from this worktree:
 - Minified release APK: 6,931,445 bytes; SHA-256 `98fa23990ddda87a4f9fec184980beea795a6adbb3c07852a5eefd4cc3b54433`. It is unsigned and is not a release candidate.
 - Instrumentation APK: 430,090 bytes; SHA-256 `01c1c06485eeb9c0dbbbf27d809383f476ea2d5b85340616ff87831f47b559c4`.
 
-The new shared preparation and stream-resolution contracts are covered by deterministic common tests; instrumentation asserts generated local audio metadata and pause/resume and separately checks URL-scoped request headers. The instrumentation APK only compiled: a local API 36 software emulator never reached `sys.boot_completed`, so no current-branch device test ran. The opt-in VyonEx live request failed before receiving a provider response (`java.io.IOException`, `ConnectPlan.kt:472`, connection refused). Apple live checks were not attempted in this run. Neither release playback nor full product parity is established by this build.
+The new shared preparation and stream-resolution contracts are covered by deterministic common tests; instrumentation asserts generated local audio metadata and pause/resume and separately checks URL-scoped request headers. The instrumentation APK only compiled: a local API 36 software emulator never reached `sys.boot_completed`, so no current-branch device test ran. The opt-in Excor live request failed before receiving a provider response (`java.io.IOException`, `ConnectPlan.kt:472`, connection refused). Apple live checks were not attempted in this run. Neither release playback nor full product parity is established by this build.
 
 ## Latest local verification
 
-The complete command passed in 8m15s against VyonEx `4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1`:
+The complete command passed in 8m15s against Excor `4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1`:
 
-`:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:vyonex:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest`
+`:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:excor:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest`
 
 | Scope | Cases | Failures / errors / skips |
 |---|---:|---|
@@ -30,7 +30,7 @@ The complete command passed in 8m15s against VyonEx `4e8c8c5f683d75d83dabe4a9ca0
 | Shared material/geometry/budget | 7 | 0 / 0 / 0 |
 | Shared UI renderer/morph/motion | 7 | 0 / 0 / 0 |
 | Shared playback/order/lyrics/favorites | 17 | 0 / 0 / 0 |
-| VyonEx adapter | 5 | 0 / 0 / 0 |
+| Excor adapter | 5 | 0 / 0 / 0 |
 | Android local unit | 7 | 0 / 0 / 0 |
 | Total | 82 | 0 / 0 / 0 |
 
@@ -73,7 +73,7 @@ Run [40739637239](https://github.com/bxanedot/rynx/actions/runs/40739637239) for
 
 ## Apple discovery checkpoint after review fixes
 
-A fresh default suite passed on 2026-10-28 in 1m42s: Android debug/test packaging, lint/unit tests, all shared tests, both provider test suites, and the complete Compose harness. Reports contain 106 cases: 104 passed, two opt-in live checks skipped, no failures/errors. Breakdown: Compose harness 43; Android unit 7; playback/ranking/listening 26; design 7; shared UI 7; Apple provider 9 (one live skip); VyonEx provider 7 (one live skip). The explicit live run separately passed Apple engine search/lookup/artwork and public data checks (51 genres, 100 regional, 100 global, 50 cities, 50 Pop songs).
+A fresh default suite passed on 2026-10-28 in 1m42s: Android debug/test packaging, lint/unit tests, all shared tests, both provider test suites, and the complete Compose harness. Reports contain 106 cases: 104 passed, two opt-in live checks skipped, no failures/errors. Breakdown: Compose harness 43; Android unit 7; playback/ranking/listening 26; design 7; shared UI 7; Apple provider 9 (one live skip); Excor provider 7 (one live skip). The explicit live run separately passed Apple engine search/lookup/artwork and public data checks (51 genres, 100 regional, 100 global, 50 cities, 50 Pop songs).
 
 The independent review's four behavioral regressions were observed failing before fixes and now pass. New shared listening tracker tests pass; its service/background instrumentation is compiled but has not yet run. Default test tasks track the live-contract opt-in as an input so cached live results cannot silently stand in for default execution.
 

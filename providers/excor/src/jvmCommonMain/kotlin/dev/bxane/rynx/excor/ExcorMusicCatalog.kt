@@ -1,11 +1,11 @@
-package dev.bxane.rynx.vyonex
+package dev.bxane.rynx.excor
 
-import com.vyonex.VyonEx
-import com.vyonex.VyonExConfigStore
-import com.vyonex.VyonExHost
-import com.vyonex.VyonExLogLevel
-import com.vyonex.VyonExPlaylist
-import com.vyonex.VyonExSession
+import com.bxane.excor.Excor
+import com.bxane.excor.ExcorConfigStore
+import com.bxane.excor.ExcorHost
+import com.bxane.excor.ExcorLogLevel
+import com.bxane.excor.ExcorPlaylist
+import com.bxane.excor.ExcorSession
 import okhttp3.OkHttpClient
 import dev.bxane.rynx.playback.catalog.AudioStreamResolver
 import dev.bxane.rynx.playback.catalog.CatalogPage
@@ -15,12 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
-/** Desktop/JVM adapter around the approved VyonEx engine. It never performs extraction itself. */
-class VyonExMusicCatalog(
-    host: VyonExHost,
+/** Desktop/JVM adapter around the approved Excor engine. It never performs extraction itself. */
+class ExcorMusicCatalog(
+    host: ExcorHost,
     private val releaseHost: () -> Unit = {},
 ) : MusicPlaybackCatalog, AudioStreamResolver {
-    private val engine = VyonEx(host)
+    private val engine = Excor(host)
 
     fun init() = engine.init()
     override fun initialize() = init()
@@ -30,7 +30,7 @@ class VyonExMusicCatalog(
         require(normalized.isNotEmpty()) { "Search text must not be empty" }
         engine.searchMusic(normalized).let { page ->
             CatalogPage(
-                items = page.results.map(VyonExCatalogMapper::mapSearchResult),
+                items = page.results.map(ExcorCatalogMapper::mapSearchResult),
                 continuation = page.continuation,
             )
         }
@@ -40,7 +40,7 @@ class VyonExMusicCatalog(
         require(continuation.isNotBlank()) { "Search continuation must not be empty" }
         engine.searchMore(continuation).let { page ->
             CatalogPage(
-                items = page.results.map(VyonExCatalogMapper::mapSearchResult),
+                items = page.results.map(ExcorCatalogMapper::mapSearchResult),
                 continuation = page.continuation,
             )
         }
@@ -48,22 +48,22 @@ class VyonExMusicCatalog(
 
     suspend fun playlist(playlistId: String): CatalogPage? {
         require(playlistId.isNotBlank()) { "Playlist ID must not be empty" }
-        val playlist: VyonExPlaylist = engine.playlist(playlistId) ?: return null
-        return VyonExCatalogMapper.mapListPage(playlist.firstPage)
+        val playlist: ExcorPlaylist = engine.playlist(playlistId) ?: return null
+        return ExcorCatalogMapper.mapListPage(playlist.firstPage)
     }
 
     suspend fun playlistMore(continuation: String): CatalogPage {
         require(continuation.isNotBlank()) { "Playlist continuation must not be empty" }
-        return VyonExCatalogMapper.mapListPage(engine.playlistMore(continuation))
+        return ExcorCatalogMapper.mapListPage(engine.playlistMore(continuation))
     }
 
     override suspend fun searchAppleMusic(query:String,country:String?,limit:Int):List<dev.bxane.rynx.playback.discovery.MusicMetadata> =
-        withContext(Dispatchers.IO) { engine.appleMusic.searchSongs(query,country,limit).mapNotNull(VyonExAppleMetadataMapper::song) }
+        withContext(Dispatchers.IO) { engine.appleMusic.searchSongs(query,country,limit).mapNotNull(ExcorAppleMetadataMapper::song) }
 
     override suspend fun appleSong(id:Long,country:String?):dev.bxane.rynx.playback.discovery.MusicMetadata? =
-        withContext(Dispatchers.IO) { engine.appleMusic.song(id,country)?.let(VyonExAppleMetadataMapper::song) }
+        withContext(Dispatchers.IO) { engine.appleMusic.song(id,country)?.let(ExcorAppleMetadataMapper::song) }
 
-    suspend fun appleArtistImages(id:Long,country:String?):List<com.vyonex.VyonExThumbnail> =
+    suspend fun appleArtistImages(id:Long,country:String?):List<com.bxane.excor.ExcorThumbnail> =
         withContext(Dispatchers.IO) { engine.appleMusic.artistImages(id,country) }
 
     override suspend fun resolveAudio(videoId: String): ResolvedAudioStream? = resolveAudio(videoId, 160)
@@ -82,7 +82,7 @@ class VyonExMusicCatalog(
         )
     }
 
-    /** Call when the native media client reports a refused stream. VyonEx owns client failover. */
+    /** Call when the native media client reports a refused stream. Excor owns client failover. */
     fun onRefused(stream: ResolvedAudioStream): String? = engine.onRefused(stream.url)
 
     fun onSessionChanged() = engine.onSessionChanged()
@@ -94,17 +94,17 @@ class VyonExMusicCatalog(
 }
 
 /** Default logged-out host. Session credentials and the engine's player cache are disabled. */
-fun createLoggedOutVyonExMusicCatalog(): VyonExMusicCatalog {
-    val host = LoggedOutVyonExHost()
-    return VyonExMusicCatalog(host, host::close)
+fun createLoggedOutExcorMusicCatalog(): ExcorMusicCatalog {
+    val host = LoggedOutExcorHost()
+    return ExcorMusicCatalog(host, host::close)
 }
 
 /** Catalog-only factory for hosts that do not need direct stream resolution. */
-fun createLoggedOutVyonExCatalog(): CatalogSearchRepository = createLoggedOutVyonExMusicCatalog()
+fun createLoggedOutExcorCatalog(): CatalogSearchRepository = createLoggedOutExcorMusicCatalog()
 
-private class LoggedOutVyonExHost : VyonExHost, AutoCloseable {
+private class LoggedOutExcorHost : ExcorHost, AutoCloseable {
     override val httpClient = OkHttpClient.Builder().build()
-    override val configStore: VyonExConfigStore = object : VyonExConfigStore {
+    override val configStore: ExcorConfigStore = object : ExcorConfigStore {
         override val enabled = false
         override fun getString(key: String): String? = null
         override fun getLong(key: String): Long? = null
@@ -113,7 +113,7 @@ private class LoggedOutVyonExHost : VyonExHost, AutoCloseable {
     }
     private val locale = Locale.getDefault()
 
-    override suspend fun session() = VyonExSession(
+    override suspend fun session() = ExcorSession(
         cookie = null,
         visitorData = null,
         region = locale.country.takeIf { it.length == 2 }?.uppercase(Locale.ROOT) ?: "US",
@@ -121,7 +121,7 @@ private class LoggedOutVyonExHost : VyonExHost, AutoCloseable {
     )
 
     override fun nowMs(): Long = System.currentTimeMillis()
-    override fun log(level: VyonExLogLevel, message: String, trackId: String?) = Unit
+    override fun log(level: ExcorLogLevel, message: String, trackId: String?) = Unit
 
     override fun close() {
         httpClient.dispatcher.executorService.shutdown()

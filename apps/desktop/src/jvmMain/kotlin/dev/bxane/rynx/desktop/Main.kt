@@ -4,12 +4,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import dev.bxane.rynx.ui.*
-import dev.bxane.rynx.vyonex.createLoggedOutVyonExCatalog
+import dev.bxane.rynx.excor.createLoggedOutExcorCatalog
 import java.awt.FileDialog
 import javax.swing.SwingUtilities
 
 fun main() = application {
-    val player=remember { DesktopPlayer(catalogSearch=createLoggedOutVyonExCatalog()) }
+    val player=remember { DesktopPlayer(catalogSearch=createLoggedOutExcorCatalog()) }
     DisposableEffect(player) { onDispose { player.close() } }
     val state by player.state.collectAsState()
     Window(onCloseRequest=::exitApplication,title="rynx",state=rememberWindowState(width=1120.dp,height=760.dp)) {

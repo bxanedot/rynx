@@ -1,4 +1,4 @@
-package dev.bxane.rynx.vyonex
+package dev.bxane.rynx.excor
 
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import kotlinx.coroutines.runBlocking
@@ -15,7 +15,7 @@ class LiveYouTubeEngineTest {
         }
         System.getenv("RYNX_TEST_TRUSTSTORE")?.let {System.setProperty("javax.net.ssl.trustStore",it)}
         runBlocking {
-            val catalog=createLoggedOutVyonExMusicCatalog()
+            val catalog=createLoggedOutExcorMusicCatalog()
             try {
                 catalog.initialize()
                 val songs=catalog.searchMusic("NCS electronic music").items.filter {it.type==CatalogItemType.Track}
@@ -24,7 +24,7 @@ class LiveYouTubeEngineTest {
                 assertNotNull(stream,"Primary engine must resolve public audio")
                 assertEquals("https",runCatching {URI(stream.url).scheme}.getOrNull())
                 assertTrue(stream.bitrateKbps>0)
-                println("LIVE VYONEX YOUTUBE: actual music search and typed public audio resolution")
+                println("LIVE EXCOR YOUTUBE: actual music search and typed public audio resolution")
             } finally {catalog.close()}
         }
     }

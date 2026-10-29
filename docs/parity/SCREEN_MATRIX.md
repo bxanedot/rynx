@@ -6,7 +6,7 @@ For every screen capture light/dark, accents, empty/populated, loading/error/off
 |---|---|---|---|---|
 | SCR-001 | Home | Missing | Not available | unverified |
 | SCR-002 | Explore | Missing | Not available | unverified |
-| SCR-003 | Search | APPLE-003 (limited desktop search/library reference) | Compose local and VyonEx search; no screenshot comparison | partial |
+| SCR-003 | Search | APPLE-003 (limited desktop search/library reference) | Compose local and Excor search; no screenshot comparison | partial |
 | SCR-004 | Artist | Missing | Not available | unverified |
 | SCR-005 | Album | Missing | Not available | unverified |
 | SCR-006 | Playlist | Missing | Not available | unverified |

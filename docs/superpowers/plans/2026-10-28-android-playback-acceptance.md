@@ -2,20 +2,20 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Verify and harden the real Android path from Apple Music metadata selection through conservative YouTube Music matching, VyonEx/NewPipe stream resolution, and the Media3 playback service.
+**Goal:** Verify and harden the real Android path from Apple Music metadata selection through conservative YouTube Music matching, Excor/NewPipe stream resolution, and the Media3 playback service.
 
-**Architecture:** Keep discovery ranking, catalog contracts, stream descriptions, metadata matching, and playback preparation in `shared/playback/commonMain` so iOS can reuse them later. Provider modules implement those shared contracts; the Android app only adapts a prepared stream to Media3, which remains owned by `PlaybackService`. Preserve VyonEx as the primary YouTube extractor and NewPipeExtractor as the user-approved fallback.
+**Architecture:** Keep discovery ranking, catalog contracts, stream descriptions, metadata matching, and playback preparation in `shared/playback/commonMain` so iOS can reuse them later. Provider modules implement those shared contracts; the Android app only adapts a prepared stream to Media3, which remains owned by `PlaybackService`. Preserve Excor as the primary YouTube extractor and NewPipeExtractor as the user-approved fallback.
 
-**Tech Stack:** Kotlin Multiplatform, Compose Multiplatform, Coroutines, VyonEx, NewPipeExtractor fallback, Android Media3, JUnit, Android instrumentation, GitHub Actions API 36 Pixel 6 emulator.
+**Tech Stack:** Kotlin Multiplatform, Compose Multiplatform, Coroutines, Excor, NewPipeExtractor fallback, Android Media3, JUnit, Android instrumentation, GitHub Actions API 36 Pixel 6 emulator.
 
-**Spec:** `docs/parity/ANDROID_FEATURE_MATRIX.md`, `docs/parity/APPLE_DISCOVERY.md`, `docs/parity/VYONEX_INTEGRATION.md`, and `docs/parity/ANDROID_AUDIO_TESTS.md`.
+**Spec:** `docs/parity/ANDROID_FEATURE_MATRIX.md`, `docs/parity/APPLE_DISCOVERY.md`, `docs/parity/EXCOR_INTEGRATION.md`, and `docs/parity/ANDROID_AUDIO_TESTS.md`.
 
 ## Global Constraints
 
 - Android phones are P0; keep shared domain and UI code in KMP `commonMain` where platform APIs are not required, including playback preparation and its provider contracts.
 - Use Apple Music's iOS experience as the authorized design reference; do not substitute generic Material screens.
 - Do not read Vyon, Convx, BitChord, or Vivi Music implementation source, tests, or derived implementation notes.
-- VyonEx remains the primary YouTube engine; the user explicitly permits NewPipeExtractor as a fallback. Do not add another extractor.
+- Excor remains the primary YouTube engine; the user explicitly permits NewPipeExtractor as a fallback. Do not add another extractor.
 - Keep Spotify access within officially authorized interfaces; do not simulate streaming or bypass service restrictions.
 - Cancellation must propagate; stale playback requests must not replace newer user selections.
 - Treat stream URLs and request headers as sensitive, short-lived data; never place them in user-facing errors or logs.
@@ -34,7 +34,7 @@
 
 ## Current checkpoint
 
-The repository already contains Apple metadata/search and Apple-derived Explore genres, local recommendation ranking and Home shelves, conservative Apple-to-YouTube Music matching, the VyonEx/NewPipe resolution chain, Media3 service playback, queue controls, lyrics, and the shared Apple-inspired player/navigation work. The latest known hosted Verify run 37 and Android phone run 33 passed. Those results do not prove live provider extraction and audible physical-device playback. `docs/parity/BLOCKERS.md` and the feature matrix must be reconciled with these latest results before new claims are made.
+The repository already contains Apple metadata/search and Apple-derived Explore genres, local recommendation ranking and Home shelves, conservative Apple-to-YouTube Music matching, the Excor/NewPipe resolution chain, Media3 service playback, queue controls, lyrics, and the shared Apple-inspired player/navigation work. The latest known hosted Verify run 37 and Android phone run 33 passed. Those results do not prove live provider extraction and audible physical-device playback. `docs/parity/BLOCKERS.md` and the feature matrix must be reconciled with these latest results before new claims are made.
 
 This plan covers the next testable playback slice only. Library/offline, Spotify, advanced audio, and complete screen parity are separate subsystems and remain sequenced follow-up plans rather than being treated as finished here.
 
@@ -47,9 +47,9 @@ This plan covers the next testable playback slice only. Library/offline, Spotify
 - Create: `shared/playback/src/commonTest/kotlin/dev/bxane/rynx/playback/discovery/MusicPlaybackPreparationTest.kt`
 - Modify: `shared/playback/src/commonMain/kotlin/dev/bxane/rynx/playback/catalog/CatalogItem.kt`
 - Modify: `shared/playback/build.gradle.kts`
-- Modify: `providers/vyonex/src/jvmCommonMain/kotlin/dev/bxane/rynx/vyonex/VyonExMusicCatalog.kt`
-- Modify: `providers/vyonex/src/jvmCommonMain/kotlin/dev/bxane/rynx/vyonex/ResolvedAudioStream.kt`
-- Modify: `providers/vyonex/build.gradle.kts`
+- Modify: `providers/excor/src/jvmCommonMain/kotlin/dev/bxane/rynx/excor/ExcorMusicCatalog.kt`
+- Modify: `providers/excor/src/jvmCommonMain/kotlin/dev/bxane/rynx/excor/ResolvedAudioStream.kt`
+- Modify: `providers/excor/build.gradle.kts`
 - Modify: `providers/newpipe/src/androidMain/kotlin/dev/bxane/rynx/newpipe/NewPipeFallbackAudioResolver.kt`
 - Modify: `providers/newpipe/build.gradle.kts`
 - Modify: `apps/android/src/main/kotlin/dev/bxane/rynx/android/MainActivity.kt`
@@ -58,15 +58,15 @@ This plan covers the next testable playback slice only. Library/offline, Spotify
 - Test: `shared/playback/src/commonTest/kotlin/dev/bxane/rynx/playback/discovery/DiscoveryRankingTest.kt`
 
 **Interfaces:**
-- Consumes: `CatalogItem`, `CatalogPage`, `CatalogSearchRepository`, `MusicMetadata`, `MetadataMatching`, and the existing VyonEx/NewPipe public adapters.
+- Consumes: `CatalogItem`, `CatalogPage`, `CatalogSearchRepository`, `MusicMetadata`, `MetadataMatching`, and the existing Excor/NewPipe public adapters.
 - Produces: `MusicPlaybackCatalog : CatalogSearchRepository` with `suspend fun searchAppleMusic(query: String, country: String?, limit: Int): List<MusicMetadata>` and `suspend fun appleSong(id: Long, country: String?): MusicMetadata?`; `AudioStreamResolver` with `suspend fun resolveAudio(videoId: String): ResolvedAudioStream?`; common `ResolvedAudioStream` with redacted `toString()`; `PreparedMusic(val item: CatalogItem, val metadata: MusicMetadata?, val stream: ResolvedAudioStream?)`; and `MusicPlaybackPreparer.prepareDiscovery(track: MusicMetadata)` / `prepareCatalog(item: CatalogItem)`.
-- `AudioResolutionChain` implements `AudioStreamResolver`, tries VyonEx first, falls back to NewPipe only on null or non-cancellation failure, and rethrows cancellation. `VyonExMusicCatalog` implements the catalog and resolver contracts; the Android Activity supplies the region and commits prepared output to Media3.
+- `AudioResolutionChain` implements `AudioStreamResolver`, tries Excor first, falls back to NewPipe only on null or non-cancellation failure, and rethrows cancellation. `ExcorMusicCatalog` implements the catalog and resolver contracts; the Android Activity supplies the region and commits prepared output to Media3.
 - Provider adapters own any platform dispatcher needed for blocking/network work. `commonMain` must not depend on Android APIs or `Dispatchers.IO`.
 
 - [x] **Step 1: Write failing common tests** for Apple metadata enrichment, a correctly matched YouTube recording, a direct YouTube Music `playbackId`, a no-match result that never calls the stream resolver, Apple lookup failure, and cancellation propagation.
 - [x] **Step 2: Run the common tests** and confirm the missing contracts/behavior fail before implementation; the focused red run failed on the absent shared contracts, then passed after implementation.
 - [x] **Step 3: Add the common contracts and preparer** in `shared/playback/commonMain`; move only provider-neutral stream data and fallback ordering into common code, retaining sensitive-field redaction.
-- [x] **Step 4: Adapt provider implementations** so VyonEx remains primary and the approved Android NewPipe adapter remains fallback; preserve provider-specific dependencies and runtime dispatching.
+- [x] **Step 4: Adapt provider implementations** so Excor remains primary and the approved Android NewPipe adapter remains fallback; preserve provider-specific dependencies and runtime dispatching.
 - [x] **Step 5: Replace the inline preparation code in `MainActivity`** with the shared `MusicPlaybackPreparer`, leaving Media3 item creation, header registration, errors, and playback commit in the Android host.
 - [x] **Step 6: Run shared and platform compilation**; the focused and final verification runs passed all included shared/provider/Android unit tasks.
 
@@ -94,18 +94,18 @@ This plan covers the next testable playback slice only. Library/offline, Spotify
 ### Task 3: Run live provider smoke checks without making CI flaky
 
 **Files:**
-- Modify only if behavior or evidence changes: `providers/vyonex/src/jvmTest/kotlin/dev/bxane/rynx/vyonex/LiveYouTubeEngineTest.kt`
-- Modify: `docs/parity/VYONEX_INTEGRATION.md`
+- Modify only if behavior or evidence changes: `providers/excor/src/jvmTest/kotlin/dev/bxane/rynx/excor/LiveYouTubeEngineTest.kt`
+- Modify: `docs/parity/EXCOR_INTEGRATION.md`
 - Modify: `docs/parity/BLOCKERS.md`
 - Modify: `docs/parity/ANDROID_FEATURE_MATRIX.md`
 - Modify: `docs/parity/ANDROID_AUDIO_TESTS.md`
 
 **Interfaces:**
-- Consumes: VyonEx's approved public search and resolution adapter; the NewPipe resolver only for its existing, explicitly permitted fallback behavior.
+- Consumes: Excor's approved public search and resolution adapter; the NewPipe resolver only for its existing, explicitly permitted fallback behavior.
 - Produces: current, dated evidence distinguishing deterministic tests, opt-in live provider checks, emulator playback, and physical-device audible playback.
 
-- [ ] **Step 1: Run the opt-in primary-engine smoke test** with `RYNX_YOUTUBE_LIVE=1 ./gradlew :providers:vyonex:jvmTest --tests '*LiveYouTubeEngineTest'`; the attempt failed before provider response with `java.io.IOException` in the network connection path (`ConnectPlan.kt:472`, connection refused). No stream URL or headers were emitted.
-- [ ] **Step 2: Run the Apple contract smoke test only when network access is available** with `RYNX_APPLE_LIVE=1 ./gradlew :providers:vyonex:jvmTest --tests '*LiveAppleEngineTest'`; keep transient endpoint failures separate from deterministic test failures.
+- [ ] **Step 1: Run the opt-in primary-engine smoke test** with `RYNX_YOUTUBE_LIVE=1 ./gradlew :providers:excor:jvmTest --tests '*LiveYouTubeEngineTest'`; the attempt failed before provider response with `java.io.IOException` in the network connection path (`ConnectPlan.kt:472`, connection refused). No stream URL or headers were emitted.
+- [ ] **Step 2: Run the Apple contract smoke test only when network access is available** with `RYNX_APPLE_LIVE=1 ./gradlew :providers:excor:jvmTest --tests '*LiveAppleEngineTest'`; keep transient endpoint failures separate from deterministic test failures.
 - [x] **Step 3: Update parity status precisely**: successful metadata or URL resolution is not audible playback, and emulator decode is not a physical-device or audio-quality result.
 
 ### Task 4: Re-run the Android release-readiness checkpoint
@@ -120,7 +120,7 @@ This plan covers the next testable playback slice only. Library/offline, Spotify
 - Consumes: Tasks 1–3 and the existing CI workflows `.github/workflows/verify.yml` and `.github/workflows/android-phone.yml`.
 - Produces: a reproducible verification record and a current list of remaining release blockers. No desktop, iOS, or production-release claim is produced by this checkpoint.
 
-- [x] **Step 1: Run deterministic verification** with `:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :providers:vyonex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --offline --console=plain`; the command passed in 10m18s. It produced 78 passing tests and three skipped opt-in live checks.
+- [x] **Step 1: Run deterministic verification** with `:apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :providers:excor:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --offline --console=plain`; the command passed in 10m18s. It produced 78 passing tests and three skipped opt-in live checks.
 - [ ] **Step 2: Run the hosted phone workflow for this worktree** and inspect the connected-test report and screenshots; historical results on earlier commits do not validate the current branch.
 - [x] **Step 3: Record artifact hashes, test counts, warnings, and limitations**; physical Android, live extraction, audible output quality, performance, Spotify, downloads, and signing gates remain open.
 

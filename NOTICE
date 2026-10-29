@@ -6,7 +6,7 @@ GNU General Public License, version 3 or (at your option) any later version.
 See LICENSE. Third-party dependencies and retained tooling keep their own licenses.
 
 The complete application source, dependency pins and build instructions accompany
-this repository. NewPipeExtractor is GPL-3.0-or-later. VyonEx, Haze, Kotlin,
+this repository. NewPipeExtractor is GPL-3.0-or-later. Excor, Haze, Kotlin,
 Compose and AndroidX retain their Apache-2.0 notices. See third_party_licenses/
 and docs/cleanroom/DEPENDENCY_AUDIT.md for the dependency inventory.
 
@@ -17,5 +17,5 @@ QuickJS-kt 1.0.15: Copyright 2024 dokar3; retained wrapper LICENSE also
 credits Copyright 2015 Anton Lopyrev (Apache-2.0).
 Bundled QuickJS: Copyright 2017-2021 Fabrice Bellard and Charlie Gordon (MIT).
 Bundled c-vector: Copyright 2015 Evan Teran (MIT).
-Full retained licenses, including VyonEx and its EJS/meriyah/astring notices,
+Full retained licenses, including Excor and its EJS/meriyah/astring notices,
 are included in the third_party_licenses directory and Android assets.

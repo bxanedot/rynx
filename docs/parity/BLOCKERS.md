@@ -7,7 +7,7 @@
 | AND-B003 | Spotify registered client/callback, entitlements and authorized test account unavailable | Authentication and supported native playback validation |
 | AND-B004 | GlyphStudio implementation Apache license confirmed by user; Apple artwork eligibility not resolved | Original vectors remain in runtime until artwork review |
 | AND-B005 | Resolved for source licensing: Rynx selects GPL-3.0-or-later and includes corresponding source, dependency pins and retained notices | Full release audit and tested release identity remain separate gates |
-| AND-B006 | VyonEx live search/extraction and audible device tests remain unverified | The current opt-in YouTube check failed before a provider response with a network `IOException` (`ConnectPlan.kt:472`, connection refused); current-branch Android instrumentation did not run because the local emulator failed to boot. Search-to-playback remains runtime-unverified. |
+| AND-B006 | Excor live search/extraction and audible device tests remain unverified | The current opt-in YouTube check failed before a provider response with a network `IOException` (`ConnectPlan.kt:472`, connection refused); current-branch Android instrumentation did not run because the local emulator failed to boot. Search-to-playback remains runtime-unverified. |
 
 Android SDK tooling was provisioned outside the repository. API 37 is available through AGP's newer package resolver, despite standalone sdkmanager initially failing to locate it. This is no longer an SDK blocker. Compile API 37 is needed by Compose 1.12.1. Other required features remain incomplete; documentation does not satisfy acceptance.
 

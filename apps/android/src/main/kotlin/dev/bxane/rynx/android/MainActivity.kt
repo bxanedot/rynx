@@ -44,8 +44,8 @@ import dev.bxane.rynx.playback.catalog.CatalogProvider
 import dev.bxane.rynx.playback.toggleFavoriteId
 import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.ui.*
-import dev.bxane.rynx.vyonex.VyonExMusicCatalog
-import dev.bxane.rynx.vyonex.createLoggedOutVyonExMusicCatalog
+import dev.bxane.rynx.excor.ExcorMusicCatalog
+import dev.bxane.rynx.excor.createLoggedOutExcorMusicCatalog
 import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
         volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
-    private lateinit var catalog: VyonExMusicCatalog
+    private lateinit var catalog: ExcorMusicCatalog
     private lateinit var audioResolver: AudioResolutionChain
     private lateinit var playbackPreparer: MusicPlaybackPreparer
     private lateinit var catalogReady: Deferred<Boolean>
@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
         title = "rynx"
         state.update {it.copy(appearance=appearanceStore.load())}
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
-        catalog = createLoggedOutVyonExMusicCatalog()
+        catalog = createLoggedOutExcorMusicCatalog()
         audioResolver = AudioResolutionChain(catalog, NewPipeFallbackAudioResolver)
         playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver) { state.value.discovery.region }
         catalogReady = lifecycleScope.async(Dispatchers.IO) {

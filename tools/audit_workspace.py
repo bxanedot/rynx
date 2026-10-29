@@ -6,7 +6,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 APPROVED = {
-    "dependencies/vyonex-clean": ("https://github.com/bxanedot/vyonex-clean", "4e8c8c5f683d75d83dabe4a9ca0c6ab18d8f92e1"),
+    "dependencies/eXcor": ("https://github.com/bxanedot/eXcor", "deb51bafc219645133f3f9145a68719cade7165e"),
     "dependencies/GlyphStudio": ("https://github.com/bxanedot/GlyphStudio", "7db5de2e81c6687f9e3b483eeaac43a145e9704c"),
 }
 
@@ -27,9 +27,9 @@ def main():
             raise ValueError("Unreviewed dependency revision: " + path)
         if git("-C", path, "status", "--porcelain", "--untracked-files=no"):
             raise ValueError("Approved dependency has tracked modifications: " + path)
-    for source, retained in (("LICENSE", "VyonEx-LICENSE.txt"), ("NOTICE", "VyonEx-NOTICE.txt"), ("ejs/LICENSE", "VyonEx-EJS-LICENSE.txt")):
-        if (ROOT / "dependencies/vyonex-clean" / source).read_bytes() != (ROOT / "third_party_licenses" / retained).read_bytes():
-            raise ValueError("Retained VyonEx notice differs from pinned dependency: " + retained)
+    for source, retained in (("LICENSE", "Excor-LICENSE.txt"), ("NOTICE", "Excor-NOTICE.txt"), ("ejs/LICENSE", "Excor-EJS-LICENSE.txt")):
+        if (ROOT / "dependencies/eXcor" / source).read_bytes() != (ROOT / "third_party_licenses" / retained).read_bytes():
+            raise ValueError("Retained Excor notice differs from pinned dependency: " + retained)
     for base in ("apps", "shared", "providers", "services"):
         for file in (ROOT / base).rglob("*"):
             if file.is_symlink() and not file.resolve().is_relative_to(ROOT):

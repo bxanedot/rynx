@@ -4,7 +4,7 @@ Continue the functioning Android/material checkpoint; no prohibited source refer
 
 1. Verify official Apple public metadata/feed/genre and authorised MusicKit contracts; retain actual endpoint evidence. Keep protected feeds explicitly unavailable without required access. Never borrow website tokens or use iTunes previews as full playback.
 2. Test and implement shared immutable metadata/discovery models, conservative cross-provider matching and original recommendation ranking with artist/genre affinity, popularity, freshness, diversity and replay penalties. Recommendations are Rynx decisions, not claims to reproduce Apple's private algorithm.
-3. Implement typed KMP Apple provider, bounded network requests, actual genre/chart parsing, cached/offline results, region/neighbor handling and optional authorised MusicKit access. Apple failures fall back to VyonEx metadata; playback remains explicit VyonEx/NewPipe.
+3. Implement typed KMP Apple provider, bounded network requests, actual genre/chart parsing, cached/offline results, region/neighbor handling and optional authorised MusicKit access. Apple failures fall back to Excor metadata; playback remains explicit Excor/NewPipe.
 4. Add Home sections and Apple-derived genre tiles using original vector decorations and central material controls. A chart drilldown shows its actual ranked results. Connect song selection to verified cross-provider identity and real playback. Persist region and listening history.
 5. Verify provider fixtures, ranking/matching/error/cancellation behavior, actual public endpoints, shared UI actions, Android build/lint and native CI. Keep requested but unavailable editorial/city/tour capabilities incomplete with exact reasons.
 

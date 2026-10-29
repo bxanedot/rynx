@@ -1,18 +1,18 @@
-package dev.bxane.rynx.vyonex
+package dev.bxane.rynx.excor
 
-import com.vyonex.VyonExListItem
-import com.vyonex.VyonExResultKind
-import com.vyonex.VyonExSearchResult
-import com.vyonex.VyonExThumbnail
-import com.vyonex.VyonExListPage
+import com.bxane.excor.ExcorListItem
+import com.bxane.excor.ExcorResultKind
+import com.bxane.excor.ExcorSearchResult
+import com.bxane.excor.ExcorThumbnail
+import com.bxane.excor.ExcorListPage
 import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogPage
 import dev.bxane.rynx.playback.catalog.CatalogProvider
 
-/** Maps documented VyonEx search/list results into provider-neutral playback catalog data. */
-object VyonExCatalogMapper {
-    fun mapSearchResult(result: VyonExSearchResult): CatalogItem = CatalogItem(
+/** Maps documented Excor search/list results into provider-neutral playback catalog data. */
+object ExcorCatalogMapper {
+    fun mapSearchResult(result: ExcorSearchResult): CatalogItem = CatalogItem(
         provider = CatalogProvider.YouTubeMusic,
         type = result.kind.toCatalogType(),
         mediaId = result.id,
@@ -22,7 +22,7 @@ object VyonExCatalogMapper {
         artworkUrl = result.thumbnails.largestArtwork(),
     )
 
-    fun mapListItem(item: VyonExListItem): CatalogItem = CatalogItem(
+    fun mapListItem(item: ExcorListItem): CatalogItem = CatalogItem(
         provider = CatalogProvider.YouTubeMusic,
         type = CatalogItemType.Track,
         mediaId = item.videoId,
@@ -32,22 +32,22 @@ object VyonExCatalogMapper {
         artworkUrl = item.thumbnails.largestArtwork(),
     )
 
-    fun mapListPage(page: VyonExListPage): CatalogPage = CatalogPage(
+    fun mapListPage(page: ExcorListPage): CatalogPage = CatalogPage(
         items = page.items.map(::mapListItem),
         continuation = page.continuation,
     )
 
-    private fun VyonExResultKind.toCatalogType(): CatalogItemType = when (this) {
-        VyonExResultKind.VIDEO -> CatalogItemType.Track
-        VyonExResultKind.PLAYLIST -> CatalogItemType.Playlist
-        VyonExResultKind.ALBUM -> CatalogItemType.Album
-        VyonExResultKind.ARTIST -> CatalogItemType.Artist
-        VyonExResultKind.CHANNEL -> CatalogItemType.Channel
+    private fun ExcorResultKind.toCatalogType(): CatalogItemType = when (this) {
+        ExcorResultKind.VIDEO -> CatalogItemType.Track
+        ExcorResultKind.PLAYLIST -> CatalogItemType.Playlist
+        ExcorResultKind.ALBUM -> CatalogItemType.Album
+        ExcorResultKind.ARTIST -> CatalogItemType.Artist
+        ExcorResultKind.CHANNEL -> CatalogItemType.Channel
     }
 
     private fun Long?.nonNegativeOrNull() = this?.takeIf { it >= 0 }
 
-    private fun List<VyonExThumbnail>.largestArtwork(): String? =
+    private fun List<ExcorThumbnail>.largestArtwork(): String? =
         filter { it.url.isNotBlank() && it.width > 0 && it.height > 0 }
             .maxByOrNull { it.width.toLong() * it.height.toLong() }
             ?.url

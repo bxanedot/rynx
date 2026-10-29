@@ -1,10 +1,10 @@
-package dev.bxane.rynx.vyonex
+package dev.bxane.rynx.excor
 
-import com.vyonex.AppleMusicSong
+import com.bxane.excor.AppleMusicSong
 import dev.bxane.rynx.playback.discovery.MusicMetadata
 
 /** Thin typed adapter to the owner's Apple metadata API; never resolves Apple media streams. */
-object VyonExAppleMetadataMapper {
+object ExcorAppleMetadataMapper {
     fun song(song:AppleMusicSong):MusicMetadata? {
         val title=song.title?.takeIf {it.isNotBlank()}?:return null
         val artist=song.artist?.takeIf {it.isNotBlank()}?:return null

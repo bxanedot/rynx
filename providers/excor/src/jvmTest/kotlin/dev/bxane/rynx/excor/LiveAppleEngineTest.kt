@@ -1,4 +1,4 @@
-package dev.bxane.rynx.vyonex
+package dev.bxane.rynx.excor
 
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
@@ -13,7 +13,7 @@ class LiveAppleEngineTest {
         }
         System.getenv("RYNX_TEST_TRUSTSTORE")?.let {System.setProperty("javax.net.ssl.trustStore",it)}
         runBlocking {
-            val catalog=createLoggedOutVyonExMusicCatalog()
+            val catalog=createLoggedOutExcorMusicCatalog()
             try {
                 catalog.initialize()
                 val songs=catalog.searchAppleMusic("Billie Eilish Wildflower","us",5)
@@ -21,7 +21,7 @@ class LiveAppleEngineTest {
                 assertTrue(match.title.isNotBlank());assertTrue(match.artworkUrl?.startsWith("https://")==true)
                 val id=match.id.removePrefix("apple:").toLong()
                 assertEquals(match.id,catalog.appleSong(id,"us")?.id)
-                println("LIVE VYONEX APPLE: verified search, typed lookup and cover artwork")
+                println("LIVE EXCOR APPLE: verified search, typed lookup and cover artwork")
             } finally {catalog.close()}
         }
     }

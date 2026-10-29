@@ -1,7 +1,7 @@
 # Rynx clean-room boundary
-Read only this independent workspace and the two explicitly approved dependency submodules.
+Read only this independent workspace and approved dependency materials. The pinned Excor and GlyphStudio submodules may be inspected for their public integration surfaces. The pinned InnerTubeX binary dependency may use its public API, documentation, license, and types to integrate its user-authorized fallback; do not copy its extractor implementation or sample application.
 Never inspect Vyon, BitChord, Convx or Vivi Music implementation, build scripts, tests, decompilations or source-derived descriptions. Do not browse their source repositories.
-Approved dependencies: dependencies/eXcor and dependencies/GlyphStudio. Their sample applications are not Rynx implementation templates; use public library APIs.
+Approved integrations: dependencies/eXcor, dependencies/GlyphStudio, pinned NewPipeExtractor and pinned InnerTubeX. Their sample applications are not Rynx implementation templates; use documented public library APIs.
 Do not invent UI values, observed features or motion parameters. Missing reference evidence means unverified.
 Latest user clarification authorizes youtube.js, NewPipeExtractor or InnerTubeX as a fallback. Excor remains primary. Obtain fallback components independently with their licenses; never derive integrations from prohibited application source. Do not build a new extractor. Do not claim a feature verified without recorded tests and relevant reference evidence.
 Do not redistribute GlyphStudio artwork until implementation and artwork licenses are resolved separately.

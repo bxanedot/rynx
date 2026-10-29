@@ -10,7 +10,7 @@ Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `
 - Android Media3 session/service, local audio import, favorites, recent metadata, queue controls, and imported LRC support at code or unit-test level.
 - A shared `commonMain` PCM DSP core (10/31-band and parametric biquads, tone shelves, headroom, stereo width/balance, crossfeed, linked compression and an interpolated peak guard) is attached to the existing Android Media3 sink. Pure Mode bypasses Rynx processing, Android settings persist locally, and the existing player exposes the sound sheet. Hosted Android API 36 instrumentation passes, including generated PCM playback through the Media3 service, pause/resume and playlist database reopen/order. Physical-device output quality and route behavior remain unverified.
 - Portable KMP download provenance now encodes `Downloaded by Rynx`, app ID and track/provider/timestamp fields; an Android writer atomically writes a `.rynx.json` sidecar without touching downloaded media bytes. Serializer and file-preservation tests pass. Rynx does not yet have an app download queue, so the writer is a ready integration point and no current download invokes it automatically.
-- eXcor catalog/stream adapter and NewPipe Android fallback adapter, with deterministic mapping, redaction, ordering, cancellation, and build checks.
+- eXcor catalog/stream adapter, shared InnerTubeX fallback adapter, and NewPipe Android fallback adapter, with deterministic mapping, redaction, provider ordering, refusal/cancellation behavior, and build checks.
 - Persistent playlists use SQLDelight with common KMP models, validation/edit rules, transactions and Flow observation; Android supplies the SQLite driver. Library create/rename/add/remove/reorder/delete and playlist detail UI are wired. Shared SQLDelight/rules tests, headless workflows and hosted Android SQLite close/reopen/order instrumentation pass.
 
 Local verification of the app-source commit `a407e1c` completed successfully: Android debug/instrumentation packaging, Android unit tests, lint, desktop/headless Compose, shared playback/library/design/UI suites, eXcor and Apple provider tests, and NewPipe Android compilation. Reports contain 161 cases: 158 passed, three opt-in live-provider checks skipped, and zero failures/errors. Lint has zero errors and two warnings. On the current test-only follow-up commit `72cbf9a`, hosted Verify run [40844482143](https://github.com/bxanedot/rynx/actions/runs/40844482143) passed the source-boundary audit, debug/instrumentation/minified-release packaging, lint and configured shared/provider checks. Hosted phone run [40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288) passed debug APK installation and API 36 connected instrumentation. The release APK is unsigned and not installable without bxane's signing key.
@@ -40,6 +40,12 @@ Local verification of the app-source commit `a407e1c` completed successfully: An
 ## Deferred
 
 Remaining advanced audio work includes ReplayGain tag normalization, overlapping crossfade, AutoEQ, resampling/channel-map controls, spatial processing, true-peak compliance testing, and DAC/exclusive USB support. DJ, downloads beyond locally authorized media, AI, recognition, social rooms/backend, and external provider modules also remain deferred until core Android journeys pass their acceptance tests.
+
+## 2026-10-29 InnerTubeX fallback update
+
+Android stream resolution now uses Excor → InnerTubeX v0.11.2 → NewPipeExtractor v0.26.5. The InnerTubeX adapter is in KMP `commonMain`, uses the pinned public library API, and permits only direct HTTPS audio compatible with the current Media3 path. Explicit age, sign-in, region, or availability refusals stop the chain; they are not retried through another provider.
+
+Verification for this change: shared playback JVM tests passed (46), InnerTubeX adapter JVM tests passed (4), Android unit tests passed (9), Android debug APK packaging passed, Android lint passed, and the workspace boundary audit passed. This verifies the adapter contract and compilation only; live InnertubeX extraction and audible device playback remain unverified. The generated APK is debug-signed and not a production release.
 
 ## Next acceptance gates
 

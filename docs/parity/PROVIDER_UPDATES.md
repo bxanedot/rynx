@@ -1,6 +1,6 @@
 # Provider policy and updates
 
-The user authorizes youtube.js, NewPipeExtractor or InnerTubeX as fallbacks. Excor remains primary. Android currently uses independently obtained NewPipeExtractor v0.26.5 for stream resolution after an eligible primary failure. Rynx is GPL-3.0-or-later; corresponding source, pinned dependency sources and retained notices accompany the implementation. Do not use fallback selection to evade account, age, geographic or rights restrictions.
+The user authorizes multiple fallbacks. Excor remains primary; Android now tries pinned InnerTubeX v0.11.2 next and NewPipeExtractor v0.26.5 last. InnerTubeX is consumed through its KMP public API and constrained to direct HTTPS audio supported by the current playback path. Explicit source refusals propagate without trying another extractor. Rynx is GPL-3.0-or-later; corresponding source, pinned dependency sources and retained notices accompany the implementation. Do not use fallback selection to evade account, age, geographic or rights restrictions.
 
 `.github/workflows/refresh-excor.yml` checks stable Excor main hourly at minute 17 and on manual dispatch. It updates only a clean dependency checkout, requires a fast-forward stable revision, updates provenance pins, then runs boundary audit, provider/shared/interaction tests and Android packaging/lint. A passing pin is committed to the existing Rynx default branch. A failed candidate is retained as a compatibility proposal while the default branch keeps its previous pin.
 

@@ -144,7 +144,8 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | PROV-004 | SMB | unverified | Observe permitted reference, implement, test and compare |
 | PROV-005 | WebDAV | unverified | Observe permitted reference, implement, test and compare |
 | PROV-006 | External modules | unverified | Observe permitted reference, implement, test and compare |
-| PROV-007 | NewPipeExtractor fallback | incomplete | Pinned Android fallback implements the shared KMP resolver contract and compiles; Excor-first/cancellation behavior tests pass. Live fallback and device acceptance remain pending |
+| PROV-007 | NewPipeExtractor fallback | incomplete | Pinned Android last-resort fallback implements the shared KMP resolver contract and compiles. Live fallback and device acceptance remain pending |
+| PROV-008 | InnerTubeX fallback | incomplete | Pinned v0.11.2 library is integrated through a shared KMP adapter between Excor and NewPipe. Direct HTTPS audio mapping, unsupported transport rejection, policy refusals, and provider order are tested; live resolution and device playback remain unverified |
 | SPOT-001 | Login | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-002 | Account linking | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-003 | Token persistence | unverified | Observe permitted reference, implement, test and compare |

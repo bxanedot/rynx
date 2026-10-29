@@ -6,11 +6,13 @@ import com.bxane.excor.ExcorHost
 import com.bxane.excor.ExcorLogLevel
 import com.bxane.excor.ExcorPlaylist
 import com.bxane.excor.ExcorSession
+import com.bxane.excor.ExcorUnplayableException
 import okhttp3.OkHttpClient
 import dev.bxane.rynx.playback.catalog.AudioStreamResolver
 import dev.bxane.rynx.playback.catalog.CatalogPage
 import dev.bxane.rynx.playback.catalog.CatalogSearchRepository
 import dev.bxane.rynx.playback.catalog.MusicPlaybackCatalog
+import dev.bxane.rynx.playback.catalog.ProviderAccessRefusalException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -71,7 +73,11 @@ class ExcorMusicCatalog(
     suspend fun resolveAudio(videoId: String, maxKbps: Int): ResolvedAudioStream? = withContext(Dispatchers.IO) {
         require(videoId.isNotBlank()) { "Video ID must not be empty" }
         require(maxKbps > 0) { "Maximum bitrate must be positive" }
-        val stream = engine.extract(videoId, maxKbps) ?: return@withContext null
+        val stream = try {
+            engine.extract(videoId, maxKbps)
+        } catch (refusal: ExcorUnplayableException) {
+            throw ProviderAccessRefusalException(refusal)
+        } ?: return@withContext null
         ResolvedAudioStream(
             videoId = stream.videoId,
             url = stream.url,

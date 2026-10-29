@@ -6,7 +6,7 @@ GNU General Public License, version 3 or (at your option) any later version.
 See LICENSE. Third-party dependencies and retained tooling keep their own licenses.
 
 The complete application source, dependency pins and build instructions accompany
-this repository. NewPipeExtractor is GPL-3.0-or-later. Excor, Haze, Kotlin,
+this repository. NewPipeExtractor, InnerTubeX and its QuackJS transform library are GPL-3.0. Excor, Haze, Kotlin,
 Compose and AndroidX retain their Apache-2.0 notices. See third_party_licenses/
 and docs/cleanroom/DEPENDENCY_AUDIT.md for the dependency inventory.
 

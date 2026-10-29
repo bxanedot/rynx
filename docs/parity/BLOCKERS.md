@@ -7,7 +7,7 @@
 | AND-B003 | Spotify registered client/callback, entitlements and authorized test account unavailable | Authentication and supported native playback validation remain blocked. |
 | AND-B004 | GlyphStudio implementation Apache license confirmed by user; Apple artwork eligibility not resolved | Original vectors remain in runtime until artwork review. |
 | AND-B005 | Source licensing resolved: Rynx selects GPL-3.0-or-later and includes corresponding source, dependency pins and retained notices | Full release audit and signed release identity remain separate gates. |
-| AND-B006 | eXcor live search/extraction and audible device tests remain unverified | The latest opt-in YouTube check failed before a provider response with a network `IOException` (`ConnectPlan.kt:472`, connection refused). Search-to-playback remains runtime-unverified. |
+| AND-B006 | eXcor/InnerTubeX live extraction, fallback invocation and audible device tests remain unverified | The latest opt-in YouTube check failed before a provider response with a network `IOException` (`ConnectPlan.kt:472`, connection refused). InnertubeX has only deterministic adapter/build coverage so far; search-to-playback remains runtime-unverified. |
 | AND-B007 | DSP has deterministic PCM tests and Media3 integration, but no physical-device audio, output-route, underrun or long-session test | Audiophile output claims, device stability and performance remain unverified; ReplayGain and overlapping crossfade are not implemented. |
 | AND-B008 | No actual download queue or download completion pipeline is implemented | The shared “Downloaded by Rynx” attribution record and Android atomic sidecar writer are tested, but no download path invokes them automatically. |
 

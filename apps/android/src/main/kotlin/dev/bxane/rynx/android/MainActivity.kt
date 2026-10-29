@@ -61,6 +61,10 @@ import dev.bxane.rynx.ui.*
 import dev.bxane.rynx.excor.ExcorMusicCatalog
 import dev.bxane.rynx.excor.createLoggedOutExcorMusicCatalog
 import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
+import dev.bxane.rynx.innertubex.InnerTubeXFallbackAudioResolver
+import dev.bxane.rynx.innertubex.createInnerTubeXFallbackAudioResolver
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -82,6 +86,8 @@ class MainActivity : ComponentActivity() {
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: ExcorMusicCatalog
     private lateinit var audioResolver: AudioResolutionChain
+    private var innertubexHttpClient: HttpClient? = null
+    private var innertubexResolver: InnerTubeXFallbackAudioResolver? = null
     private lateinit var playbackPreparer: MusicPlaybackPreparer
     private lateinit var catalogReady: Deferred<Boolean>
     private var searchJob: Job? = null
@@ -153,7 +159,11 @@ class MainActivity : ComponentActivity() {
         state.update {it.copy(audioDspSettings=audioDspStore.load())}
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
         catalog = createLoggedOutExcorMusicCatalog()
-        audioResolver = AudioResolutionChain(catalog, NewPipeFallbackAudioResolver)
+        val innertubexClient = HttpClient(OkHttp)
+        val innertubex = createInnerTubeXFallbackAudioResolver(innertubexClient)
+        innertubexHttpClient = innertubexClient
+        innertubexResolver = innertubex
+        audioResolver = AudioResolutionChain(catalog, innertubex, NewPipeFallbackAudioResolver)
         playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver) { state.value.discovery.region }
         catalogReady = lifecycleScope.async(Dispatchers.IO) {
             try {
@@ -408,6 +418,10 @@ class MainActivity : ComponentActivity() {
         val ready=if(::catalogReady.isInitialized)catalogReady else null
         ready?.cancel()
         if(::catalog.isInitialized) {val owned=catalog;AndroidResourceCloser.close {ready?.join();owned.close()}}
+        innertubexResolver?.close()
+        innertubexResolver = null
+        innertubexHttpClient?.close()
+        innertubexHttpClient = null
         super.onDestroy()
     }
 

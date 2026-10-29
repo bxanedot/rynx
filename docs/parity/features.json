@@ -1148,6 +1148,26 @@
     "tests": []
   },
   {
+    "id": "PROV-007",
+    "name": "NewPipeExtractor fallback",
+    "status": "partial",
+    "reference": "User-authorized Android fallback provider; no reference-engine internals used",
+    "acceptance": "Android resolver order is Excor, InnerTubeX, then NewPipeExtractor. NewPipe is last in the chain and runs only when prior providers return no stream or a fallback-eligible error.",
+    "tests": [
+      "Android provider compiles; end-to-end live fallback and device playback remain unverified"
+    ]
+  },
+  {
+    "id": "PROV-008",
+    "name": "InnerTubeX fallback",
+    "status": "partial",
+    "reference": "User-authorized KMP fallback provider; pinned public library API",
+    "acceptance": "Shared KMP adapter requests only direct HTTPS audio accepted by the current player; it rejects HLS, SABR and bounded-range modes. Explicit provider refusals and cancellation stop the chain.",
+    "tests": [
+      "4 InnerTubeX adapter JVM tests pass; live extraction and audible Android playback remain unverified"
+    ]
+  },
+  {
     "id": "SPOT-001",
     "name": "Login",
     "status": "unverified",

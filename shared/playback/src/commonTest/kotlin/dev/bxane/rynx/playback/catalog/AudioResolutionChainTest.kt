@@ -71,7 +71,36 @@ class AudioResolutionChainTest {
     }
 
     @Test
+    fun explicitProviderRefusalNeverStartsAnotherExtractor() = runSuspend {
+        val fallback = FakeResolver(stream("fallback"))
+
+        assertFailsWith<ProviderAccessRefusalException> {
+            AudioResolutionChain(
+                FakeResolver(failure = ProviderAccessRefusalException()), fallback,
+            ).resolveAudio("video-id")
+        }
+
+        assertEquals(0, fallback.calls)
+    }
+
+    @Test
     fun twoMissingResolversReturnNull() = runSuspend {
         assertNull(AudioResolutionChain(FakeResolver(), FakeResolver()).resolveAudio("video-id"))
+    }
+
+    @Test
+    fun triesFallbacksInOrderAndStopsAtFirstUsableStream() = runSuspend {
+        val primary = FakeResolver(failure = IllegalStateException("primary unavailable"))
+        val second = FakeResolver()
+        val third = FakeResolver(stream("third"))
+        val fourth = FakeResolver(stream("unused"))
+
+        val result = AudioResolutionChain(primary, second, third, fourth).resolveAudio("video-id")
+
+        assertEquals("third", result?.videoId)
+        assertEquals(1, primary.calls)
+        assertEquals(1, second.calls)
+        assertEquals(1, third.calls)
+        assertEquals(0, fourth.calls)
     }
 }

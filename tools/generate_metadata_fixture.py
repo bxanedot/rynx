@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 import struct, zlib
 root=Path(__file__).resolve().parent.parent
-p=root/'apps/android/src/androidTest/assets';p.mkdir(parents=True,exist_ok=True)
+p=root/'app/android/src/androidTest/assets';p.mkdir(parents=True,exist_ok=True)
 # Original geometric test artwork, generated as a PNG; this is a photograph-free metadata fixture.
 def chunk(kind,data): return struct.pack('>I',len(data))+kind+data+struct.pack('>I',zlib.crc32(kind+data)&0xffffffff)
 w=h=32

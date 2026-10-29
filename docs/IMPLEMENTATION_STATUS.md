@@ -2,6 +2,8 @@
 
 Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `main` commit `11681c9`. This is an engineering status report, not a production-readiness claim.
 
+Current repository layout change: application hosts are grouped under `app/android`, `app/ios`, and `app/desktop`; shared KMP modules and provider integrations remain under `shared/` and `providers/`. The dated artifact paths and Gradle task names below describe the historical commits on which those results were produced. See [APP_STRUCTURE.md](APP_STRUCTURE.md) for the current layout and iOS/desktop scope.
+
 ## Current PR #4 verification
 
 The current head is `187511c`. Verify run [40910603843](https://github.com/bxanedot/rynx/actions/runs/40910603843) and Android phone run [40910603735](https://github.com/bxanedot/rynx/actions/runs/40910603735) both pass. The phone job built the installable debug APK and completed the API 36 `connectedDebugAndroidTest` suite, including Search/back/query restoration; the installable debug APK is artifact [12914340956](https://github.com/bxanedot/rynx/actions/runs/40910603735/artifacts/12914340956). Navigation now starts the real app through `am start -W` without force-stopping the instrumented process. On the prior `9c51f02` head, the same-head PR phone run passed but a duplicate push-triggered run lost foreground to Launcher; feature pushes now run once via the PR check. Hosted emulator success does not establish physical-device audio, live provider playback, or release signing.

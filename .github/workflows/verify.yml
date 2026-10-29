@@ -26,16 +26,16 @@ jobs:
       - name: Audit source boundary
         run: python3 tools/audit_workspace.py
       - name: Build Android variants and run shared/provider checks
-        run: ./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:apple:jvmTest :providers:innertubex:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --console=plain
+        run: ./gradlew :app:android:assembleDebug :app:android:assembleRelease :app:android:assembleDebugAndroidTest :app:android:lintDebug :app:android:testDebugUnitTest :app:desktop:jvmTest :providers:apple:jvmTest :providers:innertubex:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --console=plain
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: android-development
           path: |
-            apps/android/build/outputs/apk/
-            apps/android/build/reports/
-            apps/android/build/test-results/
+            app/android/build/outputs/apk/
+            app/android/build/reports/
+            app/android/build/test-results/
             shared/playback/build/reports/
             shared/design/build/reports/
             shared/ui/build/reports/
-            apps/desktop/build/reports/screenshots/
+            app/desktop/build/reports/screenshots/

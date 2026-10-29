@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
 
 /** Original geometric vectors. No Apple SF Symbols artwork is bundled. */
-enum class Glyph { Play, Pause, Next, Previous, Search, Add, Library, Queue, Close, Note, Sun, Moon, Repeat, Heart, HeartFill, Home, Browse, Radio, Star, StarFill, More, SpeakerQuiet, SpeakerLoud, Output, Lyrics, Shuffle, Reorder, Infinity, AutoMix, Appearance }
+enum class Glyph { Play, Pause, Next, Previous, MoveUp, MoveDown, Search, Add, Edit, Library, Queue, Close, Note, Sun, Moon, Repeat, Heart, HeartFill, Home, Browse, Radio, Star, StarFill, More, SpeakerQuiet, SpeakerLoud, Output, Lyrics, Shuffle, Reorder, Equalizer, Infinity, AutoMix, Appearance }
 
 @Composable
 fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
@@ -29,8 +29,11 @@ fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
                 Glyph.Pause -> { drawRect(tint,Offset(6f,5f),androidx.compose.ui.geometry.Size(4f,14f)); drawRect(tint,Offset(14f,5f),androidx.compose.ui.geometry.Size(4f,14f)) }
                 Glyph.Next -> { triangle(3f,12f); triangle(12f,21f) }
                 Glyph.Previous -> { triangle(21f,12f); triangle(12f,3f) }
+                Glyph.MoveUp -> { line(12f,20f,12f,5f);line(6f,11f,12f,5f);line(18f,11f,12f,5f) }
+                Glyph.MoveDown -> { line(12f,4f,12f,19f);line(6f,13f,12f,19f);line(18f,13f,12f,19f) }
                 Glyph.Search -> { drawCircle(tint,7f,Offset(10f,10f),style=Stroke(1.8f));line(15f,15f,21f,21f) }
                 Glyph.Add -> { line(12f,4f,12f,20f);line(4f,12f,20f,12f) }
+                Glyph.Edit -> { drawPath(Path().apply{moveTo(4f,17.5f);lineTo(15.8f,5.7f);lineTo(18.3f,8.2f);lineTo(6.5f,20f);lineTo(3.5f,20.5f);close()},tint,style=Stroke(1.7f,join=androidx.compose.ui.graphics.StrokeJoin.Round));line(14f,7.5f,16.5f,10f);line(3.5f,20.5f,9f,19f) }
                 Glyph.Close -> { line(6f,6f,18f,18f);line(18f,6f,6f,18f) }
                 Glyph.Queue -> { for(y in listOf(6f,12f,18f)) { drawCircle(tint,1.2f,Offset(3f,y));line(8f,y,21f,y) } }
                 Glyph.Library -> { for(x in listOf(4f,10f,17f)) line(x,4f,x,20f);line(17f,4f,21f,19f) }
@@ -71,6 +74,7 @@ fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
                     line(18f,3f,21f,6f);line(18f,9f,21f,6f);line(18f,15f,21f,18f);line(18f,21f,21f,18f)
                 }
                 Glyph.Reorder -> for(y in listOf(7f,12f,17f)) line(4f,y,20f,y)
+                Glyph.Equalizer -> {line(5f,4f,5f,20f);line(12f,4f,12f,20f);line(19f,4f,19f,20f);drawCircle(tint,2.3f,Offset(5f,9f));drawCircle(tint,2.3f,Offset(12f,15f));drawCircle(tint,2.3f,Offset(19f,7f))}
                 Glyph.Infinity -> drawPath(Path().apply {moveTo(12f,12f);cubicTo(7f,2f,1f,6f,2f,12f);cubicTo(3f,19f,7f,21f,12f,12f);cubicTo(17f,3f,22f,5f,22f,12f);cubicTo(22f,19f,17f,22f,12f,12f)},tint,style=Stroke(1.8f,cap=StrokeCap.Round))
                 Glyph.AutoMix -> {drawCircle(tint.copy(alpha=.4f),6f,Offset(8f,12f));drawCircle(tint,6f,Offset(16f,12f));drawCircle(Color.Transparent,2f,Offset(16f,12f));drawCircle(tint.copy(alpha=.45f),2f,Offset(16f,12f))}
                 Glyph.Heart, Glyph.HeartFill -> {

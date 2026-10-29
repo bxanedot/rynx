@@ -14,3 +14,5 @@ Android SDK tooling was provisioned outside the repository. API 37 is available 
 Historical desktop packaging/renderer limitations remain recorded in REGRESSION_RESULTS.md; desktop development is paused.
 
 Apple public data/engine contracts passed live checks. This does not resolve full music playback, artwork/service release audit, complete recommendation training, native foreground/background acceptance or the Android completion gate. Native CI results must be assessed after the current fixes, not inferred from successful APK packaging.
+| AND-B007 | DSP has deterministic PCM tests and Media3 integration, but no current-branch audible device, output-route, underrun, or long-session test | Audiophile output claims, device stability and performance remain unverified; ReplayGain and overlapping crossfade are not implemented |
+| AND-B008 | No actual download queue or download completion pipeline is implemented | The shared “Downloaded by Rynx” attribution record and Android atomic sidecar writer are tested, but there is no completed download path to invoke them automatically |

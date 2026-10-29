@@ -52,3 +52,28 @@ Run 22 (`e5b49d0`) passed APK packaging but connected device tests still failed:
 
 
 Hosted phone run 24 (`1b3ea78`) passed APK packaging and 8 of 10 device tests. The failures were strict lookups for DocumentsUI's `.lrc.txt` label and `AccessibilityNodeInfo.isSelected`. Run 26 (`feaf55a`) passed 9/10 and confirmed the lyrics fix; its remaining failure was a Search-test selector expecting the accessible description and editable action on one node. The test now targets the editable `EditText`. Run 28 (`f6b5523`) passed all 10/10 API 36 KVM device tests, including Search text entry/back restoration and lyrics import. Verify run 32 passed source-boundary, Android, shared and provider checks. See `ANDROID_VISUAL_RESULTS.md`.
+
+## Persistent-playlist continuation
+
+2026-10-28: SQLDelight-backed shared playlist persistence and Library workflows now include create, rename, add, remove, reorder and delete. The verification set passed 77 tests with zero failures, errors or skips: 11 shared library, 9 shared UI, 53 desktop/headless Compose, and 4 Android unit tests. Android debug and unsigned minified release APKs built; the Android instrumentation APK compiled and packaged. Android lint reported zero errors and one `OldTargetApi` warning for target SDK 36. The Android database close/reopen instrumentation test is not device-verified because this workspace has no connected device and no `/dev/kvm`. These builds do not establish release signing, audible playback or full Android/device parity.
+
+Artifacts from this run:
+
+- Debug APK: `apps/android/build/outputs/apk/debug/android-debug.apk` (SHA-256 `76980586157316492d77096df5e5899af87493e52f763b017b7a2191d9033891`).
+- Unsigned release APK: `apps/android/build/outputs/apk/release/android-release-unsigned.apk` (SHA-256 `117f0771fe4c61465e82e25dd42236565d45cfc538d07fef5c7bd080b9b58765`).
+- Instrumentation APK: `apps/android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk` (SHA-256 `f0fbb112b141dba21bb2ea07d7dfb613347144f13af6410037b1a48792268349`).
+
+## Integrated DSP continuation
+
+2026-10-28: shared playback tests passed 43/43, shared UI tests 9/9, desktop/headless Compose tests 54/54 after correcting a fixed-state UI test fixture, and Android JVM tests 8/8. Android debug Kotlin compilation, instrumentation Kotlin compilation, and `assembleDebug` passed; the generated debug APK is `apps/android/build/outputs/apk/debug/android-debug.apk` (22,331,218 bytes). The unit tests exercise PCM16 byte-exact Pure Mode, PCM16 EQ, active 24-bit integer processing, active 32-bit float processing, shared EQ response, limiter ceiling, and stereo-linked compression. No Android device is attached, the software AVD has not booted, and `/dev/kvm` is absent. This is code/build/signal-test evidence only: no audible output, DAC route, underrun, battery, or performance claim is made. The current signed/release artifact was not rebuilt in this continuation.
+
+2026-10-29: KMP download-provenance serialization and Android sidecar file-preservation tests passed; shared playback now passes 44 tests and Android JVM tests pass 9 tests. `:apps:android:assembleDebug` and `:apps:android:compileDebugAndroidTestKotlin` passed. Debug APK: `apps/android/build/outputs/apk/debug/android-debug.apk` (22,331,218 bytes, SHA-256 `0548ea7e8ac1625eb02d8e1a35f9edf785062569c0a88597e063a95c09dfe825`). The sidecar records `Downloaded by Rynx` without altering media, but Rynx's download pipeline does not yet exist, so automatic per-download invocation remains pending.
+
+## Combined eXcor/audio/library branch verification
+
+2026-10-29, branch `feature/android-audio-excor`, based on merged `main` `11681c9`. Local command completed successfully in 9m15s (279 Gradle tasks): Android debug and instrumentation APK packaging, Android lint/unit tests, desktop/headless UI, shared playback/library/design/UI tests, eXcor/Apple provider tests, and NewPipe Android compilation. The XML reports contain 161 test cases: 158 passed, three opt-in live-provider cases skipped, zero failures/errors. Lint reported zero errors and two warnings. The live-provider skips were not converted into successful provider/network results.
+
+- Debug APK: `apps/android/build/outputs/apk/debug/android-debug.apk`, 22,003,626 bytes, SHA-256 `c0f5c292f539361649f6cb9227ce848e149ecad994c549e84e08f5a0a91bff14`.
+- Instrumentation APK: `apps/android/build/outputs/apk/androidTest/debug/android-debug-androidTest.apk`, 434,010 bytes, SHA-256 `f0fbb112b141dba21bb2ea07d7dfb613347144f13af6410037b1a48792268349`.
+
+The instrumentation APK compiled but `adb devices -l` returned no attached devices. No connected run, audible output, route/DAC test, or current-branch emulator result exists yet. Release minification/signing was not run on this combined branch. GitHub's API 36 hardware-accelerated phone workflow must run on the pushed branch before marking device tests verified.

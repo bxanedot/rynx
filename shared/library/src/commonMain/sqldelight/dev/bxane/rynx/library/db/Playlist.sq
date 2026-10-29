@@ -1,0 +1,92 @@
+CREATE TABLE playlist (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  createdAtMillis INTEGER NOT NULL,
+  updatedAtMillis INTEGER NOT NULL
+);
+
+CREATE TABLE playlistEntry (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  playlistId INTEGER NOT NULL REFERENCES playlist(id) ON DELETE CASCADE,
+  mediaId TEXT NOT NULL,
+  title TEXT NOT NULL,
+  artist TEXT NOT NULL,
+  artworkUrl TEXT,
+  source TEXT NOT NULL,
+  localUri TEXT,
+  position INTEGER NOT NULL
+);
+
+CREATE INDEX playlistEntry_order ON playlistEntry(playlistId, position, id);
+
+selectAllPlaylists:
+SELECT id, name, createdAtMillis, updatedAtMillis
+FROM playlist
+ORDER BY createdAtMillis DESC, id DESC;
+
+selectAllEntries:
+SELECT id, playlistId, mediaId, title, artist, artworkUrl, source, localUri, position
+FROM playlistEntry
+ORDER BY playlistId ASC, position ASC, id ASC;
+
+selectPlaylist:
+SELECT id, name, createdAtMillis, updatedAtMillis
+FROM playlist
+WHERE id = ?;
+
+insertPlaylist:
+INSERT INTO playlist(name, createdAtMillis, updatedAtMillis)
+VALUES (?, ?, ?);
+
+lastInsertedId:
+SELECT last_insert_rowid();
+
+renamePlaylist:
+UPDATE playlist
+SET name = ?, updatedAtMillis = ?
+WHERE id = ?;
+
+touchPlaylist:
+UPDATE playlist
+SET updatedAtMillis = ?
+WHERE id = ?;
+
+deletePlaylist:
+DELETE FROM playlist
+WHERE id = ?;
+
+selectEntries:
+SELECT id, playlistId, mediaId, title, artist, artworkUrl, source, localUri, position
+FROM playlistEntry
+WHERE playlistId = ?
+ORDER BY position ASC, id ASC;
+
+selectEntry:
+SELECT id, playlistId, mediaId, title, artist, artworkUrl, source, localUri, position
+FROM playlistEntry
+WHERE playlistId = ? AND id = ?;
+
+insertEntry:
+INSERT INTO playlistEntry(playlistId, mediaId, title, artist, artworkUrl, source, localUri, position)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+lastInsertedEntryId:
+SELECT last_insert_rowid();
+
+countEntries:
+SELECT COUNT(*)
+FROM playlistEntry
+WHERE playlistId = ?;
+
+updateEntryPosition:
+UPDATE playlistEntry
+SET position = ?
+WHERE playlistId = ? AND id = ?;
+
+deleteEntry:
+DELETE FROM playlistEntry
+WHERE playlistId = ? AND id = ?;
+
+deleteEntries:
+DELETE FROM playlistEntry
+WHERE playlistId = ?;

@@ -36,14 +36,14 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | PLAY-014 | Notifications | unverified | Observe permitted reference, implement, test and compare |
 | PLAY-015 | Playback recovery | unverified | Observe permitted reference, implement, test and compare |
 | LIB-001 | Favorites | incomplete | Compose actions update shared favorite IDs; Android persists IDs plus local/YouTube Music display metadata and can resolve saved YouTube Music items again. Shared/UI tests pass and Android unit/instrumentation tests compile; device persistence/playback validation remains pending. |
-| LIB-002 | Playlists | unverified | Observe permitted reference, implement, test and compare |
+| LIB-002 | Playlists | incomplete | SQLDelight common repository persists names and stable local/provider track IDs; create/rename/add/remove/reorder/delete and Library list/detail flows are implemented. Shared SQLite and headless Compose tests cover persistence/rules, detail, create/add/rename, reorder and remove. Android driver close/reopen instrumentation runtime, import/export and reference comparison remain open. |
 | LIB-003 | History | unverified | Observe permitted reference, implement, test and compare |
 | LIB-004 | Recent tracks | incomplete | Android persists up to 50 actually playing tracks and restores metadata for the Home shelf; playback-history device test and comparison remain pending. |
 | LIB-005 | Local songs | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | LIB-006 | Local folders | unverified | Observe permitted reference, implement, test and compare |
 | LIB-007 | Albums | unverified | Observe permitted reference, implement, test and compare |
 | LIB-008 | Artists | unverified | Observe permitted reference, implement, test and compare |
-| LIB-009 | Downloads | unverified | Observe permitted reference, implement, test and compare |
+| LIB-009 | Downloads | incomplete | No app download queue/save flow exists yet. A portable KMP provenance record and Android sidecar writer are implemented, but nothing invokes them automatically until downloads are added. |
 | LIB-010 | Network libraries | unverified | Observe permitted reference, implement, test and compare |
 | LIB-011 | Cached content | unverified | Observe permitted reference, implement, test and compare |
 | LIB-012 | Automatic playlists | unverified | Observe permitted reference, implement, test and compare |
@@ -59,20 +59,20 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | LYR-006 | Lyrics sources | incomplete | Local LRC picker/import and private persistence implemented; online lyric providers absent |
 | LYR-007 | Font customization | unverified | Observe permitted reference, implement, test and compare |
 | LYR-008 | Lyrics motion | incomplete | Auto-follow, user-scroll pause/recovery and line/word emphasis; headless tests pass, exact motion unmeasured |
-| AUD-001 | Graphic EQ | unverified | Observe permitted reference, implement, test and compare |
-| AUD-002 | Parametric EQ | unverified | Observe permitted reference, implement, test and compare |
+| AUD-001 | Graphic EQ | incomplete | Common PCM DSP implements editable 10/31-band RBJ biquads with automatic headroom; deterministic frequency-response tests pass. Android device/audio-route acceptance remains pending. |
+| AUD-002 | Parametric EQ | incomplete | Common DSP supports peaking, low/high shelf, high/low pass, frequency, gain and Q; settings UI writes through the existing Media3 session. JVM signal tests pass; no device listening test. |
 | AUD-003 | AutoEQ | unverified | Observe permitted reference, implement, test and compare |
-| AUD-004 | Presets | unverified | Observe permitted reference, implement, test and compare |
-| AUD-005 | Crossfade | unverified | Observe permitted reference, implement, test and compare |
+| AUD-004 | Presets | incomplete | Flat, Bass, Vocal and Treble presets update actual EQ bands; additional measured/user presets are not implemented. |
+| AUD-005 | Crossfade | unverified | No overlapping two-source crossfade is implemented or tested. |
 | AUD-006 | Automix | unverified | Observe permitted reference, implement, test and compare |
-| AUD-007 | Loudness handling | unverified | Observe permitted reference, implement, test and compare |
-| AUD-008 | Lossless output | unverified | Observe permitted reference, implement, test and compare |
+| AUD-007 | Loudness handling | incomplete | EQ headroom, stereo-linked compression and an optional interpolated peak guard are real PCM processing. ReplayGain tag parsing/normalization is not implemented. |
+| AUD-008 | Lossless output | incomplete | Pure Mode copies PCM bytes unchanged at Rynx's Media3 processor boundary. Android decoder, mixer, route and DAC may still convert; lossless end-to-end output is not established. |
 | AUD-009 | Spatial audio | unverified | Observe permitted reference, implement, test and compare |
 | AUD-010 | Vocal suppression | unverified | Observe permitted reference, implement, test and compare |
-| AUD-011 | Output configuration | unverified | Observe permitted reference, implement, test and compare |
-| AUD-012 | Gapless playback | unverified | Observe permitted reference, implement, test and compare |
-| AUD-013 | High resolution output | unverified | Observe permitted reference, implement, test and compare |
-| AUD-014 | Audio telemetry | unverified | Observe permitted reference, implement, test and compare |
+| AUD-011 | Output configuration | incomplete | Existing Android volume/output screen is retained; Rynx displays selected Media3 track format, a primary native-rate hint, available route names and clip count. It cannot report active DAC format or choose an exclusive route. |
+| AUD-012 | Gapless playback | unverified | Existing Media3 queue is retained, but transitions have not been checked for gapless output with the Rynx processor. |
+| AUD-013 | High resolution output | incomplete | The Android hook processes PCM 8/16/24/32-bit integer and float without rate conversion; 24-bit and float paths have unit coverage. Decoder/device acceptance and end-to-end 192 kHz output remain unverified. |
+| AUD-014 | Audio telemetry | incomplete | Best-effort Media3 format/route hints and an in-process clipped-sample counter are shown; DAC signal, latency and underrun telemetry are not available. |
 | DJ-001 | Beat detection | unverified | Observe permitted reference, implement, test and compare |
 | DJ-002 | BPM | unverified | Observe permitted reference, implement, test and compare |
 | DJ-003 | Musical key | unverified | Observe permitted reference, implement, test and compare |
@@ -86,7 +86,7 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | REC-002 | Fingerprint handling | unverified | Observe permitted reference, implement, test and compare |
 | REC-003 | Recognition history | unverified | Observe permitted reference, implement, test and compare |
 | REC-004 | Recognition results | unverified | Observe permitted reference, implement, test and compare |
-| DOWN-001 | Track download | unverified | Observe permitted reference, implement, test and compare |
+| DOWN-001 | Track download | incomplete | `DownloadBrandingMetadata` serializes “Downloaded by Rynx” plus app ID, media ID, title, artist, provider and timestamp; Android writes `<media-file>.rynx.json` without mutating media bytes. The download feature itself is not present, so no file is tagged automatically yet. |
 | DOWN-002 | Batch download | unverified | Observe permitted reference, implement, test and compare |
 | DOWN-003 | Caching | unverified | Observe permitted reference, implement, test and compare |
 | DOWN-004 | Offline playback | unverified | Observe permitted reference, implement, test and compare |

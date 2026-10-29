@@ -132,6 +132,7 @@ class NavigationMotionUiTest {
             assertEquals(true, find(scene, "Library").config.getOrNull(SemanticsProperties.Selected))
             assertTrue(inFlight.width > 0f && settledTarget.width > 0f)
             assertTrue(settledTarget.left >= bar.left - 1f && settledTarget.right <= bar.right + 1f)
+            repeat(3) { clock += 1_000_000_000; scene.render(clock).close() }
         } finally {
             scene.close()
         }

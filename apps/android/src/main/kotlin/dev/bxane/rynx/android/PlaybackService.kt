@@ -19,6 +19,9 @@ import androidx.media3.session.MediaSessionService
 class PlaybackService : MediaSessionService() {
     private var session: MediaSession? = null
     private var listening:AndroidListeningRecorder?=null
+    private var audioSettingsStore:AndroidAudioDspSettingsStore?=null
+    private var audioSettingsObservation:AutoCloseable?=null
+    private var audioProcessor:RynxMedia3AudioProcessor?=null
     override fun onCreate() {
         super.onCreate()
         val http = DefaultHttpDataSource.Factory()
@@ -30,7 +33,13 @@ class PlaybackService : MediaSessionService() {
             base,
             ProviderHeaderResolver(StreamRequestHeaderStore::headersFor),
         )
+        val settingsStore=AndroidAudioDspSettingsStore(applicationContext)
+        val processor=RynxMedia3AudioProcessor(settingsStore.load())
+        audioSettingsStore=settingsStore
+        audioProcessor=processor
+        audioSettingsObservation=settingsStore.observe(processor::updateSettings)
         val player = ExoPlayer.Builder(this)
+            .setRenderersFactory(RynxAudioRenderersFactory(this,processor))
             .setMediaSourceFactory(DefaultMediaSourceFactory(requestAware))
             .build().apply {
                 setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true)
@@ -44,6 +53,8 @@ class PlaybackService : MediaSessionService() {
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
     override fun onDestroy() {
         listening?.close();listening=null
+        audioSettingsObservation?.close();audioSettingsObservation=null
+        audioProcessor=null;audioSettingsStore=null
         session?.let { it.player.release(); it.release() }
         session = null
         StreamRequestHeaderStore.clear()

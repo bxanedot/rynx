@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 import dev.bxane.rynx.design.*
 import dev.bxane.rynx.ui.*
 
-@Composable internal fun AppearanceSheet(appearance:RynxAppearance,onChange:(RynxAppearance)->Unit,onClose:()->Unit) {
+@Composable internal fun AppearanceSheet(appearance:RynxAppearance,onChange:(RynxAppearance)->Unit,onOpenAudio:()->Unit,onClose:()->Unit) {
     PlayerBackHandler(true,onClose)
     val dark=appearance.darkTheme || appearance.material==RynxMaterialMode.Amoled
     val ink=if(dark)Color.White else Color(0xFF1A1B21)
@@ -33,6 +33,7 @@ import dev.bxane.rynx.ui.*
                 Column(Modifier.fillMaxSize().padding(horizontal=22.dp)) {
                     Row(Modifier.fillMaxWidth().height(66.dp),verticalAlignment=Alignment.CenterVertically) {
                         BasicText("Appearance",Modifier.weight(1f),style=TextStyle(color=ink,fontSize=25.sp,fontWeight=FontWeight.Bold))
+                        RynxButton("Sound",onOpenAudio)
                         RynxButton("Done",onClose)
                     }
                     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(12.dp)) {

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.*
 import coil3.compose.AsyncImage
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.ui.window.Dialog
 import dev.bxane.rynx.design.*
 import dev.bxane.rynx.ui.material.*
 import dev.chrisbanes.haze.rememberHazeState
@@ -180,10 +181,10 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     if(!wide) Spacer(Modifier.height(if(state.current!=null)74.dp else NavigationDockHeight.dp))
                 }
             }
-            Box(Modifier.fillMaxSize().semantics {if(appearanceOpen || state.discoverySelection!=null)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
+            Box(Modifier.fillMaxSize().semantics {if(appearanceOpen || state.audioSettingsOpen || state.discoverySelection!=null)hideFromAccessibility()}) {RynxFluidPlayer(effectiveState,actions,player)}
             if(!wide) FloatingNavigation(
                 hasTrack=state.current!=null,player=player,activeTab=activeTab,reduced=effectiveState.reduceMotion,
-                blocked=appearanceOpen || state.discoverySelection!=null,expanded=navigationExpanded,
+                blocked=appearanceOpen || state.audioSettingsOpen || state.discoverySelection!=null,expanded=navigationExpanded,
                 onExpansionChange={navigationExpanded=it},viewportWidth=maxWidth.value,viewportHeight=maxHeight.value,
                 modifier=Modifier.align(Alignment.BottomCenter),
             ) {tab->
@@ -191,7 +192,9 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                 if(playerVisible)player.close(effectiveState.reduceMotion)
             }
             if(state.discoverySelection!=null)DiscoveryDetail(state,actions)
-            if(appearanceOpen) AppearanceSheet(appearance,::updateAppearance){appearanceOpen=false}
+            if(appearanceOpen) AppearanceSheet(appearance,::updateAppearance,{appearanceOpen=false;actions.openAudioSettings()}){appearanceOpen=false}
+            if(state.audioSettingsOpen) AudioDspSheet(state.audioDspSettings,state.audioSignalInfo,state.audioClipCount,
+                actions::updateAudioDsp,actions::closeAudioSettings)
 
         }
     }
@@ -322,24 +325,161 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val p=LocalPalette.current
     val libraryTracks=(state.tracks+state.favoriteTracks+listOfNotNull(state.current)).distinctBy { it.id }
     val favorites=libraryTracks.filter { it.id in state.favoriteIds }
-    if(libraryTracks.isEmpty()) Column(modifier.fillMaxSize().padding(32.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
+    var selectedPlaylistId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var renamePlaylistId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var createPlaylistOpen by rememberSaveable { mutableStateOf(false) }
+    var addTrack by remember { mutableStateOf<TrackItem?>(null) }
+    val selectedPlaylist=state.playlists.firstOrNull { it.id==selectedPlaylistId }
+    val renameTarget=state.playlists.firstOrNull { it.id==renamePlaylistId }
+    if(selectedPlaylistId!=null && selectedPlaylist==null) selectedPlaylistId=null
+    if(renamePlaylistId!=null && renameTarget==null) renamePlaylistId=null
+
+    if(selectedPlaylist!=null) {
+        Column(modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
+                IconButton(Glyph.Previous,"Back to Library",onClick={selectedPlaylistId=null})
+                Column(Modifier.weight(1f).padding(horizontal=10.dp)) {
+                    Label(selectedPlaylist.name,21,bold=true)
+                    Label("${selectedPlaylist.entries.size} songs",12,p.secondary)
+                }
+                IconButton(Glyph.Edit,"Rename playlist",onClick={renamePlaylistId=selectedPlaylist.id})
+                IconButton(Glyph.Close,"Delete ${selectedPlaylist.name}",tint=Accent,onClick={
+                    actions.deletePlaylist(selectedPlaylist.id);selectedPlaylistId=null
+                })
+            }
+            if(selectedPlaylist.entries.isEmpty()) Column(Modifier.weight(1f).fillMaxWidth().padding(32.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
+                RynxGlyph(Glyph.Queue,p.secondary,Modifier.size(48.dp))
+                Spacer(Modifier.height(16.dp))
+                Label("This playlist is empty",21,bold=true)
+                Spacer(Modifier.height(8.dp))
+                Label("Add songs from your library to start listening.",14,p.secondary)
+                Spacer(Modifier.height(18.dp))
+                Action("Back to Library",{selectedPlaylistId=null})
+            } else LazyColumn(Modifier.weight(1f).padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
+                items(selectedPlaylist.entries,key={"playlist:${selectedPlaylist.id}:${it.id}"}) { entry ->
+                    val track=TrackItem(entry.mediaId,entry.title,entry.artist,entry.artworkUrl)
+                    TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},track.id in state.favoriteIds,{actions.toggleFavorite(track.id)},
+                        onRemoveFromPlaylist={actions.removePlaylistEntry(selectedPlaylist.id,entry.id)},
+                        onMoveUp=if(entry.position>0)({actions.movePlaylistEntry(selectedPlaylist.id,entry.id,(entry.position-1).toInt())}) else null,
+                        onMoveDown=if(entry.position<selectedPlaylist.entries.lastIndex)({actions.movePlaylistEntry(selectedPlaylist.id,entry.id,(entry.position+1).toInt())}) else null)
+                }
+            }
+        }
+    } else if(libraryTracks.isEmpty() && state.playlists.isEmpty()) Column(modifier.fillMaxSize().padding(32.dp),verticalArrangement=Arrangement.Center,horizontalAlignment=Alignment.CenterHorizontally) {
         RynxBrandMark(Modifier.size(54.dp))
         Spacer(Modifier.height(18.dp))
         Label("Your music, right here",24,bold=true)
         Spacer(Modifier.height(10.dp))
-        Label("Add audio files to build your library.",14,p.secondary)
+        Label("Add audio files or create a playlist to get started.",14,p.secondary)
         Spacer(Modifier.height(24.dp))
         Action("Add music",actions::importFiles)
+        Spacer(Modifier.height(10.dp))
+        Action("Create playlist",{createPlaylistOpen=true})
     } else LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
+        item {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Label("Playlists",20,bold=true)
+                    Label("${state.playlists.size} playlists",12,p.secondary)
+                }
+                IconButton(Glyph.Add,"Create playlist",onClick={createPlaylistOpen=true})
+            }
+        }
+        items(state.playlists,key={"user-playlist:${it.id}"}) { playlist ->
+            Row(Modifier.fillMaxWidth().rynxMaterial(12.dp,amount=.25f).clickable(role=Role.Button){selectedPlaylistId=playlist.id}
+                .semantics{contentDescription="Open playlist ${playlist.name}"}.padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+                Artwork(48.dp,artworkUrl=playlist.entries.firstOrNull()?.artworkUrl)
+                Column(Modifier.weight(1f).padding(horizontal=14.dp)) {
+                    Label(playlist.name,bold=true)
+                    Spacer(Modifier.height(3.dp))
+                    Label("Playlist · ${playlist.entries.size} songs",12,p.secondary)
+                }
+                RynxGlyph(Glyph.Previous,p.secondary,Modifier.graphicsLayer{rotationZ=180f})
+            }
+        }
         if(favorites.isNotEmpty()) {
             item { SectionHeading("Favorites", "${favorites.size} songs") }
             items(favorites,key={"favorite:${it.id}"}) { track ->
-                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},true,{actions.toggleFavorite(track.id)})
+                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},true,{actions.toggleFavorite(track.id)},
+                    onAddToPlaylist={addTrack=track})
             }
         }
         item { SectionHeading("Songs", "${state.tracks.size} songs") }
         items(state.tracks,key={"library:${it.id}"}) { track ->
-            TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},track.id in state.favoriteIds,{actions.toggleFavorite(track.id)})
+            TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},track.id in state.favoriteIds,{actions.toggleFavorite(track.id)},
+                onAddToPlaylist={addTrack=track})
+        }
+    }
+    if(createPlaylistOpen) PlaylistNameDialog(
+        title="New Playlist",initialName="",confirmLabel="Create",
+        onDismiss={createPlaylistOpen=false},
+        onCreate={name->actions.createPlaylist(name);createPlaylistOpen=false},
+    )
+    renameTarget?.let { playlist -> PlaylistNameDialog(
+        title="Rename Playlist",initialName=playlist.name,confirmLabel="Save",
+        onDismiss={renamePlaylistId=null},
+        onCreate={name->actions.renamePlaylist(playlist.id,name);renamePlaylistId=null},
+    ) }
+    addTrack?.let { track ->
+        AddToPlaylistDialog(
+            track=track,
+            playlists=state.playlists,
+            onDismiss={addTrack=null},
+            onSelect={playlistId->actions.addTrackToPlaylist(playlistId,track);addTrack=null},
+            onCreatePlaylist={createPlaylistOpen=true},
+        )
+    }
+}
+
+@Composable private fun PlaylistNameDialog(title:String,initialName:String,confirmLabel:String,onDismiss:()->Unit,onCreate:(String)->Unit) {
+    val p=LocalPalette.current
+    var name by remember(initialName) { mutableStateOf(initialName) }
+    Dialog(onDismissRequest=onDismiss) {
+        Column(Modifier.fillMaxWidth().rynxMaterial(28.dp,amount=.9f).padding(24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+            Label(title,23,bold=true)
+            Label(if(initialName.isBlank()) "Give your collection a name." else "Choose a new name for this playlist.",14,p.secondary)
+            BasicTextField(name,{name=it},singleLine=true,textStyle=TextStyle(color=p.text,fontSize=16.sp),modifier=Modifier.fillMaxWidth()
+                .rynxMaterial(15.dp,amount=.5f).semantics{contentDescription="Playlist name"}.padding(horizontal=14.dp,vertical=15.dp),decorationBox={inner->
+                    Box { if(name.isEmpty()) BasicText("Playlist name",style=TextStyle(color=p.secondary,fontSize=16.sp));inner() }
+                })
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                Action("Cancel",onDismiss)
+                Action(confirmLabel,{onCreate(name)},enabled=name.isNotBlank())
+            }
+        }
+    }
+}
+
+@Composable private fun AddToPlaylistDialog(
+    track:TrackItem,
+    playlists:List<dev.bxane.rynx.library.Playlist>,
+    onDismiss:()->Unit,
+    onSelect:(Long)->Unit,
+    onCreatePlaylist:()->Unit,
+) {
+    val p=LocalPalette.current
+    Dialog(onDismissRequest=onDismiss) {
+        Column(Modifier.fillMaxWidth().rynxMaterial(28.dp,amount=.9f).padding(24.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+            Label("Add to Playlist",22,bold=true)
+            Label(track.title,14,p.secondary)
+            if(playlists.isEmpty()) Label("Create a playlist before adding songs.",14,p.secondary)
+            else playlists.forEach { playlist ->
+                Row(Modifier.fillMaxWidth().rynxMaterial(14.dp,amount=.45f).clickable(role=Role.Button){onSelect(playlist.id)}
+                    .semantics{contentDescription="Add to ${playlist.name}"}.padding(12.dp),verticalAlignment=Alignment.CenterVertically) {
+                    Artwork(38.dp,artworkUrl=playlist.entries.firstOrNull()?.artworkUrl)
+                    Column(Modifier.weight(1f).padding(horizontal=12.dp)) {
+                        Label(playlist.name,bold=true)
+                        Label("${playlist.entries.size} songs",12,p.secondary)
+                    }
+                    RynxGlyph(Glyph.Add,p.secondary)
+                }
+            }
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                Action("New Playlist",onCreatePlaylist)
+                Action("Done",onDismiss)
+            }
         }
     }
 }
@@ -443,12 +583,28 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     }
 }
 
-@Composable private fun TrackRow(track:TrackItem,selected:Boolean,playing:Boolean,onClick:()->Unit,favorite:Boolean=false,onToggleFavorite:(()->Unit)?=null) {
+@Composable private fun TrackRow(track:TrackItem,selected:Boolean,playing:Boolean,onClick:()->Unit,favorite:Boolean=false,onToggleFavorite:(()->Unit)?=null,onAddToPlaylist:(()->Unit)?=null,onRemoveFromPlaylist:(()->Unit)?=null,onMoveUp:(()->Unit)?=null,onMoveDown:(()->Unit)?=null) {
     val p=LocalPalette.current
     Row(Modifier.fillMaxWidth().rynxMaterial(12.dp,selected=selected,amount=.3f).clickable(role=Role.Button,onClick=onClick).padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
         Artwork(44.dp,artworkUrl=track.artworkUrl)
         Column(Modifier.padding(start=14.dp).weight(1f)) { Label(track.title,bold=selected,color=if(selected) Accent else p.text);Spacer(Modifier.height(4.dp));Label(track.subtitle,12,p.secondary) }
         if(selected) RynxGlyph(if(playing) Glyph.Pause else Glyph.Play,Accent)
         onToggleFavorite?.let { toggle -> IconButton(if(favorite) Glyph.HeartFill else Glyph.Heart,if(favorite) "Remove ${track.title} from Favorites" else "Add ${track.title} to Favorites",tint=if(favorite) Accent else p.secondary,onClick=toggle) }
+        onAddToPlaylist?.let { add -> IconButton(Glyph.Add,"Add ${track.title} to a playlist",tint=p.secondary,onClick=add) }
+        onRemoveFromPlaylist?.let { remove -> IconButton(Glyph.Close,"Remove ${track.title} from playlist",tint=p.secondary,onClick=remove) }
+        if(onMoveUp!=null || onMoveDown!=null) Column(verticalArrangement=Arrangement.spacedBy(2.dp)) {
+            onMoveUp?.let { move -> SmallIconButton(Glyph.MoveUp,"Move ${track.title} earlier",onClick=move) }
+            onMoveDown?.let { move -> SmallIconButton(Glyph.MoveDown,"Move ${track.title} later",onClick=move) }
+        }
+    }
+}
+
+@Composable private fun SmallIconButton(glyph:Glyph,description:String,enabled:Boolean=true,onClick:()->Unit) {
+    val p=LocalPalette.current
+    val interaction=remember {MutableInteractionSource()}
+    Box(Modifier.size(32.dp).rynxPressFeedback(interaction,enabled).rynxMaterial(16.dp,interaction=interaction,amount=.35f)
+        .clickable(enabled=enabled,role=Role.Button,interactionSource=interaction,indication=null,onClick=onClick)
+        .semantics{contentDescription=description;if(!enabled)disabled()},contentAlignment=Alignment.Center) {
+        RynxGlyph(glyph,if(enabled)p.secondary else p.secondary.copy(alpha=.35f),Modifier.size(18.dp))
     }
 }

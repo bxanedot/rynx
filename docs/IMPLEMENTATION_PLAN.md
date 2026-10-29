@@ -13,3 +13,9 @@ The user's master prompt is the scope and execution order. User follow-up replac
 No future step is complete merely because its folder or contract exists. No public remote or upstream mutation is authorized.
 
 Executed initial scope: source isolation, requested inventory, reference research, shared queue foundation, adaptive Compose UI, desktop local decode/output code, persistence, render/callback tests and a Linux development JAR. Original phases 4–12 and much of phase 3 remain incomplete.
+
+## Android media and library continuation
+
+The current Android-first continuation adds an independently authored shared PCM DSP runtime, routes it through the existing Media3 audio sink, stores DSP settings locally, and exposes a real settings/player control surface. It also adds shared SQLDelight playlist rules/persistence and an Android sidecar schema for download attribution. The sidecar writer is not yet connected to a download-completion pipeline because Rynx still has no completed downloader; it must not be described as attribution on every download yet.
+
+Next gates: run Android instrumentation on the current branch, verify audible playback and DSP behavior on a device, connect attribution when an authorized download pipeline exists, and keep Spotify and service/artwork eligibility blocked until their actual prerequisites and tests are available.

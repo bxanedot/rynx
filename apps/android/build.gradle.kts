@@ -52,6 +52,7 @@ dependencies {
     androidTestImplementation("androidx.test:core-ktx:1.7.0")
     implementation(project(":shared:ui"))
     implementation(project(":shared:playback"))
+    implementation(project(":shared:library"))
     implementation(project(":providers:excor"))
     implementation(project(":providers:apple"))
     implementation(project(":providers:newpipe"))
@@ -62,6 +63,7 @@ dependencies {
     implementation("androidx.media3:media3-session:1.11.1")
     implementation("io.ktor:ktor-client-okhttp:3.6.0")
     implementation("androidx.core:core-ktx:1.19.1")
+    implementation("app.cash.sqldelight:android-driver:2.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     implementation(compose.foundation)
 }

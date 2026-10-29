@@ -2,11 +2,17 @@
 
 2026-10-28 · Linux x86_64 · Temurin JDK 27 · Gradle 9.8.2 · AGP 9.4.1 · compile SDK 37 / target 36 / min 26.
 
-## Latest hosted verification — 2026-10-29
+## Latest hosted verification — current PR #4 head `c808ceb`
+
+On 2026-10-29, Verify run [40905772925](https://github.com/bxanedot/rynx/actions/runs/40905772925) and Android phone run [40905772918](https://github.com/bxanedot/rynx/actions/runs/40905772918) passed. Verify completed the source-boundary audit, Android debug/release/instrumentation packaging, lint, Android unit tests, and shared/provider checks. The phone job completed the API 36 `connectedDebugAndroidTest` suite; its reports cover generated-PCM Media3 queue restoration and Search/back navigation. CI also uploaded an installable debug APK artifact: [download ZIP](https://github.com/bxanedot/rynx/actions/runs/40905772918/artifacts/12911617173), then extract and install `android-debug.apk`.
+
+Two earlier phone runs on `005cf91` were red. The resume test observed an empty saved queue, and the Search test's active accessibility package was the launcher. The current test now stops and restarts only `PlaybackService`, while `NavigationDeviceTest` keeps `MainActivity` foreground in `ActivityScenario`; both workflows pass on `c808ceb`. This is hosted API 36 emulator evidence, not a physical-phone audio or performance result.
+
+## Previous hosted verification — 2026-10-29, commit `72cbf9a`
 
 For commit `72cbf9a`, Verify run [40844482143](https://github.com/bxanedot/rynx/actions/runs/40844482143) passed source-boundary audit, Android debug/instrumentation/minified-release packaging, lint and configured unit/shared/provider checks. Android phone run [40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288) passed an explicit `adb install -r` of the debug APK followed by the API 36 Pixel 6 `connectedDebugAndroidTest` suite, including service playback/pause-resume, playlist persistence after database reopen, and Search/back navigation. The APK is signed with the Android development key. The minified release APK is unsigned and Android will reject it until an owner-controlled release key is configured. This verifies emulator installation and instrumentation only; it does not establish physical-device audibility, DAC routing, production signing, audio quality or visual parity.
 
-Earlier dated sections below are retained as historical snapshots and are superseded for current-branch build/device status by these hosted results. The current local software emulator still fails to boot. The Search test had intermittent launcher foreground failures on intermediate commits; a variant that force-stopped Rynx also risked terminating the test process. The final harness launches MainActivity through Android's shell command without force-stopping the package; the current connected suite passes.
+The dated sections below are historical snapshots; the two latest sections above record current PR evidence. The local software emulator still fails to boot. Earlier Search tests intermittently observed the launcher, and the resume test used a force-stop approach that could kill its instrumentation host. The current harness keeps `MainActivity` owned by `ActivityScenario` and stops only `PlaybackService`; the current connected suite passes.
 
 ## Current shared-playback continuation
 

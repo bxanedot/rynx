@@ -2,6 +2,10 @@
 
 Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `main` commit `11681c9`. This is an engineering status report, not a production-readiness claim.
 
+## Current PR #4 verification
+
+The current head is `c808ceb`. Verify run [40905772925](https://github.com/bxanedot/rynx/actions/runs/40905772925) and Android phone run [40905772918](https://github.com/bxanedot/rynx/actions/runs/40905772918) both pass. The phone job built the installable debug APK and completed the API 36 `connectedDebugAndroidTest` suite. Earlier red phone runs are on the previous `005cf91` commit, not the current PR head. Their resume test started with an empty restored queue and navigation test saw the launcher; the current test restarts only `PlaybackService` and launches the navigation scenario through `ActivityScenario`. Hosted emulator success does not establish physical-device audio, live provider playback, or release signing.
+
 ## Implemented and deterministically tested
 
 - Shared Kotlin playback queue/order, metadata matching, recommendations, lyrics parsing, appearance/motion models, and provider-neutral playback preparation contracts.
@@ -49,7 +53,7 @@ That earlier branch used Excor → InnerTubeX v0.11.2 → NewPipeExtractor v0.26
 
 Verification for this change: shared playback JVM tests passed (46), InnerTubeX adapter JVM tests passed (4), Android unit tests passed (9), Android debug APK packaging passed, Android lint passed, and the workspace boundary audit passed. This verifies the adapter contract and compilation only; live InnertubeX extraction and audible device playback remain unverified. The generated APK is debug-signed and not a production release.
 
-## Current provider/archive and artwork change — local verification passed
+## Earlier provider/archive and artwork change — local verification passed
 
 The active Android chain is InnerTubeX → NewPipeExtractor. Apple public iTunes/RSS song search and lookup return real cover-art URLs, with matching artwork mapped to catalog results; InnerTubeX search rows map their largest published thumbnail. A live Apple search returned a real “Get Lucky” cover URL, and a separate image request returned HTTP 200 with `image/jpeg`. This proves metadata/artwork retrieval only, not redistribution rights or Android rendering.
 

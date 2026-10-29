@@ -24,9 +24,9 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | PLAY-002 | Mini-player | incomplete | One capsule-to-sheet surface, shared artwork/transport and navigation handoff pass headless interaction/continuity tests; Android gesture/render acceptance pending |
 | PLAY-003 | Expanded player | incomplete | Reference-proportioned transport, volume, output, seek and menus implemented in all material modes; landscape and large-font harness passes; native/reference gates pending |
 | PLAY-004 | Player variants | unverified | Observe permitted reference, implement, test and compare |
-| PLAY-005 | Queue and restart restoration | incomplete | Playback-order aware queue with shuffle-safe reorder/remove/clear. A bounded KMP snapshot and Media3 service restoration now preserve eligible local `content://` queues, position, repeat, and shuffle traversal order while restoring paused. Common codec tests pass; new Android restoration instrumentation compiles but has not yet run on a device. Remote/provider stream IDs and signed URLs are intentionally not persisted. |
-| PLAY-006 | Shuffle | incomplete | Native Media3 shuffle and shuffle-order editing wired; headless/order tests pass, device test pending |
-| PLAY-007 | Repeat | incomplete | Android host code present; actual-device validation and reference comparison pending |
+| PLAY-005 | Queue and restart restoration | incomplete | Playback-order aware queue with shuffle-safe reorder/remove/clear. A bounded KMP snapshot and Media3 service restoration preserve eligible local `content://` queues, position, repeat, and shuffle traversal order while restoring paused. Common codec tests and generated-PCM MediaStore restoration instrumentation passed on hosted API 36 at `c808ceb`; permission revocation, process death, and physical-device behavior remain unverified. Remote/provider stream IDs and signed URLs are intentionally not persisted. |
+| PLAY-006 | Shuffle | incomplete | Native Media3 shuffle and shuffle-order editing wired; headless/order tests and hosted API 36 restoration of shuffle order pass; direct device interaction and reference comparison remain pending |
+| PLAY-007 | Repeat | incomplete | Android host code present; hosted API 36 restoration of repeat state passes; direct device interaction and reference comparison remain pending |
 | PLAY-008 | Seeking | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | PLAY-009 | Playback speed | unverified | Observe permitted reference, implement, test and compare |
 | PLAY-010 | Sleep timer | unverified | Observe permitted reference, implement, test and compare |
@@ -138,13 +138,13 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | UTIL-008 | Error logs | unverified | Observe permitted reference, implement, test and compare |
 | UTIL-009 | Updates | unverified | Observe permitted reference, implement, test and compare |
 | UTIL-010 | Diagnostics | unverified | Observe permitted reference, implement, test and compare |
-| PROV-001 | InnerTubeX | incomplete | Shared KMP adapter now handles YouTube Music catalog search/paging and is the primary Android audio resolver. Direct HTTPS audio only; deterministic tests/build are pending on this revision; live extraction/device playback unverified. |
+| PROV-001 | InnerTubeX | incomplete | Shared KMP adapter handles YouTube Music catalog search/paging and is the primary Android audio resolver. Deterministic adapter tests and current PR builds pass. Direct HTTPS audio only; live extraction and audible device playback remain unverified; the latest opt-in request failed before a provider response because the connection was refused. |
 | PROV-002 | Spotify | unverified | Observe permitted reference, implement, test and compare |
 | PROV-003 | Local files | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | PROV-004 | SMB | unverified | Observe permitted reference, implement, test and compare |
 | PROV-005 | WebDAV | unverified | Observe permitted reference, implement, test and compare |
 | PROV-006 | External modules | unverified | Observe permitted reference, implement, test and compare |
-| PROV-007 | NewPipeExtractor fallback | incomplete | Pinned Android last-resort fallback implements the shared KMP resolver contract and compiles. Live fallback and device acceptance remain pending |
+| PROV-007 | NewPipeExtractor fallback | incomplete | Pinned Android last-resort fallback implements the shared KMP resolver contract and compiles in the current PR checks. Live fallback invocation and device acceptance remain unverified. |
 | PROV-008 | YouTube.js | blocked | The inspected npm `youtubei.js` library is JavaScript-only. No Android/Kotlin host or active dependency is present; it is not claimed as an Android provider. |
 | SPOT-001 | Login | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-002 | Account linking | unverified | Observe permitted reference, implement, test and compare |

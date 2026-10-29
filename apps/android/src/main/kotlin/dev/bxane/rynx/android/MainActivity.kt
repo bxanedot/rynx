@@ -11,6 +11,8 @@ import android.media.AudioDeviceInfo
 import android.provider.Settings
 import android.provider.OpenableColumns
 import android.os.Handler
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
@@ -33,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.core.view.WindowCompat
 import kotlin.math.roundToInt
 import dev.bxane.rynx.library.PlaylistEntryDraft
@@ -138,6 +141,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingLyricsTrackId=savedInstanceState?.getString("pending-lyrics-track")
+        state.update { it.copy(reduceMotion=Settings.Global.getFloat(contentResolver,Settings.Global.ANIMATOR_DURATION_SCALE,1f)==0f) }
         enableEdgeToEdge()
         title = "rynx"
         refreshAvailableAudioRoutes()
@@ -335,18 +339,40 @@ class MainActivity : ComponentActivity() {
         setContent {
             val current by state.collectAsStateWithLifecycle()
             var immersivePlayer by remember { mutableStateOf(false) }
+            var startupSplashVisible by remember { mutableStateOf(savedInstanceState == null) }
             SideEffect {
                 WindowCompat.getInsetsController(window,window.decorView).apply {
-                    val dark=current.appearance.darkTheme || current.appearance.material==dev.bxane.rynx.design.RynxMaterialMode.Amoled || immersivePlayer
+                    val dark=startupSplashVisible || current.appearance.darkTheme || current.appearance.material==dev.bxane.rynx.design.RynxMaterialMode.Amoled || immersivePlayer
                     isAppearanceLightStatusBars=!dark
                     isAppearanceLightNavigationBars=!dark
                 }
             }
-            Box(Modifier.fillMaxSize().background(if(immersivePlayer && current.appearance.material!=dev.bxane.rynx.design.RynxMaterialMode.Amoled)Color(0xFF142430) else Color(current.appearance.policy().backgroundArgb)).safeDrawingPadding()) {
-                RynxApp(current,actions,onPlayerVisibleChanged={immersivePlayer=it})
+            Box(Modifier.fillMaxSize().background(
+                if(startupSplashVisible) Color.Black
+                else if(immersivePlayer && current.appearance.material!=dev.bxane.rynx.design.RynxMaterialMode.Amoled) Color(0xFF142430)
+                else Color(current.appearance.policy().backgroundArgb),
+            )) {
+                Box(Modifier.fillMaxSize().safeDrawingPadding().then(
+                    if(startupSplashVisible) Modifier.clearAndSetSemantics {} else Modifier,
+                )) {
+                    RynxApp(current,actions,onPlayerVisibleChanged={immersivePlayer=it})
+                }
+                if(startupSplashVisible) {
+                    RynxStartupSplash(
+                        reduceMotion=current.appearance.reducedMotion(current.reduceMotion),
+                        onPulse={vibrateStartupPulse()},
+                        onFinished={startupSplashVisible=false},
+                    )
+                }
             }
         }
     }
+
+    private fun vibrateStartupPulse() {
+        val vibrator=getSystemService(Vibrator::class.java) ?: return
+        if(vibrator.hasVibrator()) vibrator.vibrate(VibrationEffect.createOneShot(38,VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
     override fun onSaveInstanceState(outState:Bundle) {
         outState.putString("pending-lyrics-track",pendingLyricsTrackId)
         super.onSaveInstanceState(outState)

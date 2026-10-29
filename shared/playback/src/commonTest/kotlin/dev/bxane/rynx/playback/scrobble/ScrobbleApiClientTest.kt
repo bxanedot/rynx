@@ -113,14 +113,16 @@ class ScrobbleApiClientTest {
         }
     }
 
-    @Test fun listenBrainzRejectsAnInvalidToken() = runSuspend {
-        val client = HttpClient(MockEngine {
-            respond("""{"valid":false}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
-        })
-        try {
-            assertFailsWith<ScrobbleAuthenticationException> { ListenBrainzClient(client).validateToken("bad") }
-        } finally {
-            client.close()
+    @Test fun listenBrainzRejectsAnInvalidToken() {
+        runSuspend {
+            val client = HttpClient(MockEngine {
+                respond("""{"valid":false}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            })
+            try {
+                assertFailsWith<ScrobbleAuthenticationException> { ListenBrainzClient(client).validateToken("bad") }
+            } finally {
+                client.close()
+            }
         }
     }
 }

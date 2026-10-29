@@ -34,13 +34,15 @@ class ScrobbleProgressTrackerTest {
 
     @Test fun pausedTimeAndSeekJumpsDoNotCount() {
         val tracker = ScrobbleProgressTracker()
-        assertNull(tracker.observe(sample(0, 0, duration = 60_000)))
-        assertNull(tracker.observe(sample(10_000, 10_000, duration = 60_000)))
-        assertNull(tracker.observe(sample(40_000, 10_000, playing = false, duration = 60_000)))
-        assertNull(tracker.observe(sample(100_000, 20_000, duration = 60_000))) // seek forward
-        assertNull(tracker.observe(sample(110_000, 30_000, duration = 60_000)))
-        assertNull(tracker.observe(sample(120_000, 40_000, duration = 60_000)))
-        assertNotNull(tracker.observe(sample(130_000, 50_000, duration = 60_000)))
+        assertNull(tracker.observe(sample(0, 0, duration = 120_000)))
+        assertNull(tracker.observe(sample(10_000, 10_000, duration = 120_000)))
+        assertNull(tracker.observe(sample(40_000, 10_000, playing = false, duration = 120_000)))
+        assertNull(tracker.observe(sample(100_000, 20_000, duration = 120_000))) // seek while paused
+        assertNull(tracker.observe(sample(110_000, 30_000, duration = 120_000)))
+        assertNull(tracker.observe(sample(120_000, 40_000, duration = 120_000)))
+        assertNull(tracker.observe(sample(130_000, 90_000, duration = 120_000))) // seek while playing
+        assertNull(tracker.observe(sample(140_000, 100_000, duration = 120_000)))
+        assertNotNull(tracker.observe(sample(160_000, 120_000, duration = 120_000)))
     }
 
     @Test fun changingTrackStartsANewPlaybackAttempt() {
@@ -49,7 +51,8 @@ class ScrobbleProgressTrackerTest {
         assertNull(tracker.observe(sample(10_000, 10_000, id = "a", duration = 60_000)))
         assertNull(tracker.observe(sample(20_000, 20_000, id = "b", duration = 60_000)))
         assertNull(tracker.observe(sample(30_000, 30_000, id = "b", duration = 60_000)))
-        assertNotNull(tracker.observe(sample(40_000, 40_000, id = "b", duration = 60_000)))
+        assertNull(tracker.observe(sample(40_000, 40_000, id = "b", duration = 60_000)))
+        assertNotNull(tracker.observe(sample(50_000, 50_000, id = "b", duration = 60_000)))
     }
 
     @Test fun timestampUsesTheEstimatedTrackStartAndPlaybackAttemptEmitsOnce() {

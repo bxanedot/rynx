@@ -37,7 +37,7 @@ for report_root in (Path('apps/android/build/outputs/androidTest-results/connect
             continue
         for case in root.iter('testcase'):
             for failure in case.findall('failure') + case.findall('error'):
-                message = failure.get('message', '') + '\n' + (failure.text or '')
+                message = failure.get('message', '') + '\n' + ''.join(failure.itertext())
                 message = re.sub(r'https?://\S+', '[URL]', message)
                 print(f'ANDROID TEST FAILURE {case.get("classname")}.{case.get("name")}:\n{message[:6000]}')
 PY

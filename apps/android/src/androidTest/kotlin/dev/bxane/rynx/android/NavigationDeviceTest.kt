@@ -1,10 +1,10 @@
 package dev.bxane.rynx.android
 
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -97,48 +97,36 @@ class NavigationDeviceTest {
         throw AssertionError("Could not activate navigation action: $label")
     }
 
-    private fun shell(command: String): String {
-        val descriptor = instrumentation.uiAutomation.executeShellCommand(command)
-        return ParcelFileDescriptor.AutoCloseInputStream(descriptor).bufferedReader().use { it.readText() }
-    }
-
-    private fun launchRynx() {
-        val context = instrumentation.targetContext
-        val packageName = context.packageName
-        val component = "$packageName/${MainActivity::class.java.name}"
-        val result = shell("am start -W -n $component")
-        assertTrue("Android did not launch Rynx: $result", result.contains("Status: ok"))
-        instrumentation.waitForIdleSync()
-        eventually("Rynx did not become the foreground accessibility window") {
-            instrumentation.uiAutomation.rootInActiveWindow?.packageName == packageName
-        }
-    }
-
     @Test fun searchKeepsItsQueryAndBackReturnsToThePreviousTab() {
-        launchRynx()
-        click("Library")
-        eventually("Library screen did not open") { findVisibleText("Your music, right here") != null }
-        click("Search")
-        eventually("Search screen did not open") { findVisibleText("YouTube Music") != null }
-        eventually("Search input did not finish its expansion") {
-            findEditableField()?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
-        }
-        val query = "navigation survives back"
-        val args = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, query) }
-        assertTrue("Search must accept accessibility text input", findEditableField()!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args))
+        ActivityScenario.launch(MainActivity::class.java).use {
+            val packageName=instrumentation.targetContext.packageName
+            eventually("Rynx did not become the foreground accessibility window") {
+                instrumentation.uiAutomation.rootInActiveWindow?.packageName == packageName
+            }
+            click("Library")
+            eventually("Library screen did not open") { findVisibleText("Your music, right here") != null }
+            click("Search")
+            eventually("Search screen did not open") { findVisibleText("YouTube Music") != null }
+            eventually("Search input did not finish its expansion") {
+                findEditableField()?.let { node -> node.isEnabled && node.actionList.any { action -> action.id == AccessibilityNodeInfo.ACTION_SET_TEXT } } == true
+            }
+            val query = "navigation survives back"
+            val args = Bundle().apply { putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, query) }
+            assertTrue("Search must accept accessibility text input", findEditableField()!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args))
 
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        if (!appearsWithin(2_000) { findVisibleText("Your music, right here") != null }) {
             instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        }
-        eventually("Android back must return to the tab that opened Search") { findVisibleText("Your music, right here") != null }
+            if (!appearsWithin(2_000) { findVisibleText("Your music, right here") != null }) {
+                instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            }
+            eventually("Android back must return to the tab that opened Search") { findVisibleText("Your music, right here") != null }
 
-        click("Search")
-        var restoredQuery:String? = null
-        eventually("Search query was lost while returning from the prior tab") {
-            restoredQuery = findEditableField()?.text?.toString()
-            restoredQuery == query
+            click("Search")
+            var restoredQuery:String? = null
+            eventually("Search query was lost while returning from the prior tab") {
+                restoredQuery = findEditableField()?.text?.toString()
+                restoredQuery == query
+            }
+            assertEquals(query, restoredQuery)
         }
-        assertEquals(query, restoredQuery)
     }
 }

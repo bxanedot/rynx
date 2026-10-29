@@ -1,9 +1,10 @@
 package dev.bxane.rynx.android
 
+import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.ContentValues
+import android.content.Intent
 import android.net.Uri
-import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.provider.MediaStore
 import androidx.media3.common.MediaItem
@@ -27,13 +28,14 @@ import java.util.concurrent.TimeUnit
 class PlaybackResumeTest {
     private val instrumentation=InstrumentationRegistry.getInstrumentation()
 
-    @Test fun serviceRestoresLocalQueuePausedAtSavedPositionAndOrder() {
+    @Test fun serviceRestartRestoresLocalQueuePausedAtSavedPositionAndOrder() {
         val context=instrumentation.targetContext
         val first=insertAudio("Rynx resume one")
         val second=insertAudio("Rynx resume two")
-        forceStopApp(context)
         var expectedOrder:List<Int> = emptyList()
         try {
+            stopPlaybackService(context)
+            AndroidPlaybackResumeStore(context).saveDurably(null)
             ActivityScenario.launch(MainActivity::class.java).use {
                 val controller=connectController(context)
                 try {
@@ -59,8 +61,8 @@ class PlaybackResumeTest {
                     instrumentation.runOnMainSync {
                         expectedOrder=playbackOrder(controller.currentTimeline,true)
                     }
-                    // Let PlaybackService's normal checkpoint loop write the queue before simulating
-                    // process death. The test does not seed the service's private preferences itself.
+                    // Let PlaybackService's normal checkpoint loop write the queue before stopping
+                    // its session. The test does not seed the service's private preferences itself.
                     SystemClock.sleep(2_500)
                     instrumentation.runOnMainSync {
                         assertEquals(2,controller.mediaItemCount)
@@ -73,7 +75,7 @@ class PlaybackResumeTest {
                 }
             }
 
-            forceStopApp(context)
+            stopPlaybackService(context)
             ActivityScenario.launch(MainActivity::class.java).use {
                 val controller=connectController(context)
                 try {
@@ -86,7 +88,7 @@ class PlaybackResumeTest {
                         assertEquals(androidx.media3.common.Player.REPEAT_MODE_ALL,controller.repeatMode)
                         assertTrue(controller.shuffleModeEnabled)
                         assertEquals(expectedOrder,playbackOrder(controller.currentTimeline,true))
-                        assertFalse("Process restoration must not start audio unexpectedly",controller.playWhenReady)
+                        assertFalse("Service restoration must not start audio unexpectedly",controller.playWhenReady)
                         assertTrue("Restored seek position should remain near the saved point",controller.currentPosition in 900..2_000)
                     }
                 } finally {
@@ -94,7 +96,7 @@ class PlaybackResumeTest {
                 }
             }
         } finally {
-            forceStopApp(context)
+            stopPlaybackService(context)
             AndroidPlaybackResumeStore(context).saveDurably(null)
             context.contentResolver.delete(first,null,null)
             context.contentResolver.delete(second,null,null)
@@ -146,10 +148,18 @@ class PlaybackResumeTest {
         return uri
     }
 
-    private fun forceStopApp(context:android.content.Context) {
-        val descriptor=instrumentation.uiAutomation.executeShellCommand("am force-stop ${context.packageName}")
-        ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { it.readBytes() }
-        instrumentation.waitForIdleSync()
+    @Suppress("DEPRECATION")
+    private fun stopPlaybackService(context:android.content.Context) {
+        context.stopService(Intent(context,PlaybackService::class.java))
+        val manager=context.getSystemService(ActivityManager::class.java)
+        val deadline=SystemClock.elapsedRealtime()+5_000
+        while(SystemClock.elapsedRealtime()<deadline) {
+            val running=manager.getRunningServices(100).any { it.service.className==PlaybackService::class.java.name }
+            if(!running)return
+            SystemClock.sleep(50)
+        }
+        assertFalse("PlaybackService must stop before a fresh session reconnects",
+            manager.getRunningServices(100).any { it.service.className==PlaybackService::class.java.name })
     }
 
     private fun wav():ByteArray {

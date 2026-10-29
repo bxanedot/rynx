@@ -1,10 +1,17 @@
 # Rynx implementation status
 
-Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `main` commit `11681c9`. This is an engineering status report, not a production-readiness claim.
+Status date: 2026-10-29. Current in-progress worktree: `feature/scrobbling`, current head `b006a6f` (production code at `8718a0f`), based on merged application-host move `515ee51`. This is an engineering status report, not a production-readiness claim.
 
 Current repository layout change: application hosts are grouped under `app/android`, `app/ios`, and `app/desktop`; shared KMP modules and provider integrations remain under `shared/` and `providers/`. The dated artifact paths and Gradle task names below describe the historical commits on which those results were produced. See [APP_STRUCTURE.md](APP_STRUCTURE.md) for the current layout and iOS/desktop scope.
 
-## Current PR #4 verification
+## Current in-progress changes
+
+- Last.fm and ListenBrainz scrobbling has KMP common clients, Last.fm signing, ListenBrainz token validation/submission, and a playback-duration/seek-aware threshold tracker. Android adds Settings login controls, AES-GCM credentials backed by Android Keystore, and a Media3-service recorder. Current exact PR head `fa21cc2` passes Verify run [40969216416](https://github.com/bxanedot/rynx/actions/runs/40969216416) and hosted API 36 phone run [40969216328](https://github.com/bxanedot/rynx/actions/runs/40969216328). Production code is at `8718a0f`; `b006a6f` adds test-only foreground recovery. Earlier phone run [40967462418](https://github.com/bxanedot/rynx/actions/runs/40967462418) failed because Android Launcher was foreground during navigation. Local Gradle cannot download its wrapper distribution in this environment.
+- Last.fm account linking is disabled until Rynx API credentials are configured with `LASTFM_API_KEY` and `LASTFM_SHARED_SECRET`. Live provider verification is not available. Android-only secure storage and browser handoff still need an iOS Keychain/browser adapter before an iOS host can use account linking.
+- PR #5's selected-track fallback fix is at head `daaf075`, adding test-only foreground recovery. Exact-head Verify run [40968632064](https://github.com/bxanedot/rynx/actions/runs/40968632064) and API 36 hosted phone run [40968631913](https://github.com/bxanedot/rynx/actions/runs/40968631913) both pass. The earlier nested `runOnMainSync` test bug was removed; the installable debug APK is [artifact 12939736137](https://github.com/bxanedot/rynx/actions/runs/40968631913/artifacts/12939736137).
+- ADB is not installed in this workspace and no phone is connected through its USB device path. The owner has authorized inspecting only Convx's running, visible UI via ADB, not its source; that inspection must wait for an accessible device or visual recordings.
+
+## Historical PR #4 verification
 
 The current head is `187511c`. Verify run [40910603843](https://github.com/bxanedot/rynx/actions/runs/40910603843) and Android phone run [40910603735](https://github.com/bxanedot/rynx/actions/runs/40910603735) both pass. The phone job built the installable debug APK and completed the API 36 `connectedDebugAndroidTest` suite, including Search/back/query restoration; the installable debug APK is artifact [12914340956](https://github.com/bxanedot/rynx/actions/runs/40910603735/artifacts/12914340956). Navigation now starts the real app through `am start -W` without force-stopping the instrumented process. On the prior `9c51f02` head, the same-head PR phone run passed but a duplicate push-triggered run lost foreground to Launcher; feature pushes now run once via the PR check. Hosted emulator success does not establish physical-device audio, live provider playback, or release signing.
 

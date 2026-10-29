@@ -1,0 +1,214 @@
+RYNX CONTINUATION HANDOFF
+Generated: 2026-10-29
+Repository: https://github.com/bxanedot/rynx
+
+READ THIS FIRST
+===============
+Continue work in the existing Rynx repository. Do not start a replacement project,
+repeat the repository audit, or claim production readiness from scaffolding or CI
+packaging alone. Inspect this handoff and the current git/PR state first, then
+continue the pending verification and fix real failures.
+
+PRODUCT AND OWNER REQUIREMENTS
+==============================
+- App: Rynx / rynx. Author: bxane.
+- Android phone is the first release target; KMP/Compose Multiplatform is required
+  so shared code can be ported to iOS later. Do not substantially expand desktop,
+  TV, or Wear work until Android reaches its completion gate.
+- The desired visual direction is Apple Music on iOS, not Apple Music Android.
+  Dark mode is the new-install default. Preserve existing Rynx UI and use live
+  Apple Music iOS references where available; do not claim pixel parity without
+  comparing against actual evidence.
+- The owner has authorized inspecting the Convx app only as a running, visible
+  application via ADB (screens, accessibility tree, gestures, behavior). They
+  explicitly do NOT authorize reading its source, decompiling it, or using
+  JADX/Ghidra to recover implementation. Keep this runtime-only boundary.
+- The current agent workspace has no `adb` binary, USB device path, or attached
+  phone. On the owner's computer, use ADB only if they connect/authorize a device.
+  Capture visible UI and interaction behavior only; do not inspect app files,
+  APK internals, private data, or source-derived internals.
+- The owner previously requested a small downloadable/installable APK because
+  Codex artifact links did not open and they could not install earlier APKs.
+  Prefer a GitHub Actions debug APK artifact they can download, and give simple
+  installation steps. Release APKs are unsigned without the owner's signing key.
+- Splash request: Rynx logo, white on black, pulses three times, one vibration
+  per pulse. Check the existing implementation and device behavior before
+  claiming it works.
+- Download branding: “Downloaded by Rynx” metadata/sidecar is implemented as a
+  tested integration point, but no real download queue currently invokes it.
+- YouTube provider status: eXcor was requested archived/removed from active
+  build. Current active Android chain is InnerTubeX with NewPipeExtractor
+  fallback. YouTube.js was requested as an option but is not an Android/Kotlin
+  provider in the active build. Do not claim it is integrated. Do not implement
+  a new extractor. Apple public catalog metadata/artwork should be preferred,
+  with YouTube Music fallback as already implemented.
+- User asked for Last.fm and ListenBrainz logins/scrobbling; enable scrobbling by
+  default on successful login, but preserve a user's later explicit opt-out.
+- Do not inspect source code from Vyon, Convx, BitChord, or Vivi Music. VyonEx is
+  no longer the active requested engine; eXcor archival was requested. GlyphStudio
+  is the approved icon library per the user, subject to artwork licensing.
+- Preserve existing repository and branch history. Do not create a new public
+  repository, force-push main, overwrite the owner's source, or merge PRs without
+  explicit direction.
+
+CURRENT PRS AND BRANCHES
+========================
+PR #5 — InnerTubeX → NewPipe fallback and Android runtime test stabilization
+https://github.com/bxanedot/rynx/pull/5
+Branch: fix/innertubex-music-video-fallback
+Latest rebased commit: 378f3e516de288237759cc383744024dfbd1b4ee
+Local rebased worktree at time of handoff: /tmp/rynx-pr5
+Latest follow-up diagnostic commit: 01c0b4210b844ff1a1e929697c1590ec519ad759
+Current branch head: `daaf075`. Its test-only recovery relaunches Rynx after a
+hosted run found Android's launcher, rather than Rynx, foreground during
+navigation. Exact-head Verify run 40968632064 and API 36 phone run 40968631913
+both passed. The diagnostic snapshot and foreground recovery are test-only
+changes. Earlier, a test called Instrumentation.runOnMainSync from inside
+runOnMainSync; that nested call was removed. Keep PR #5 open unless the owner
+asks to merge.
+
+PR #7 — Last.fm and ListenBrainz integration
+https://github.com/bxanedot/rynx/pull/7
+Branch: feature/scrobbling
+Current branch: `feature/scrobbling`; run `git pull origin feature/scrobbling` to
+get this handoff and use `git rev-parse HEAD` for the current docs commit. Latest
+production-code commit: `8718a0f`; `b006a6f` only updates Android test foreground
+recovery/diagnostics.
+Main working directory at handoff: /workspace/rynx-audio-excor-wt
+Previous run 40966127829 failed on the incorrect Compose import; run 40966399442
+then compiled the corrected import but failed scrobbling tests. Root causes found:
+the test expectations were inconsistent with the half-duration threshold and
+track reset policy, one test method returned an exception instead of JUnit Unit,
+and Ktor MockEngine suspends asynchronously while the custom `runSuspend` helper
+requires synchronous completion. Commits f2b1642, bdf9e3b, and 8718a0f fix these
+issues. Verify run 40967462478 passes on `8718a0f`. Android phone run 40967462418
+failed because Android Launcher was the foreground window while the Search/Library
+test was trying to navigate. Commit `b006a6f` adds test-only foreground recovery
+and an accessibility snapshot. Later code-equivalent PR head `fa21cc2` passes
+Verify run 40969216416 and API 36 phone run 40969216328. Documentation-only
+follow-up commits may trigger fresh checks; inspect `gh pr view 7 --json
+headRefOid,statusCheckRollup,url` for live state. Keep PR #7 open unless the owner
+asks to merge.
+
+To check status/logs:
+  gh pr view 5 --json headRefOid,mergeable,statusCheckRollup,url
+  gh pr view 7 --json headRefOid,mergeable,statusCheckRollup,url
+  gh run view 40966195350 --log-failed
+  gh run view 40966195671 --log-failed
+  gh run view 40966127748 --log-failed
+  gh run view 40966127829 --log-failed
+
+PR #5 ROOT CAUSE AND FIX
+========================
+- The provider previously treated missing `NO_MUSIC_VIDEO` metadata as terminal,
+  so NewPipe fallback was never tried for ordinary search results. The fix makes
+  that case eligible for fallback while keeping age-restricted, unavailable, or
+  explicit refusal conditions terminal.
+- MainActivity now distinguishes a provider refusal from a generic connection or
+  preparation failure.
+- Latest PR #5 rebase is onto merged main commit 515ee51 (app folder move). Its
+  diff was reviewed and `git diff --check` passed.
+- A local safety branch `backup/pr5-before-main-rebase` retains the old head.
+- Do not lose the latest rebased changes in `/tmp/rynx-pr5`.
+
+PR #7 IMPLEMENTATION SUMMARY
+============================
+Common KMP (`shared/playback/commonMain`):
+- Playback-duration/seek-aware scrobble threshold policy.
+- Last.fm API signing (original Kotlin MD5 implementation), auth/session,
+  now-playing and scrobble clients.
+- ListenBrainz token validation, now-playing and submission clients.
+- Ktor protocol tests with MockEngine.
+Android:
+- AES-GCM credential storage backed by Android Keystore.
+- Last.fm browser approval/manual finish-login flow; no password collection.
+- ListenBrainz token validation/login.
+- Apple-style grouped Settings controls and status/errors.
+- Existing Media3 service observes playback and sends now-playing/scrobble events;
+  network errors must not interrupt playback. No automatic retry is used to avoid
+  duplicate listens after ambiguous failures.
+- Successful provider connection enables scrobbling; explicit user opt-out
+  persists. Disconnect clears saved secrets.
+Credentials required for live testing: `LASTFM_API_KEY`,
+`LASTFM_SHARED_SECRET` and a valid test account; ListenBrainz also needs an
+owner-authorized token. These must never be committed or logged.
+Read `docs/SCROBBLING.md` and the scrobbling spec/plan under
+`docs/superpowers/` for behavior and rationale.
+
+CURRENT WORKTREES
+=================
+- `/workspace/rynx-audio-excor-wt`: branch `feature/scrobbling`, with this
+  committed handoff; production code is at `8718a0f` and test-harness recovery
+  at `b006a6f`.
+- `/tmp/rynx-pr5`: branch `fix/innertubex-music-video-fallback`, current head
+  `daaf075`; exact-head Verify and hosted phone CI are running.
+- Other existing worktrees may contain unrelated/in-progress work. Inspect their
+  status before touching them. Do not discard or merge unreviewed changes.
+
+NEXT STEPS
+==========
+1. Check the current PR #7 Verify and Android phone jobs; inspect exact
+   failed-step logs if any; implement fixes and rerun the relevant workflow.
+   PR #5's exact-head checks now both pass.
+2. Keep `docs/IMPLEMENTATION_STATUS.md`, `docs/parity/BLOCKERS.md`, and this file
+   accurate. Distinguish compilation, hosted emulator, physical phone, live
+   provider, and visual comparison evidence.
+3. Run the workspace/source-boundary audit and `git diff --check`; do not claim
+   physical playback, live scrobbling, or visual parity unless actually tested.
+4. Keep both PRs open. Do not merge without bxane's instruction.
+5. Make sure the owner can access a debug APK artifact. Provide direct GitHub
+   Actions artifact instructions/link and explain that the artifact must be
+   downloaded (not opened in the Codex preview); install with `adb install -r
+   <apk>` if ADB is available. Never present an unsigned release APK as
+   installable.
+6. For Convx UI research, wait until the owner's device is reachable via ADB or
+   they provide screenshots/recordings. Runtime UI observation only; no source or
+   binary reverse engineering.
+7. Continue the Android-first product work. Scrobbling is one vertical slice,
+   not completion of the app. Check the feature/screen matrices and blockers.
+
+USEFUL DOCUMENTATION
+====================
+- `AGENTS.md`
+- `docs/IMPLEMENTATION_PLAN.md`
+- `docs/IMPLEMENTATION_STATUS.md`
+- `docs/APP_STRUCTURE.md`
+- `docs/SCROBBLING.md`
+- `docs/parity/ANDROID_FEATURE_MATRIX.md`
+- `docs/parity/ANDROID_SCREEN_MATRIX.md`
+- `docs/parity/BLOCKERS.md`
+- `docs/cleanroom/`
+
+LOCAL ENVIRONMENT LIMITATIONS
+=============================
+- Gradle wrapper distribution download failed in the previous workspace due to
+  a connection refusal from services.gradle.org. Use CI for Kotlin/Android tests
+  if this environment still cannot download dependencies.
+- `adb` is absent and local API 36 emulator did not reach `sys.boot_completed`.
+  Hosted GitHub Android emulator jobs are available but are not physical-device
+  audio or Convx UI evidence.
+- No Last.fm credentials, ListenBrainz test token, Spotify test app/account,
+  physical Android device, or owner's release signing key were available.
+
+Latest completed PR #7 debug APK:
+https://github.com/bxanedot/rynx/actions/runs/40969216328/artifacts/12940360138
+This is a debug APK built with the scrobbling slice; the associated hosted API 36
+phone suite passed. Its production code is at `8718a0f`; later PR commits only
+adjust tests and documentation. It is not a production release.
+Download the ZIP in a browser, extract the APK, then install it with Android's
+package installer or `adb install -r <apk>`. The owner previously could not open
+large in-app previews, so use the GitHub artifact page rather than an inline APK
+preview. PR #7 device test results are artifact
+https://github.com/bxanedot/rynx/actions/runs/40969216328/artifacts/12940386433
+PR #5 device test results are artifact
+https://github.com/bxanedot/rynx/actions/runs/40968631913/artifacts/12939452834
+Latest PR #5 debug APK:
+https://github.com/bxanedot/rynx/actions/runs/40968631913/artifacts/12939736137
+
+HANDOFF INSTRUCTION FOR THE NEXT SESSION
+========================================
+Read this file and the listed Rynx docs, then inspect git and PR state. Start by
+finishing the pending CI investigation described above; avoid repeating completed
+work. Continue in small, tested changes on the existing branches. Tell bxane what
+was actually built and tested, what remains blocked, and provide the installable
+debug APK artifact whenever a current successful phone run has produced one.

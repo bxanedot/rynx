@@ -102,8 +102,8 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | SOC-004 | Presence | unverified | Observe permitted reference, implement, test and compare |
 | SOC-005 | Participant controls | unverified | Observe permitted reference, implement, test and compare |
 | SOC-006 | Discord Rich Presence | unverified | Observe permitted reference, implement, test and compare |
-| SOC-007 | Last.fm | unverified | Observe permitted reference, implement, test and compare |
-| SOC-008 | ListenBrainz | unverified | Observe permitted reference, implement, test and compare |
+| SOC-007 | Last.fm | incomplete | KMP API-signing/session/scrobble client and Android browser approval, encrypted session storage, Settings controls, and Media3-service submission are implemented. Verify run 40969216416 and hosted API 36 phone run 40969216328 pass. Live acceptance needs Rynx Last.fm API credentials and an authorized account test. |
+| SOC-008 | ListenBrainz | incomplete | KMP validate-token/submit-listens client and Android token-entry, encrypted storage, Settings, and service submission are implemented. Shared and Android verification pass in 40969216416 and 40969216328. An authorized test token/account is still needed for live acceptance. |
 | SOC-009 | Clock correction | unverified | Observe permitted reference, implement, test and compare |
 | SOC-010 | Reconnection | unverified | Observe permitted reference, implement, test and compare |
 | SOC-011 | Room expiry | unverified | Observe permitted reference, implement, test and compare |

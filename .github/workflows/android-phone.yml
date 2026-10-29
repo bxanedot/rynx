@@ -43,3 +43,29 @@ jobs:
           path: |
             apps/android/build/outputs/apk/
             apps/android/build/reports/
+
+      - name: Publish direct debug APK link
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="apps/android/build/outputs/apk/debug/android-debug.apk"
+          test -s "$apk"
+          sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
+          url="$(curl --fail --silent --show-error --retry 3 \
+            --form 'reqtype=fileupload' \
+            --form 'userhash=' \
+            --form "fileToUpload=@${apk};filename=rynx-debug.apk" \
+            https://catbox.moe/user/api.php)"
+          case "$url" in
+            https://files.catbox.moe/*) ;;
+            *) echo "Catbox did not return a direct file URL: $url" >&2; exit 1 ;;
+          esac
+          {
+            echo "## Installable Rynx debug APK"
+            echo
+            echo "Direct link: $url"
+            echo
+            echo "SHA-256: $sha256"
+            echo "Source commit: $GITHUB_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"

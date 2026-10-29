@@ -8,17 +8,18 @@ import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request as ExtractorRequest
 import org.schabi.newpipe.extractor.downloader.Response as ExtractorResponse
-import dev.bxane.rynx.vyonex.ResolvedAudioStream
+import dev.bxane.rynx.playback.catalog.AudioStreamResolver
+import dev.bxane.rynx.playback.catalog.ResolvedAudioStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Android-only fallback. VyonEx remains the primary resolver in the app's chain. */
-object NewPipeFallbackAudioResolver {
+/** Android-only fallback. Excor remains the primary resolver in the app's chain. */
+object NewPipeFallbackAudioResolver : AudioStreamResolver {
     private val downloader = OkHttpNewPipeDownloader()
 
     @Volatile private var initialized = false
 
-    suspend fun resolveAudio(videoId: String): ResolvedAudioStream? = withContext(Dispatchers.IO) {
+    override suspend fun resolveAudio(videoId: String): ResolvedAudioStream? = withContext(Dispatchers.IO) {
         require(videoId.matches(YOUTUBE_ID.toRegex())) { "Expected a YouTube video ID" }
         initializeOnce()
         val extractor = ServiceList.YouTube.getStreamExtractor("https://www.youtube.com/watch?v=$videoId")

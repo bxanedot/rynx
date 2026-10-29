@@ -1,0 +1,52 @@
+name: Refresh verified stable Excor hourly
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: refresh-excor
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          submodules: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '27'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Refresh stable dependency and provenance pins
+        run: python3 tools/refresh_excor.py
+      - name: Audit candidate
+        run: python3 tools/audit_workspace.py
+      - name: Verify candidate
+        run: ./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:excor:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest --console=plain
+      - name: Adopt the passing stable pin
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add dependencies/eXcor tools/audit_workspace.py docs/cleanroom/DEPENDENCY_AUDIT.md docs/parity/EXCOR_INTEGRATION.md third_party_licenses/Excor-*
+          git commit -m 'chore: refresh verified stable Excor'
+          git push origin "HEAD:$DEFAULT_BRANCH"
+      - name: Preserve a failed candidate for review
+        if: failure()
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: dependencies/excor-compatibility
+          title: Resolve compatibility with latest stable Excor
+          commit-message: Propose latest stable Excor for compatibility review
+          body: The hourly stable Excor candidate did not pass validation. The default branch retains its previous pin. Check the failed workflow before adopting this candidate.

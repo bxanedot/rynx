@@ -7,7 +7,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(project(":shared:playback"))
             implementation(project(":shared:ui"))
-            implementation(project(":providers:vyonex"))
+            implementation(project(":providers:excor"))
             implementation(compose.desktop.currentOs)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
             implementation("io.ktor:ktor-client-cio:3.6.0")

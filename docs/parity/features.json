@@ -20,7 +20,7 @@
     "name": "Search",
     "status": "partial",
     "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
-    "acceptance": "Desktop local filtering plus VyonEx YouTube Music search/pagination; UI, query trimming, paging and provider-error handling tested. Live network, visual parity and other platforms unverified.",
+    "acceptance": "Desktop local filtering plus Excor YouTube Music search/pagination; UI, query trimming, paging and provider-error handling tested. Live network, visual parity and other platforms unverified.",
     "tests": [
       "YouTubeSearchUiTest and DesktopCatalogSearchTest pass; live network, visual parity and other platforms unverified"
     ]
@@ -1097,12 +1097,12 @@
   },
   {
     "id": "PROV-001",
-    "name": "VyonEx",
+    "name": "Excor",
     "status": "partial",
     "reference": "Approved public API; no live provider observation",
     "acceptance": "JVM adapter maps search and playlist pages, holds resolved audio URLs in memory with redacted string rendering, forwards refusal/session changes, and classifies failures. Desktop search uses the composite-linked engine. Live search/stream/download and native playback remain unverified.",
     "tests": [
-      "VyonExMapperTest passes; live provider network and extraction are not verified"
+      "ExcorMapperTest passes; live provider network and extraction are not verified"
     ]
   },
   {

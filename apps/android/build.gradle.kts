@@ -52,7 +52,7 @@ dependencies {
     androidTestImplementation("androidx.test:core-ktx:1.7.0")
     implementation(project(":shared:ui"))
     implementation(project(":shared:playback"))
-    implementation(project(":providers:vyonex"))
+    implementation(project(":providers:excor"))
     implementation(project(":providers:apple"))
     implementation(project(":providers:newpipe"))
     implementation("androidx.activity:activity-compose:1.13.0")

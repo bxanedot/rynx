@@ -8,14 +8,16 @@ This is a development build. Dark appearance is the clean-install default. Setti
 
 See [current blockers](docs/parity/BLOCKERS.md) and the [Android feature inventory](docs/parity/ANDROID_FEATURE_MATRIX.md).
 
+Platform app hosts live under [`app/`](docs/APP_STRUCTURE.md): Android in `app/android`, the future iOS host in `app/ios`, and the existing desktop/JVM app in `app/desktop`. Shared KMP modules remain in `shared/`; provider integrations remain in `providers/`.
+
 ## Build and test
 
 Use JDK 27, Android SDK 37/build tools, and the approved dependency submodules. Set `ANDROID_HOME` or `sdk.dir` in untracked `local.properties`.
 
 ```sh
 git submodule update --init
-./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:innertubex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
-./gradlew :apps:android:connectedDebugAndroidTest
+./gradlew :app:android:assembleDebug :app:android:assembleRelease :app:android:assembleDebugAndroidTest :app:android:lintDebug :app:android:testDebugUnitTest :app:desktop:jvmTest :providers:innertubex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
+./gradlew :app:android:connectedDebugAndroidTest
 ```
 
 To install the Android debug build, open the [Android phone workflow runs](https://github.com/bxanedot/rynx/actions/workflows/android-phone.yml), choose a completed run, and download its `rynx-debug-apk` artifact. The artifact is a ZIP; extract `android-debug.apk` and install that APK (not the ZIP or the `androidTest` APK). With Android platform tools and USB debugging enabled, run `adb install -r android-debug.apk`. The debug APK uses the Android development key. If Android reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, uninstall `dev.bxane.rynx` first, then retry; uninstalling removes its app data. For file-manager installation, open the extracted APK and allow that file manager to install apps if Android prompts.

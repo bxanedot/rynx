@@ -28,11 +28,11 @@ def main():
             raise ValueError("Approved dependency has tracked modifications: " + path)
     if (ROOT / "dependencies/eXcor").exists() or (ROOT / "providers/excor").exists():
         raise ValueError("Archived eXcor must not be present in the active Rynx workspace")
-    for build_file in (ROOT / "settings.gradle.kts", ROOT / "apps/android/build.gradle.kts", ROOT / "apps/desktop/build.gradle.kts"):
+    for build_file in (ROOT / "settings.gradle.kts", ROOT / "app/android/build.gradle.kts", ROOT / "app/desktop/build.gradle.kts"):
         contents = build_file.read_text()
         if "providers:excor" in contents or 'includeBuild("dependencies/eXcor")' in contents:
             raise ValueError("Archived eXcor is still linked from " + str(build_file.relative_to(ROOT)))
-    for base in ("apps", "shared", "providers", "services"):
+    for base in ("app", "shared", "providers", "services"):
         for file in (ROOT / base).rglob("*"):
             if file.is_symlink() and not file.resolve().is_relative_to(ROOT):
                 raise ValueError("Implementation symlink crosses workspace boundary")

@@ -5,7 +5,7 @@ device_log_pid=
 # Keep actual rendered frames and device diagnostics even when an assertion fails.
 collect_device_evidence() {
   local test_exit=$?
-  local destination=apps/android/build/reports/device
+  local destination=app/android/build/reports/device
   mkdir -p "$destination"
   if test -n "$device_log_pid"; then kill "$device_log_pid" 2>/dev/null || true; fi
   adb logcat -d -t 3000 > "$destination/logcat.txt" 2>&1 || true
@@ -18,7 +18,7 @@ collect_device_evidence() {
 from pathlib import Path
 import html, re
 import xml.etree.ElementTree as ET
-root = Path('apps/android/build/reports/androidTests/connected')
+root = Path('app/android/build/reports/androidTests/connected')
 for report in root.rglob('*.html'):
     if report.name in ('index.html',):
         continue
@@ -27,8 +27,8 @@ for report in root.rglob('*.html'):
         message = html.unescape(re.sub(r'<[^>]+>', '', failure))
         message = re.sub(r'https?://\S+', '[URL]', message)
         print(f'ANDROID DIAGNOSTIC {report.name}:\n{message[:6000]}')
-for report_root in (Path('apps/android/build/outputs/androidTest-results/connected'),
-                    Path('apps/android/build/outputs/androidTest-results/connectedAndroidTest')):
+for report_root in (Path('app/android/build/outputs/androidTest-results/connected'),
+                    Path('app/android/build/outputs/androidTest-results/connectedAndroidTest')):
     reports = report_root.rglob('TEST-*.xml') if report_root.exists() else ()
     for report in reports:
         try:
@@ -52,7 +52,7 @@ PY
 from pathlib import Path
 import re
 
-log = Path('apps/android/build/reports/device/logcat.txt')
+log = Path('app/android/build/reports/device/logcat.txt')
 if not log.exists():
     raise SystemExit(0)
 lines = log.read_text(errors='replace').splitlines()
@@ -67,11 +67,11 @@ PY
   fi
 }
 trap collect_device_evidence EXIT
-mkdir -p apps/android/build/reports/device
-adb install -r apps/android/build/outputs/apk/debug/android-debug.apk >/dev/null
+mkdir -p app/android/build/reports/device
+adb install -r app/android/build/outputs/apk/debug/android-debug.apk >/dev/null
 app_uid=$(adb shell cmd package list packages -U dev.bxane.rynx | python3 -c 'import re,sys; text=sys.stdin.read(); match=re.search(r"package:dev\.bxane\.rynx uid:(\d+)",text); print(match.group(1) if match else "")')
 if test -n "$app_uid"; then
-  adb logcat -v threadtime --uid="$app_uid" > apps/android/build/reports/device/rynx-process.log 2>&1 &
+  adb logcat -v threadtime --uid="$app_uid" > app/android/build/reports/device/rynx-process.log 2>&1 &
   device_log_pid=$!
 fi
-./gradlew :apps:android:connectedDebugAndroidTest "$@"
+./gradlew :app:android:connectedDebugAndroidTest "$@"

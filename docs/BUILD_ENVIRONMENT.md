@@ -9,7 +9,7 @@ JAVA_HOME=/workspace/scratch/jdk21 /workspace/scratch/gradle-9.8.2/bin/gradle \
   -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts \
   -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080 \
   -Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 \
-  check :apps:desktop:packageUberJarForCurrentOS --console=plain
+  check :app:desktop:packageUberJarForCurrentOS --console=plain
 ```
 
 Ordinary development environments with a full JDK and direct network access should use the committed wrapper. No proxy settings, private CA files or downloaded JDKs are committed.

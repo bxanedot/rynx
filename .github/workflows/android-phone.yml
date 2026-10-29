@@ -27,13 +27,13 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
       - name: Build phone and instrumentation APKs
-        run: ./gradlew :apps:android:assembleDebug :apps:android:assembleDebugAndroidTest --console=plain
+        run: ./gradlew :app:android:assembleDebug :app:android:assembleDebugAndroidTest --console=plain
       - name: Upload installable debug APK
         id: debug-apk
         uses: actions/upload-artifact@v4
         with:
           name: rynx-debug-apk
-          path: apps/android/build/outputs/apk/debug/android-debug.apk
+          path: app/android/build/outputs/apk/debug/android-debug.apk
           if-no-files-found: error
           retention-days: 30
       - name: Share debug APK artifact link
@@ -68,6 +68,6 @@ jobs:
         with:
           name: android-phone-test-results
           path: |
-            apps/android/build/reports/
-            apps/android/build/outputs/androidTest-results/connected/
+            app/android/build/reports/
+            app/android/build/outputs/androidTest-results/connected/
           if-no-files-found: ignore

@@ -63,7 +63,7 @@ class PlaybackSessionTest {
                         assertEquals("Generated session audio", controller.mediaMetadata.title.toString())
                         controller.pause()
                         pausedAt = controller.currentPosition
-                        assertTrue(!controller.playWhenReady)
+                        assertTrue("Controller must acknowledge pause before resuming",!controller.playWhenReady)
                     }
                     instrumentation.runOnMainSync { controller.play() }
                     val resumed=SystemClock.elapsedRealtime()+5000
@@ -72,7 +72,7 @@ class PlaybackSessionTest {
                         instrumentation.runOnMainSync { resumedPlayback=controller.isPlaying&&controller.currentPosition>pausedAt }
                         SystemClock.sleep(50)
                     }
-                    assertTrue("MediaController must resume the same generated item",resumedPlayback)
+                    assertTrue("MediaController must resume the same generated item: ${playbackDiagnostics(controller)}",resumedPlayback)
                     instrumentation.runOnMainSync { controller.stop();controller.clearMediaItems() }
                 } finally { instrumentation.runOnMainSync { controller.release() } }
             }

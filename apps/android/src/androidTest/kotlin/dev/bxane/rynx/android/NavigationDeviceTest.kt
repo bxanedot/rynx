@@ -1,10 +1,10 @@
 package dev.bxane.rynx.android
 
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -88,20 +88,28 @@ class NavigationDeviceTest {
         throw AssertionError("Could not activate navigation action: $label")
     }
 
-    private fun launchRynx(): ActivityScenario<MainActivity> {
-        val context=instrumentation.targetContext
-        val intent=context.packageManager.getLaunchIntentForPackage(context.packageName)
-            ?: error("Rynx launcher activity is not registered")
-        val scenario=ActivityScenario.launch<MainActivity>(intent)
+    private fun shell(command: String): String {
+        val descriptor = instrumentation.uiAutomation.executeShellCommand(command)
+        return ParcelFileDescriptor.AutoCloseInputStream(descriptor).bufferedReader().use { it.readText() }
+    }
+
+    private fun launchRynx() {
+        val context = instrumentation.targetContext
+        val packageName = context.packageName
+        shell("am force-stop $packageName")
+        val component = "$packageName/${MainActivity::class.java.name}"
+        val result = shell("am start -W -n $component")
+        assertTrue("Android did not launch Rynx: $result", result.contains("Status: ok"))
         instrumentation.waitForIdleSync()
         eventually("Rynx did not become the foreground accessibility window") {
-            instrumentation.uiAutomation.rootInActiveWindow?.packageName==context.packageName
+            instrumentation.uiAutomation.rootInActiveWindow?.packageName == packageName
         }
-        return scenario
     }
 
     @Test fun searchKeepsItsQueryAndBackReturnsToThePreviousTab() {
-        launchRynx().use {
+        val packageName=instrumentation.targetContext.packageName
+        try {
+            launchRynx()
             click("Library")
             eventually("Library screen did not open") { findVisibleText("Your music, right here") != null }
             click("Search")
@@ -123,6 +131,8 @@ class NavigationDeviceTest {
                 findEditableField()?.text?.toString() == query
             }
             assertEquals(query, findEditableField()?.text?.toString())
+        } finally {
+            shell("am force-stop $packageName")
         }
     }
 }

@@ -28,6 +28,7 @@ for report in root.rglob('*.html'):
         print(f'ANDROID DIAGNOSTIC {report.name}:\n{message[:6000]}')
 PY
   if test "$test_exit" -ne 0; then
+    rg 'RynxResume' "$destination/logcat.txt" | tail -80 || true
     python3 - <<'PY'
 from pathlib import Path
 import re

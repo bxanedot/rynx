@@ -20,6 +20,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.core.net.toUri
+import android.util.Log
 import dev.bxane.rynx.playback.PlaybackResumeCodec
 import dev.bxane.rynx.playback.PlaybackResumeSnapshot
 import dev.bxane.rynx.playback.PlaybackResumeTrack
@@ -69,7 +70,9 @@ class PlaybackService : MediaSessionService() {
         val store=AndroidPlaybackResumeStore(applicationContext)
         this.player=player
         resumeStore=store
-        restoreCheckpoint(player,store,store.load())
+        val savedSnapshot=store.load()
+        Log.d(RESUME_LOG_TAG,"Loaded local resume queue items=${savedSnapshot?.tracks?.size ?: 0}")
+        restoreCheckpoint(player,store,savedSnapshot)
         player.addListener(object:Player.Listener {
             override fun onEvents(player:Player,events:Player.Events) {
                 if(events.contains(Player.EVENT_PLAYER_ERROR)) {
@@ -128,7 +131,12 @@ class PlaybackService : MediaSessionService() {
             player.shuffleModeEnabled=snapshot.shuffleEnabled
             player.playWhenReady=false
             player.prepare()
-        }.onFailure { store.clear() }
+        }.onSuccess {
+            Log.d(RESUME_LOG_TAG,"Restored local resume queue items=${player.mediaItemCount}")
+        }.onFailure {
+            Log.e(RESUME_LOG_TAG,"Local resume restore failed (${it.javaClass.simpleName})")
+            store.clear()
+        }
     }
 
     private fun persistCheckpoint() {
@@ -170,5 +178,9 @@ class PlaybackService : MediaSessionService() {
             playbackOrder=order,
         )
         if(PlaybackResumeCodec.isPersistableQueue(tracks)) store.save(snapshot) else store.save(null)
+    }
+
+    private companion object {
+        const val RESUME_LOG_TAG="RynxResume"
     }
 }

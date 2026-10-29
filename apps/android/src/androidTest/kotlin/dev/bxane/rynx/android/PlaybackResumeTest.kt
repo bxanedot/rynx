@@ -46,6 +46,7 @@ class PlaybackResumeTest {
             shuffleEnabled=true,
             playbackOrder=listOf(1,0),
         ))
+        assertEquals("The local resume snapshot must be stored before starting the service",2,store.load()?.tracks?.size)
         try {
             ActivityScenario.launch(MainActivity::class.java).use {
                 lateinit var future:com.google.common.util.concurrent.ListenableFuture<MediaController>

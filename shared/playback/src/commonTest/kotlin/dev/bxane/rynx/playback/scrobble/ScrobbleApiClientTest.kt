@@ -1,6 +1,5 @@
 package dev.bxane.rynx.playback.scrobble
 
-import dev.bxane.rynx.playback.runSuspend
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -9,6 +8,7 @@ import io.ktor.http.content.TextContent
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -31,7 +31,7 @@ class ScrobbleApiClientTest {
         )
     }
 
-    @Test fun lastFmBrowserApprovalUsesTokenThenExchangesItForSession() = runSuspend {
+    @Test fun lastFmBrowserApprovalUsesTokenThenExchangesItForSession() = runTest {
         val requests = mutableListOf<io.ktor.client.request.HttpRequestData>()
         val client = HttpClient(MockEngine { request ->
             requests += request
@@ -77,7 +77,7 @@ class ScrobbleApiClientTest {
         }
     }
 
-    @Test fun listenBrainzValidatesTokenAndSubmitsRealListenPayload() = runSuspend {
+    @Test fun listenBrainzValidatesTokenAndSubmitsRealListenPayload() = runTest {
         val requests = mutableListOf<io.ktor.client.request.HttpRequestData>()
         val client = HttpClient(MockEngine { request ->
             requests += request
@@ -114,7 +114,7 @@ class ScrobbleApiClientTest {
     }
 
     @Test fun listenBrainzRejectsAnInvalidToken() {
-        runSuspend {
+        runTest {
             val client = HttpClient(MockEngine {
                 respond("""{"valid":false}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
             })

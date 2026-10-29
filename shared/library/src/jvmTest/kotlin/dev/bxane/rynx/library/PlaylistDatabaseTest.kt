@@ -136,6 +136,41 @@ class PlaylistDatabaseTest {
     }
 
     @Test
+    fun importedPlaylistsAreAddedAtomicallyAndKeepEntryOrder() = runBlocking {
+        val (driver, repository) = inMemoryRepository()
+        val existing = repository.createPlaylist("Keep me")
+        val imports = listOf(
+            PlaylistImportDraft(
+                "Road trip",
+                listOf(localEntry("provider:one"), localEntry("provider:two")),
+            ),
+            PlaylistImportDraft("Empty list", emptyList()),
+        )
+
+        val imported = repository.importPlaylists(imports)
+
+        assertEquals(listOf("Keep me", "Road trip", "Empty list"), repository.getPlaylists().sortedBy { it.id }.map { it.name })
+        assertEquals(listOf("provider:one", "provider:two"), imported.first().entries.map { it.mediaId })
+        assertEquals(listOf(0L, 1L), imported.first().entries.map { it.position })
+        assertEquals(existing.id, repository.getPlaylist(existing.id)?.id)
+
+        var failure: Throwable? = null
+        try {
+            repository.importPlaylists(
+                listOf(
+                    PlaylistImportDraft("Would roll back", emptyList()),
+                    PlaylistImportDraft("Invalid", listOf(localEntry(" "))),
+                ),
+            )
+        } catch (error: Throwable) {
+            failure = error
+        }
+        assertTrue(failure is IllegalArgumentException)
+        assertEquals(listOf("Keep me", "Road trip", "Empty list"), repository.getPlaylists().sortedBy { it.id }.map { it.name })
+        driver.close()
+    }
+
+    @Test
     fun addingAnEntryToAnUnknownPlaylistFailsWithoutCreatingOrphanRows() = runBlocking {
         val (driver,repository)=inMemoryRepository()
 

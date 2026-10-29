@@ -43,6 +43,7 @@ data class PlayerUiState(
     val favoriteTracks: List<TrackItem> = emptyList(),
     val recentTracks: List<TrackItem> = emptyList(),
     val playlists: List<Playlist> = emptyList(),
+    val playlistBackupAvailable: Boolean = false,
     val volume: Float = 1f,
     val volumeControlAvailable: Boolean = false,
     val audioOutputAvailable: Boolean = false,
@@ -105,4 +106,6 @@ interface PlayerActions {
     fun addTrackToPlaylist(playlistId:Long,track:TrackItem) = Unit
     fun removePlaylistEntry(playlistId:Long,entryId:Long) = Unit
     fun movePlaylistEntry(playlistId:Long,entryId:Long,toIndex:Int) = Unit
+    fun importPlaylistBackup() = Unit
+    fun exportPlaylistBackup() = Unit
 }

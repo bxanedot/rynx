@@ -8,6 +8,8 @@ interface PlaylistRepository {
     suspend fun getPlaylists(): List<Playlist>
     suspend fun getPlaylist(id: Long): Playlist?
     suspend fun createPlaylist(name: String): Playlist
+    /** Adds imported playlists and entries in one transaction; existing playlists are left untouched. */
+    suspend fun importPlaylists(playlists: List<PlaylistImportDraft>): List<Playlist>
     suspend fun renamePlaylist(id: Long, name: String): Playlist?
     suspend fun deletePlaylist(id: Long): Boolean
     suspend fun addEntry(playlistId: Long, entry: PlaylistEntryDraft): PlaylistEntry

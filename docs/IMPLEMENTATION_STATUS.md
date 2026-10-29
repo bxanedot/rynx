@@ -12,6 +12,7 @@ Status date: 2026-10-29. Branch `feature/android-audio-excor`, based on merged `
 - Portable KMP download provenance now encodes `Downloaded by Rynx`, app ID and track/provider/timestamp fields; an Android writer atomically writes a `.rynx.json` sidecar without touching downloaded media bytes. Serializer and file-preservation tests pass. Rynx does not yet have an app download queue, so the writer is a ready integration point and no current download invokes it automatically.
 - eXcor catalog/stream adapter, shared InnerTubeX fallback adapter, and NewPipe Android fallback adapter, with deterministic mapping, redaction, provider ordering, refusal/cancellation behavior, and build checks.
 - Persistent playlists use SQLDelight with common KMP models, validation/edit rules, transactions and Flow observation; Android supplies the SQLite driver. Library create/rename/add/remove/reorder/delete and playlist detail UI are wired. Shared SQLDelight/rules tests, headless workflows and hosted Android SQLite close/reopen/order instrumentation pass.
+- Android playlist backup now has a bounded, versioned JSON codec in `commonMain`, atomic repository import, and Android Storage Access Framework import/export actions. Archive codec/database tests and the headless UI action test pass. The archive stores playlist metadata and references, not local audio bytes or resolved stream URLs; an Android content URI may still lack a read grant on another installation.
 
 Local verification of the app-source commit `a407e1c` completed successfully: Android debug/instrumentation packaging, Android unit tests, lint, desktop/headless Compose, shared playback/library/design/UI suites, eXcor and Apple provider tests, and NewPipe Android compilation. Reports contain 161 cases: 158 passed, three opt-in live-provider checks skipped, and zero failures/errors. Lint has zero errors and two warnings. On the current test-only follow-up commit `72cbf9a`, hosted Verify run [40844482143](https://github.com/bxanedot/rynx/actions/runs/40844482143) passed the source-boundary audit, debug/instrumentation/minified-release packaging, lint and configured shared/provider checks. Hosted phone run [40844482288](https://github.com/bxanedot/rynx/actions/runs/40844482288) passed debug APK installation and API 36 connected instrumentation. The release APK is unsigned and not installable without bxane's signing key.
 
@@ -24,7 +25,7 @@ Local verification of the app-source commit `a407e1c` completed successfully: An
 
 ## Partial
 
-- Android Library has local songs, favorites, recent tracks and persistent user playlists with basic editing/detail screens. The desktop/headless UI suite covers playlist detail, create/add/rename interactions, reorder and removal. Android instrumentation execution, import/export, richer collection screens and robust offline workflows remain incomplete.
+- Android Library has local songs, favorites, recent tracks, persistent user playlists, playlist JSON backup actions, and basic editing/detail screens. The desktop/headless UI suite covers playlist detail, create/add/rename interactions, reorder, removal, and backup callbacks. Android SAF file-picker round trips, richer collection screens and robust offline workflows remain incomplete.
 - Android player controls and queue are implemented; device-level end-to-end playback and exact Apple Music iOS visual/motion comparison remain incomplete.
 - Apple discovery uses real catalog data and original local ranking, but the public feature inventory is not a verified copy of every Apple Music recommendation or chart algorithm.
 - Linux/JVM desktop code is present; it does not establish Windows/macOS application readiness or native system media integration.
@@ -46,6 +47,12 @@ Remaining advanced audio work includes ReplayGain tag normalization, overlapping
 Android stream resolution now uses Excor → InnerTubeX v0.11.2 → NewPipeExtractor v0.26.5. The InnerTubeX adapter is in KMP `commonMain`, uses the pinned public library API, and permits only direct HTTPS audio compatible with the current Media3 path. Explicit age, sign-in, region, or availability refusals stop the chain; they are not retried through another provider.
 
 Verification for this change: shared playback JVM tests passed (46), InnerTubeX adapter JVM tests passed (4), Android unit tests passed (9), Android debug APK packaging passed, Android lint passed, and the workspace boundary audit passed. This verifies the adapter contract and compilation only; live InnertubeX extraction and audible device playback remain unverified. The generated APK is debug-signed and not a production release.
+
+## 2026-10-29 Playlist archive slice
+
+Added a bounded, versioned KMP JSON format and transactional SQLDelight import for user playlists, plus Android Storage Access Framework import/export controls. Playlist order and stable media references are retained; archives do not contain downloaded audio, resolved stream URLs, or Android document-provider grants. A local content URI can remain as a reference without a transferable read permission.
+
+Local verification passed: `:shared:library:jvmTest`, `:apps:desktop:jvmTest`, `:apps:android:testDebugUnitTest`, `:apps:android:compileDebugAndroidTestKotlin`, `:apps:android:lintDebug`, and `:apps:android:assembleDebug`. Real Android system-picker round trips have not yet been run. At the starting commit `f390fde`, both PR #4 workflows passed: [Android verification](https://github.com/bxanedot/rynx/actions/runs/40859593200) and [hosted Android phone tests](https://github.com/bxanedot/rynx/actions/runs/40859593231). PR #4 currently has no submitted review comments; this new change still requires fresh CI.
 
 ## Next acceptance gates
 

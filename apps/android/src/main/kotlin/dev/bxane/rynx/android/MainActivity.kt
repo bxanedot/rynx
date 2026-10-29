@@ -57,6 +57,7 @@ import dev.bxane.rynx.playback.toggleFavoriteId
 import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.playback.audio.AudioDspSettings
 import dev.bxane.rynx.playback.audio.AudioSignalInfo
+import dev.bxane.rynx.library.PlaylistArchive
 import dev.bxane.rynx.ui.*
 import dev.bxane.rynx.excor.ExcorMusicCatalog
 import dev.bxane.rynx.excor.createLoggedOutExcorMusicCatalog
@@ -76,12 +77,18 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** Phone host for the shared Compose UI; the service owns all audio resources. */
 @UnstableApi
 class MainActivity : ComponentActivity() {
     private val state = MutableStateFlow(PlayerUiState(catalogSearchEnabled=true,catalogPlaybackEnabled=true,
-        volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true))
+        volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true,
+        playlistBackupAvailable=true))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: ExcorMusicCatalog
@@ -118,6 +125,32 @@ class MainActivity : ComponentActivity() {
                 state.update { if(it.currentId==trackId) it.copy(lyrics=lines,lyricsTrackId=trackId,error=null) else it }
             } catch(cancelled:CancellationException) { throw cancelled }
             catch(_:Exception) { state.update { it.copy(error="Choose a timed lyrics (.lrc) file smaller than 256K characters.") } }
+        }
+    }
+    private val playlistImportPicker=registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if(uri!=null) lifecycleScope.launch {
+            try {
+                val drafts=withContext(Dispatchers.IO) {
+                    contentResolver.openInputStream(uri)?.use(::readPlaylistArchive)
+                        ?:throw IllegalStateException("The selected file could not be opened")
+                }
+                playlistRepository.importPlaylists(PlaylistArchive.decode(drafts))
+                state.update {it.copy(error=null)}
+            } catch(cancelled:CancellationException) {throw cancelled}
+            catch(_:Exception) {state.update {it.copy(error="That playlist backup could not be imported. Check that it is a valid Rynx JSON backup.")}}
+        }
+    }
+    private val playlistExportPicker=registerForActivityResult(ActivityResultContracts.CreateDocument(PlaylistArchive.MIME_TYPE)) { uri ->
+        if(uri!=null) lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val archive=PlaylistArchive.encode(playlistRepository.getPlaylists(),System.currentTimeMillis())
+                    val output=contentResolver.openOutputStream(uri,"wt")?:error("The selected destination could not be opened")
+                    output.bufferedWriter(Charsets.UTF_8).use {it.write(archive)}
+                }
+                state.update {it.copy(error=null)}
+            } catch(cancelled:CancellationException) {throw cancelled}
+            catch(_:Exception) {state.update {it.copy(error="The playlist backup could not be saved. Choose another location and try again.")}}
         }
     }
     private val picker = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
@@ -344,6 +377,11 @@ class MainActivity : ComponentActivity() {
             }
             override fun movePlaylistEntry(playlistId:Long,entryId:Long,toIndex:Int) {
                 launchLibraryMutation("Playlist order could not be changed.") { playlistRepository.moveEntry(playlistId,entryId,toIndex) }
+            }
+            override fun importPlaylistBackup() = playlistImportPicker.launch(arrayOf(PlaylistArchive.MIME_TYPE))
+            override fun exportPlaylistBackup() {
+                val stamp=SimpleDateFormat("yyyyMMdd-HHmm",Locale.ROOT).format(Date())
+                playlistExportPicker.launch("rynx-playlists-$stamp.json")
             }
         }
         setContent {
@@ -623,4 +661,20 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+private fun readPlaylistArchive(input:InputStream):String {
+    val output=ByteArrayOutputStream()
+    val buffer=ByteArray(8_192)
+    var total=0
+    while(true) {
+        val count=input.read(buffer)
+        if(count<0)break
+        if(count==0)continue
+        total+=count
+        if(total>PlaylistArchive.MAX_ARCHIVE_BYTES)
+            throw dev.bxane.rynx.library.InvalidPlaylistArchive("Playlist archive exceeds size limit")
+        output.write(buffer,0,count)
+    }
+    return output.toByteArray().toString(Charsets.UTF_8)
 }

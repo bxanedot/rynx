@@ -47,8 +47,8 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | LIB-010 | Network libraries | unverified | Observe permitted reference, implement, test and compare |
 | LIB-011 | Cached content | unverified | Observe permitted reference, implement, test and compare |
 | LIB-012 | Automatic playlists | unverified | Observe permitted reference, implement, test and compare |
-| LIB-013 | Import | incomplete | Android host code present; actual-device validation and reference comparison pending |
-| LIB-014 | Export | unverified | Observe permitted reference, implement, test and compare |
+| LIB-013 | Import | incomplete | Android SAF imports versioned Rynx playlist JSON; bounded KMP decoder and transactional SQLDelight import pass JVM tests, UI actions pass headless tests; device picker and local URI recovery remain unverified |
+| LIB-014 | Export | incomplete | Android SAF exports playlist names/order/stable media references as versioned Rynx JSON; bounded encoder and headless UI actions pass tests; device picker round trip remains unverified; archive contains no media bytes or stream URLs |
 | LIB-015 | Sorting | unverified | Observe permitted reference, implement, test and compare |
 | LIB-016 | Filtering | unverified | Observe permitted reference, implement, test and compare |
 | LYR-001 | Synchronized lyrics | incomplete | Imported timed LRC, current-line following and seek implemented; parser/UI tests pass; native picker/device verification pending |

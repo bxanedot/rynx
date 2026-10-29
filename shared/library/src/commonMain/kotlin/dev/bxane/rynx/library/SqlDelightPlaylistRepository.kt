@@ -52,6 +52,44 @@ class SqlDelightPlaylistRepository(
         }
     }
 
+    override suspend fun importPlaylists(playlists: List<PlaylistImportDraft>): List<Playlist> =
+        withContext(queryDispatcher) {
+            require(playlists.size <= PlaylistArchive.MAX_PLAYLISTS) { "Too many playlists to import" }
+            require(playlists.sumOf { it.entries.size } <= PlaylistArchive.MAX_ENTRIES) { "Too many playlist entries to import" }
+            playlists.forEach { playlist ->
+                PlaylistRules.normalizeName(playlist.name)
+                playlist.entries.forEach { entry ->
+                    require(entry.mediaId.isNotBlank() && entry.mediaId.length <= 4096) { "Invalid media identity" }
+                    require(entry.title.isNotBlank() && entry.title.length <= 1024) { "Invalid track title" }
+                    require(entry.artist.isNotBlank() && entry.artist.length <= 1024) { "Invalid artist name" }
+                    require(entry.source.isNotBlank() && entry.source.length <= 128) { "Invalid media source" }
+                    require(entry.artworkUrl == null || entry.artworkUrl.startsWith("https://")) { "Artwork links must use HTTPS" }
+                }
+            }
+            database.transactionWithResult {
+                playlists.map { imported ->
+                    val timestamp = nowMillis()
+                    queries.insertPlaylist(PlaylistRules.normalizeName(imported.name), timestamp, timestamp).value
+                    val playlistId = queries.lastInsertedId().executeAsOne()
+                    imported.entries.forEachIndexed { index, entry ->
+                        queries.insertEntry(
+                            playlistId = playlistId,
+                            mediaId = entry.mediaId,
+                            title = entry.title,
+                            artist = entry.artist,
+                            artworkUrl = entry.artworkUrl,
+                            source = entry.source,
+                            // Android document-provider grants belong to the source device. Re-imported
+                            // local references remain visible, but must be selected again if inaccessible.
+                            localUri = null,
+                            position = index.toLong(),
+                        ).value
+                    }
+                    playlistById(playlistId) ?: error("Imported playlist could not be read back")
+                }
+            }
+        }
+
     override suspend fun renamePlaylist(id: Long, name: String): Playlist? = withContext(queryDispatcher) {
         val normalizedName = PlaylistRules.normalizeName(name)
         database.transactionWithResult {

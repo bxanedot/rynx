@@ -375,6 +375,10 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         Action("Add music",actions::importFiles)
         Spacer(Modifier.height(10.dp))
         Action("Create playlist",{createPlaylistOpen=true})
+        if(state.playlistBackupAvailable) {
+            Spacer(Modifier.height(10.dp))
+            Action("Import playlist backup",actions::importPlaylistBackup)
+        }
     } else LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
         item {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
@@ -383,6 +387,12 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     Label("${state.playlists.size} playlists",12,p.secondary)
                 }
                 IconButton(Glyph.Add,"Create playlist",onClick={createPlaylistOpen=true})
+            }
+        }
+        if(state.playlistBackupAvailable) item {
+            Row(Modifier.fillMaxWidth().padding(top=10.dp,bottom=6.dp),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                RynxButton("Import backup",actions::importPlaylistBackup,Modifier.weight(1f))
+                RynxButton("Export backup",actions::exportPlaylistBackup,Modifier.weight(1f),enabled=state.playlists.isNotEmpty())
             }
         }
         items(state.playlists,key={"user-playlist:${it.id}"}) { playlist ->

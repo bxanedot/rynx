@@ -24,6 +24,7 @@ kotlin {
             api("app.cash.sqldelight:runtime:2.4.1")
             implementation("app.cash.sqldelight:coroutines-extensions:2.4.1")
             api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

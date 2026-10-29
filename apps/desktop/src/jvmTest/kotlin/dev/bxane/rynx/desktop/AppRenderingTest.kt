@@ -19,6 +19,7 @@ class AppRenderingTest {
         var addedPlaylistId:Long?=null;var addedTrack:TrackItem?=null
         var renamedPlaylistId:Long?=null;var renamedPlaylistName:String?=null
         var createdPlaylistName:String?=null;var deletedPlaylistId:Long?=null
+        var playlistBackupImports=0;var playlistBackupExports=0
         var updatedDsp:AudioDspSettings?=null
         override fun importFiles(){imports++}
         override fun toggle(){toggles++}
@@ -34,6 +35,8 @@ class AppRenderingTest {
         override fun createPlaylist(name:String){createdPlaylistName=name}
         override fun deletePlaylist(id:Long){deletedPlaylistId=id}
         override fun updateAudioDsp(settings:AudioDspSettings){updatedDsp=settings}
+        override fun importPlaylistBackup(){playlistBackupImports++}
+        override fun exportPlaylistBackup(){playlistBackupExports++}
     }
     private fun descendants(node:SemanticsNode):List<SemanticsNode> = listOf(node)+node.children.flatMap(::descendants)
     private fun click(scene:ImageComposeScene,label:String) {
@@ -211,6 +214,20 @@ class AppRenderingTest {
             assertEquals(7L,actions.addedPlaylistId)
             assertEquals(track,actions.addedTrack)
         } finally { scene.close() }
+    }
+    @Test fun libraryPlaylistBackupActionsInvokeTheirPlatformHandlers() {
+        val actions=Actions()
+        val playlist=Playlist(9,"Backup target",1,1)
+        val scene=ImageComposeScene(390,844,Density(1f)) {
+            RynxApp(PlayerUiState(playlists=listOf(playlist),playlistBackupAvailable=true),actions)
+        }
+        try {
+            click(scene,"Library")
+            click(scene,"Import backup")
+            click(scene,"Export backup")
+            assertEquals(1,actions.playlistBackupImports)
+            assertEquals(1,actions.playlistBackupExports)
+        } finally {scene.close()}
     }
     @Test fun playlistCanBeRenamedFromItsDetailScreen() {
         val actions=Actions()

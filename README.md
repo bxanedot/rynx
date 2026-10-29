@@ -2,7 +2,7 @@
 
 An independently authored Kotlin Multiplatform music application by **bxane**. Android phones are the active target; the existing desktop target also provides the headless Compose test harness.
 
-The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through eXcor, an independently obtained NewPipe fallback, favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
+The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through eXcor, and ordered audio resolution through eXcor → InnerTubeX → NewPipeExtractor. InnerTubeX is integrated through a shared KMP adapter; NewPipeExtractor is the Android-only final fallback. The app also includes favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
 
 This is a development build. Spotify, downloads/offline management, advanced DSP/DJ, recognition, social/backend features and complete reference screen/motion parity are not finished. No production readiness, audible audio quality, benchmark or 95% visual-parity result is claimed. Apple discovery includes real genres, global/regional/city charts, release/tour collections and original local recommendations; see [discovery sources](docs/parity/APPLE_DISCOVERY.md).
 
@@ -14,7 +14,7 @@ Use JDK 27, Android SDK 37/build tools, and the approved dependency submodules. 
 
 ```sh
 git submodule update --init
-./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:excor:jvmTest :providers:apple:jvmTest :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
+./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:excor:jvmTest :providers:innertubex:jvmTest :providers:apple:jvmTest :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
 ./gradlew :apps:android:connectedDebugAndroidTest
 ```
 

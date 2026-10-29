@@ -78,8 +78,9 @@ class NavigationDeviceTest {
             val label=node.contentDescription?.toString()
             val text=node.text?.toString()
             val actions=node.actionList.map { it.id }
+            val bounds=android.graphics.Rect().also(node::getBoundsInScreen)
             if(label!=null || text!=null || node.isEditable || AccessibilityNodeInfo.ACTION_SET_TEXT in actions) {
-                nodes += "class=${node.className}, description=$label, text=$text, selected=${node.isSelected}, enabled=${node.isEnabled}, editable=${node.isEditable}, actions=$actions"
+                nodes += "class=${node.className}, description=$label, text=$text, selected=${node.isSelected}, enabled=${node.isEnabled}, clickable=${node.isClickable}, bounds=$bounds, editable=${node.isEditable}, actions=$actions"
             }
             for(index in 0 until node.childCount)node.getChild(index)?.let(::visit)
         }
@@ -94,7 +95,7 @@ class NavigationDeviceTest {
             if (target.isEnabled && target.isClickable && target.performAction(AccessibilityNodeInfo.ACTION_CLICK)) return
             target = target.parent
         }
-        throw AssertionError("Could not activate navigation action: $label")
+        throw AssertionError("Could not activate navigation action: $label. ${accessibilitySnapshot()}")
     }
 
     private fun shell(command: String): String {

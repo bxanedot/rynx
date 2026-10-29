@@ -24,7 +24,7 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | PLAY-002 | Mini-player | incomplete | One capsule-to-sheet surface, shared artwork/transport and navigation handoff pass headless interaction/continuity tests; Android gesture/render acceptance pending |
 | PLAY-003 | Expanded player | incomplete | Reference-proportioned transport, volume, output, seek and menus implemented in all material modes; landscape and large-font harness passes; native/reference gates pending |
 | PLAY-004 | Player variants | unverified | Observe permitted reference, implement, test and compare |
-| PLAY-005 | Queue | incomplete | Playback-order aware queue with shuffle-safe reorder/remove/clear; headless tests and hosted API 36 Media3 instrumentation pass. Full reference comparison and physical-device validation remain open. |
+| PLAY-005 | Queue and restart restoration | incomplete | Playback-order aware queue with shuffle-safe reorder/remove/clear. A bounded KMP snapshot and Media3 service restoration now preserve eligible local `content://` queues, position, repeat, and shuffle traversal order while restoring paused. Common codec tests pass; new Android restoration instrumentation compiles but has not yet run on a device. Remote/provider stream IDs and signed URLs are intentionally not persisted. |
 | PLAY-006 | Shuffle | incomplete | Native Media3 shuffle and shuffle-order editing wired; headless/order tests pass, device test pending |
 | PLAY-007 | Repeat | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | PLAY-008 | Seeking | incomplete | Android host code present; actual-device validation and reference comparison pending |

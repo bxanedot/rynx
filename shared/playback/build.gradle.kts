@@ -5,5 +5,8 @@ kotlin {
     jvm { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21 } }
     iosArm64()
     iosSimulatorArm64()
-    sourceSets { commonTest.dependencies { implementation(kotlin("test")) } }
+    sourceSets {
+        commonMain.dependencies { implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0") }
+        commonTest.dependencies { implementation(kotlin("test")) }
+    }
 }

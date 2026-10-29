@@ -71,7 +71,7 @@ class PlaybackService : MediaSessionService() {
         this.player=player
         resumeStore=store
         val savedSnapshot=store.load()
-        Log.d(RESUME_LOG_TAG,"Loaded local resume queue items=${savedSnapshot?.tracks?.size ?: 0}")
+        Log.d(RESUME_LOG_TAG,"Loaded local resume queue items=${savedSnapshot?.tracks?.size ?: 0} pid=${android.os.Process.myPid()}")
         restoreCheckpoint(player,store,savedSnapshot)
         player.addListener(object:Player.Listener {
             override fun onEvents(player:Player,events:Player.Events) {

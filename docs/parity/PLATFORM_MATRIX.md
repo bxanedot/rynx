@@ -12,4 +12,4 @@
 The foundation's commonMain is platform-neutral Kotlin. A JVM test target is not a delivered desktop app or proof of other platform support.
 
 
-Rynx UI and domain logic are authored in Kotlin KMP. Shared Compose components are in `commonMain`; Android platform services and back behavior are Kotlin platform adapters. Shared iOS target declarations now exist to support later porting, but an iOS host app and Apple-toolchain build remain future work. The GlyphStudio renderer in `iosMain` is therefore source-integrated but runtime-unverified.
+Rynx UI and domain logic are authored in Kotlin KMP. Shared Compose components and GlyphStudio symbol rendering are in `commonMain`; Android platform services and back behavior are Kotlin platform adapters. Shared iOS target declarations now exist to support later porting, but an iOS host app and Apple-toolchain build remain future work. The renderer is not runtime-verified on Apple targets.

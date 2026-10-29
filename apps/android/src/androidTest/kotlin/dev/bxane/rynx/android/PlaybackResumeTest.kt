@@ -35,7 +35,7 @@ class PlaybackResumeTest {
         val second=insertAudio("Rynx resume two")
         val store=AndroidPlaybackResumeStore(context)
         stopExistingPlaybackService(context)
-        store.save(PlaybackResumeSnapshot(
+        val snapshot=PlaybackResumeSnapshot(
             tracks=listOf(
                 PlaybackResumeTrack(first.toString(),"Resume one","Rynx test"),
                 PlaybackResumeTrack(second.toString(),"Resume two","Rynx test"),
@@ -45,7 +45,8 @@ class PlaybackResumeTest {
             repeatMode=RepeatMode.All,
             shuffleEnabled=true,
             playbackOrder=listOf(1,0),
-        ))
+        )
+        assertTrue("The seeded queue must reach disk before the service starts",store.saveDurably(snapshot))
         assertEquals("The local resume snapshot must be stored before starting the service",2,store.load()?.tracks?.size)
         try {
             ActivityScenario.launch(MainActivity::class.java).use {

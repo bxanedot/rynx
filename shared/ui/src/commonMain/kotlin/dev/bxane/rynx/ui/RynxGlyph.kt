@@ -12,9 +12,14 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.unit.dp
+import com.composables.sfsymbols.SfRenderingMode
+import com.composables.sfsymbols.SfSymbol
+import com.composables.sfsymbols.SfSymbolEffect
+import com.composables.sfsymbols.SfSymbolIcon
+import com.composables.sfsymbols.SfWeight
 
-/** Semantic glyph registry. Apple glyph names are resolved through GlyphStudio on Apple targets. */
-enum class Glyph(val symbolName: String) {
+/** Semantic glyph registry. GlyphStudio supplies the shared KMP glyph artwork on every target. */
+internal enum class Glyph(val symbolName: String) {
     Play("play.fill"), Pause("pause.fill"), Next("forward.end.fill"), Previous("backward.end.fill"),
     MoveUp("arrow.up"), MoveDown("arrow.down"), Search("magnifyingglass"), Add("plus"), Edit("pencil"),
     Library("books.vertical"), Queue("list.bullet"), Close("xmark"), Note("music.note"),
@@ -26,11 +31,30 @@ enum class Glyph(val symbolName: String) {
 }
 
 @Composable
-internal expect fun drawGlyphStudioSymbol(glyph: Glyph, tint: Color, modifier: Modifier): Boolean
-
-@Composable
-fun RynxGlyph(glyph: Glyph, tint: Color, modifier: Modifier = Modifier) {
-    if (drawGlyphStudioSymbol(glyph, tint, modifier)) return
+internal fun RynxGlyph(
+    glyph: Glyph,
+    tint: Color,
+    modifier: Modifier = Modifier,
+    effect: SfSymbolEffect? = null,
+    trigger: Any? = null,
+    active: Boolean = true,
+) {
+    val symbol = remember(glyph) { SfSymbol.named(glyph.symbolName) }
+    if (symbol != null) {
+        SfSymbolIcon(
+            symbol = symbol,
+            modifier = modifier,
+            size = 22.dp,
+            weight = SfWeight.Medium,
+            mode = SfRenderingMode.Monochrome,
+            tint = tint,
+            effect = effect,
+            trigger = trigger,
+            active = active,
+            contentDescription = null,
+        )
+        return
+    }
     Canvas(modifier.size(22.dp)) {
         scale(size.width / 24f, size.height / 24f, pivot = Offset.Zero) {
             fun line(x: Float, y: Float, x2: Float, y2: Float) = drawLine(tint, Offset(x,y), Offset(x2,y2), 1.8f, StrokeCap.Round)

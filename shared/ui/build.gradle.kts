@@ -16,6 +16,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.animation)
             implementation(compose.components.resources)
+            implementation(project(":glyphstudioSfsymbols"))
             api(project(":shared:playback"))
             api(project(":shared:library"))
             api(project(":shared:design"))
@@ -25,6 +26,5 @@ kotlin {
         }
         jvmTest.dependencies { implementation(kotlin("test"));implementation(compose.desktop.currentOs) }
         androidMain.dependencies { implementation("androidx.activity:activity-compose:1.13.0") }
-        iosMain.dependencies { implementation(project(":glyphstudioSfsymbols")) }
     }
 }

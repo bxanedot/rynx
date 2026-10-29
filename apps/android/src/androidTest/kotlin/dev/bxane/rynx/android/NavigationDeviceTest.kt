@@ -2,10 +2,8 @@ package dev.bxane.rynx.android
 
 import android.os.Bundle
 import android.os.SystemClock
-import android.content.Intent
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -92,11 +90,9 @@ class NavigationDeviceTest {
 
     private fun launchRynx(): ActivityScenario<MainActivity> {
         val context=instrumentation.targetContext
-        val intent=Intent(context,MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
+        val intent=context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?: error("Rynx launcher activity is not registered")
         val scenario=ActivityScenario.launch<MainActivity>(intent)
-        scenario.moveToState(Lifecycle.State.RESUMED)
         instrumentation.waitForIdleSync()
         eventually("Rynx did not become the foreground accessibility window") {
             instrumentation.uiAutomation.rootInActiveWindow?.packageName==context.packageName

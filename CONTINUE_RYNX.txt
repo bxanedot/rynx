@@ -71,9 +71,10 @@ the owner asks to merge.
 PR #7 — Last.fm and ListenBrainz integration
 https://github.com/bxanedot/rynx/pull/7
 Branch: feature/scrobbling
-Current branch head: `f9ce530` (documentation/handoff commit; full SHA is available
-through `git rev-parse HEAD`). Latest production-code commit: `8718a0f`;
-`b006a6f` only updates Android test foreground recovery/diagnostics.
+Current branch: `feature/scrobbling`; run `git pull origin feature/scrobbling` to
+get this handoff and use `git rev-parse HEAD` for the current docs commit. Latest
+production-code commit: `8718a0f`; `b006a6f` only updates Android test foreground
+recovery/diagnostics.
 Main working directory at handoff: /workspace/rynx-audio-excor-wt
 Previous run 40966127829 failed on the incorrect Compose import; run 40966399442
 then compiled the corrected import but failed scrobbling tests. Root causes found:
@@ -84,10 +85,9 @@ requires synchronous completion. Commits f2b1642, bdf9e3b, and 8718a0f fix these
 issues. Verify run 40967462478 passes on `8718a0f`. Android phone run 40967462418
 failed because Android Launcher was the foreground window while the Search/Library
 test was trying to navigate. Commit `b006a6f` adds test-only foreground recovery
-and an accessibility snapshot. Documentation commit `f9ce530` triggered fresh
-Verify run 40969094260 and phone run 40969094203; both are currently in progress.
-The prior phone run 40968738046 was canceled after the newer push. Keep PR #7
-open unless the owner asks to merge.
+and an accessibility snapshot. Later documentation-only commits trigger fresh
+checks; always inspect `gh pr view 7 --json headRefOid,statusCheckRollup,url` for
+the current exact-head result. Keep PR #7 open unless the owner asks to merge.
 
 To check status/logs:
   gh pr view 5 --json headRefOid,mergeable,statusCheckRollup,url
@@ -136,9 +136,9 @@ Read `docs/SCROBBLING.md` and the scrobbling spec/plan under
 
 CURRENT WORKTREES
 =================
-- `/workspace/rynx-audio-excor-wt`: branch `feature/scrobbling`, pushed head
-  `f9ce530` (documentation/handoff); production code is at `8718a0f` and
-  test-harness recovery at `b006a6f`.
+- `/workspace/rynx-audio-excor-wt`: branch `feature/scrobbling`, with this
+  committed handoff; production code is at `8718a0f` and test-harness recovery
+  at `b006a6f`.
 - `/tmp/rynx-pr5`: branch `fix/innertubex-music-video-fallback`, current head
   `daaf075`; exact-head Verify and hosted phone CI are running.
 - Other existing worktrees may contain unrelated/in-progress work. Inspect their

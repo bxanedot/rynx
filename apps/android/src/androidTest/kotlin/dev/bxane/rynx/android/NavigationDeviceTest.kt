@@ -62,6 +62,15 @@ class NavigationDeviceTest {
         throw AssertionError("$message. ${accessibilitySnapshot()}")
     }
 
+    private fun appearsWithin(timeoutMillis: Long, condition: () -> Boolean): Boolean {
+        val deadline = SystemClock.elapsedRealtime() + timeoutMillis
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (condition()) return true
+            SystemClock.sleep(50)
+        }
+        return condition()
+    }
+
     private fun accessibilitySnapshot(): String {
         val root=instrumentation.uiAutomation.rootInActiveWindow ?: return "No active accessibility window."
         val nodes=mutableListOf<String>()
@@ -119,8 +128,9 @@ class NavigationDeviceTest {
         assertTrue("Search must accept accessibility text input", findEditableField()!!.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args))
 
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        SystemClock.sleep(350)
-        if (findVisibleText("Your music, right here") == null) instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        if (!appearsWithin(2_000) { findVisibleText("Your music, right here") != null }) {
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        }
         eventually("Android back must return to the tab that opened Search") { findVisibleText("Your music, right here") != null }
 
         click("Search")

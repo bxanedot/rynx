@@ -24,31 +24,27 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build phone and instrumentation APKs
         run: ./gradlew :apps:android:assembleDebug :apps:android:assembleDebugAndroidTest --console=plain
-      - name: Publish direct debug APK link
+      - name: Upload installable debug APK
+        id: debug-apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: rynx-debug-apk
+          path: apps/android/build/outputs/apk/debug/android-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Share debug APK artifact link
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
+        env:
+          ARTIFACT_URL: ${{ steps.debug-apk.outputs.artifact-url }}
         run: |
           set -euo pipefail
-          apk="apps/android/build/outputs/apk/debug/android-debug.apk"
-          test -s "$apk"
-          sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
-          url="$(curl --fail --silent --show-error --retry 3 \
-            --form 'reqtype=fileupload' \
-            --form 'userhash=' \
-            --form "fileToUpload=@${apk};filename=rynx-debug.apk" \
-            https://catbox.moe/user/api.php)"
-          case "$url" in
-            https://files.catbox.moe/*) ;;
-            *) echo "Catbox did not return a direct file URL: $url" >&2; exit 1 ;;
-          esac
-          echo "Direct debug APK URL: $url"
-          echo "SHA-256: $sha256"
+          test -n "$ARTIFACT_URL"
+          echo "Rynx debug APK artifact: $ARTIFACT_URL"
           {
             echo "## Installable Rynx debug APK"
             echo
-            echo "Direct link: $url"
-            echo
-            echo "SHA-256: $sha256"
+            echo "[Download the APK artifact]($ARTIFACT_URL) and extract the ZIP. Install the contained `android-debug.apk`."
             echo "Source commit: $GITHUB_SHA"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Enable Android hardware acceleration
@@ -66,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-phone
+          name: android-phone-test-results
           path: |
-            apps/android/build/outputs/apk/
             apps/android/build/reports/
+          if-no-files-found: ignore

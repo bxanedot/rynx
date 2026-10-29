@@ -69,7 +69,6 @@ class InnerTubeXFallbackAudioResolver internal constructor(
             StreamResolveException.Reason.EXPLICIT_UNSUPPORTED,
             StreamResolveException.Reason.UNAVAILABLE,
             StreamResolveException.Reason.AGE_RESTRICTED,
-            StreamResolveException.Reason.NO_MUSIC_VIDEO,
         )
     }
 }

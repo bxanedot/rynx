@@ -54,6 +54,7 @@ import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogProvider
 import dev.bxane.rynx.playback.catalog.MusicPlaybackCatalog
+import dev.bxane.rynx.playback.catalog.ProviderAccessRefusalException
 import dev.bxane.rynx.playback.toggleFavoriteId
 import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.playback.audio.AudioDspSettings
@@ -558,9 +559,11 @@ class MainActivity : ComponentActivity() {
                 val media=MediaItem.Builder().setMediaId(id).setUri(stream.url).setMimeType(stream.mimeType).setMediaMetadata(metadata).build()
                 output.setMediaItem(media);output.prepare();output.play();discovery.closeSelection();publish()
             }
-        },onFailure={failure->state.update {it.copy(error=if(failure is NoMatchingRecordingException)
-            "No matching recording was found on YouTube Music. Try a search result or open this song in Apple Music."
-            else "The selected track could not be prepared. Try another result.")}})
+        },onFailure={failure->state.update {it.copy(error=when(failure) {
+            is NoMatchingRecordingException -> "No matching recording was found on YouTube Music. Try a search result or open this song in Apple Music."
+            is ProviderAccessRefusalException -> "The provider restricts playback of this track."
+            else -> "Rynx couldn't prepare a playable stream. Check your connection and try again."
+        })}})
     }
     private fun restoreLibrary() {
         lifecycleScope.launch(Dispatchers.IO) {

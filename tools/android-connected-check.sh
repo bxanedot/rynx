@@ -17,6 +17,7 @@ collect_device_evidence() {
   python3 - <<'PY'
 from pathlib import Path
 import html, re
+import xml.etree.ElementTree as ET
 root = Path('apps/android/build/reports/androidTests/connected')
 for report in root.rglob('*.html'):
     if report.name in ('index.html',):
@@ -26,6 +27,19 @@ for report in root.rglob('*.html'):
         message = html.unescape(re.sub(r'<[^>]+>', '', failure))
         message = re.sub(r'https?://\S+', '[URL]', message)
         print(f'ANDROID DIAGNOSTIC {report.name}:\n{message[:6000]}')
+for report_root in (Path('apps/android/build/outputs/androidTest-results/connected'),
+                    Path('apps/android/build/outputs/androidTest-results/connectedAndroidTest')):
+    reports = report_root.rglob('TEST-*.xml') if report_root.exists() else ()
+    for report in reports:
+        try:
+            root = ET.parse(report).getroot()
+        except ET.ParseError:
+            continue
+        for case in root.iter('testcase'):
+            for failure in case.findall('failure') + case.findall('error'):
+                message = failure.get('message', '') + '\n' + (failure.text or '')
+                message = re.sub(r'https?://\S+', '[URL]', message)
+                print(f'ANDROID TEST FAILURE {case.get("classname")}.{case.get("name")}:\n{message[:6000]}')
 PY
   if test "$test_exit" -ne 0; then
     for device_log in "$destination/rynx-process.log" "$destination/logcat.txt"; do

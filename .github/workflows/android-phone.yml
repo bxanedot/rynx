@@ -65,4 +65,5 @@ jobs:
           name: android-phone-test-results
           path: |
             apps/android/build/reports/
+            apps/android/build/outputs/androidTest-results/connected/
           if-no-files-found: ignore

@@ -58,7 +58,11 @@ class PlaybackResumeTest {
                     val deadline=SystemClock.elapsedRealtime()+10_000
                     while(mediaItemCount(controller)!=2 && SystemClock.elapsedRealtime()<deadline) SystemClock.sleep(50)
                     instrumentation.runOnMainSync {
-                        assertEquals(2,controller.mediaItemCount)
+                        assertEquals(
+                            "The Media3 service should restore two items; persisted count=${store.load()?.tracks?.size ?: 0}",
+                            2,
+                            controller.mediaItemCount,
+                        )
                         assertEquals("Saved current item must be restored",second.toString(),controller.currentMediaItem?.mediaId)
                         assertEquals("Saved item position must be restored",1,controller.currentMediaItemIndex)
                         assertTrue("Restore must preserve repeat mode",controller.repeatMode==androidx.media3.common.Player.REPEAT_MODE_ALL)

@@ -3,6 +3,7 @@
 |---|---|---|---|
 | REQ-001 | User master implementation prompt, 2026-10-27 | Requirements only | Describes requested scope; does not establish current reference behavior |
 | APPLE-007 | Apple Music Google Play listing, inspected 2026-10-28 | Public Android UI reference only | Promotional screenshots expose Home/Browse/Radio/Library/Search, recommendation and recent shelves, player controls and Radio. No source media copied into Rynx. |
+| APPLE-008 | MakeUseOf, “How to Set Your Apple Music Equalizer,” screenshot of iPhone Music settings, https://www.makeuseof.com/how-to-set-apple-music-equalizer/ (inspected 2026-10-29) | Public UI reference for grouped settings presentation only | Dark black canvas, inset charcoal groups, uppercase section captions, compact text rows, trailing values, disclosure arrows and native green switches. Screenshot is not retained or copied as an app asset. |
 | DEP-001 | Approved Excor README and library build configuration | Public API integration and dependency requirements | See EXCOR_INTEGRATION.md |
 | DEP-002 | Approved GlyphStudio README, sfsymbols build and version catalog | Library integration requirements | Owner confirms implementation Apache-2.0; SF Symbols artwork terms are separate |
 

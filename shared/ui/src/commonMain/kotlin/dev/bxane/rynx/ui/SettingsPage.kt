@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import dev.bxane.rynx.design.RynxAppearance
 import dev.bxane.rynx.design.RynxMaterialMode
 import dev.bxane.rynx.ui.material.LocalRynxReducedMotion
-import dev.bxane.rynx.ui.material.RynxAccent
 
 /** iOS-style grouped settings for capabilities Rynx currently implements. */
 @Composable
@@ -61,20 +60,20 @@ internal fun SettingsPage(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .semantics { paneTitle = "Settings" },
     ) {
-        Row(
-            Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 22.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicText("Settings", style = TextStyle(color = ink, fontSize = 34.sp, fontWeight = FontWeight.Bold))
-            Spacer(Modifier.weight(1f))
+        Box(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 16.dp)) {
+            BasicText(
+                "Settings",
+                Modifier.align(Alignment.Center),
+                style = TextStyle(color = ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
+            )
             val interaction = remember { MutableInteractionSource() }
             Box(
-                Modifier.size(42.dp).clip(RoundedCornerShape(21.dp))
+                Modifier.align(Alignment.CenterEnd).size(38.dp).clip(RoundedCornerShape(19.dp))
                     .clickable(role = Role.Button, interactionSource = interaction, indication = null, onClick = onClose)
                     .semantics { contentDescription = "Close settings" },
                 contentAlignment = Alignment.Center,
             ) {
-                RynxGlyph(Glyph.Close, secondary, Modifier.size(19.dp))
+                RynxGlyph(Glyph.Close, secondary, Modifier.size(17.dp))
             }
         }
 
@@ -83,24 +82,17 @@ internal fun SettingsPage(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(23.dp),
         ) {
-            SettingsGroup("PLAYBACK", card, secondary, divider) {
+            SettingsGroup("AUDIO", card, secondary, divider) {
                 SettingsRow(
-                    icon = Glyph.Equalizer,
-                    iconColor = Color(0xFFFFFFFF),
-                    iconSurface = Color(0xFFAF52DE),
                     title = "Sound & EQ",
-                    detail = "Equalizer, Pure Mode and sound processing",
                     ink = ink,
                     secondary = secondary,
                     onClick = onOpenAudio,
                 )
                 SettingsDivider(divider)
                 SettingsRow(
-                    icon = Glyph.Output,
-                    iconColor = Color.White,
-                    iconSurface = Color(0xFF007AFF),
                     title = "Audio Output",
-                    detail = state.audioOutputName,
+                    value = state.audioOutputName,
                     ink = ink,
                     secondary = secondary,
                     enabled = state.audioOutputAvailable,
@@ -110,23 +102,16 @@ internal fun SettingsPage(
 
             SettingsGroup("APPEARANCE", card, secondary, divider) {
                 SettingsToggleRow(
-                    icon = if (appearance.darkTheme) Glyph.Moon else Glyph.Sun,
-                    iconSurface = Color(0xFF5856D6),
                     title = "Dark Appearance",
-                    detail = if (appearance.material == RynxMaterialMode.Amoled) "Always on in True AMOLED" else "Use a dark interface",
                     checked = appearance.darkTheme,
                     enabled = appearance.material != RynxMaterialMode.Amoled,
                     ink = ink,
-                    secondary = secondary,
                     onChange = { onAppearanceChange(appearance.copy(darkTheme = it)) },
                 )
                 SettingsDivider(divider)
                 SettingsRow(
-                    icon = Glyph.Appearance,
-                    iconColor = Color.White,
-                    iconSurface = Color(0xFFFF2D55),
                     title = "Interface & Motion",
-                    detail = "${appearance.material.label}, themes, glass and motion",
+                    value = appearance.material.label,
                     ink = ink,
                     secondary = secondary,
                     onClick = onOpenAppearance,
@@ -135,22 +120,14 @@ internal fun SettingsPage(
 
             SettingsGroup("LIBRARY", card, secondary, divider) {
                 SettingsRow(
-                    icon = Glyph.Add,
-                    iconColor = Color.White,
-                    iconSurface = Color(0xFF34C759),
                     title = "Import Music",
-                    detail = "Add audio files from this device",
                     ink = ink,
                     secondary = secondary,
                     onClick = onImportFiles,
                 )
                 SettingsDivider(divider)
                 SettingsRow(
-                    icon = Glyph.Library,
-                    iconColor = Color.White,
-                    iconSurface = Color(0xFFFF9500),
                     title = "Manage Library",
-                    detail = "Songs, favorites, history and playlists",
                     ink = ink,
                     secondary = secondary,
                     onClick = onOpenLibrary,
@@ -158,11 +135,7 @@ internal fun SettingsPage(
                 if (state.playlistBackupAvailable) {
                     SettingsDivider(divider)
                     SettingsRow(
-                        icon = Glyph.MoveDown,
-                        iconColor = Color.White,
-                        iconSurface = Color(0xFF5AC8FA),
                         title = "Import Playlist Backup",
-                        detail = "Restore a Rynx playlist archive",
                         ink = ink,
                         secondary = secondary,
                         onClick = onImportPlaylistBackup,
@@ -170,11 +143,7 @@ internal fun SettingsPage(
                     if (state.playlists.isNotEmpty()) {
                         SettingsDivider(divider)
                         SettingsRow(
-                            icon = Glyph.MoveUp,
-                            iconColor = Color.White,
-                            iconSurface = Color(0xFF32ADE6),
                             title = "Export Playlist Backup",
-                            detail = "Save playlists as a portable archive",
                             ink = ink,
                             secondary = secondary,
                             onClick = onExportPlaylistBackup,
@@ -218,11 +187,8 @@ private fun SettingsGroup(
 
 @Composable
 private fun SettingsRow(
-    icon: Glyph,
-    iconColor: Color,
-    iconSurface: Color,
     title: String,
-    detail: String,
+    value: String? = null,
     ink: Color,
     secondary: Color,
     enabled: Boolean = true,
@@ -230,18 +196,15 @@ private fun SettingsRow(
 ) {
     val interaction = remember { MutableInteractionSource() }
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 66.dp)
+        Modifier.fillMaxWidth().heightIn(min = 54.dp)
             .clickable(enabled = enabled, role = Role.Button, interactionSource = interaction, indication = null, onClick = onClick)
             .semantics { contentDescription = title; if (!enabled) disabled() }
-            .padding(horizontal = 13.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(30.dp).clip(RoundedCornerShape(7.dp)).background(iconSurface), contentAlignment = Alignment.Center) {
-            RynxGlyph(icon, iconColor, Modifier.size(18.dp))
-        }
-        Column(Modifier.weight(1f).padding(start = 12.dp, end = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            BasicText(title, style = TextStyle(color = ink.copy(alpha = if (enabled) 1f else .44f), fontSize = 15.sp))
-            BasicText(detail, style = TextStyle(color = secondary.copy(alpha = if (enabled) 1f else .5f), fontSize = 12.sp))
+        BasicText(title, Modifier.weight(1f), style = TextStyle(color = ink.copy(alpha = if (enabled) 1f else .44f), fontSize = 16.sp))
+        value?.let {
+            BasicText(it, Modifier.padding(start = 8.dp), style = TextStyle(color = secondary.copy(alpha = if (enabled) 1f else .5f), fontSize = 15.sp))
         }
         RynxGlyph(Glyph.ChevronRight, secondary.copy(alpha = if (enabled) .72f else .3f), Modifier.size(15.dp))
     }
@@ -249,14 +212,10 @@ private fun SettingsRow(
 
 @Composable
 private fun SettingsToggleRow(
-    icon: Glyph,
-    iconSurface: Color,
     title: String,
-    detail: String,
     checked: Boolean,
     enabled: Boolean,
     ink: Color,
-    secondary: Color,
     onChange: (Boolean) -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -267,35 +226,26 @@ private fun SettingsToggleRow(
         label = "Settings dark appearance switch",
     ).value
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 66.dp)
+        Modifier.fillMaxWidth().heightIn(min = 54.dp)
             .clickable(enabled = enabled, role = Role.Switch, interactionSource = interaction, indication = null) { onChange(!checked) }
             .semantics {
                 contentDescription = title
                 toggleableState = if (checked) ToggleableState.On else ToggleableState.Off
                 if (!enabled) disabled()
             }
-            .padding(horizontal = 13.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(30.dp).clip(RoundedCornerShape(7.dp)).background(iconSurface), contentAlignment = Alignment.Center) {
-            RynxGlyph(icon, Color.White, Modifier.size(18.dp))
-        }
-        Column(Modifier.weight(1f).padding(start = 12.dp, end = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            BasicText(title, style = TextStyle(color = ink, fontSize = 15.sp))
-            BasicText(detail, style = TextStyle(color = secondary, fontSize = 12.sp))
-        }
-        Box(Modifier.size(51.dp, 31.dp).clip(RoundedCornerShape(16.dp)).background(if (checked) RynxAccent else Color(0xFF787880))) {
-            Box(
-                Modifier.padding(2.dp).offset(x = (20f * fraction).dp).size(27.dp)
-                    .clip(RoundedCornerShape(14.dp)).background(Color.White),
-            )
+        BasicText(title, Modifier.weight(1f), style = TextStyle(color = ink, fontSize = 16.sp))
+        Box(Modifier.size(49.dp, 29.dp).clip(RoundedCornerShape(15.dp)).background(if (checked) Color(0xFF34C759) else Color(0xFF787880))) {
+            Box(Modifier.padding(2.dp).offset(x = (20f * fraction).dp).size(25.dp).clip(RoundedCornerShape(13.dp)).background(Color.White))
         }
     }
 }
 
 @Composable
 private fun SettingsDivider(color: Color) {
-    Spacer(Modifier.fillMaxWidth().padding(start = 55.dp).height(.5.dp).background(color))
+    Spacer(Modifier.fillMaxWidth().padding(start = 16.dp).height(.5.dp).background(color))
 }
 
 @Composable

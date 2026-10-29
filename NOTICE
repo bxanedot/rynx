@@ -6,16 +6,14 @@ GNU General Public License, version 3 or (at your option) any later version.
 See LICENSE. Third-party dependencies and retained tooling keep their own licenses.
 
 The complete application source, dependency pins and build instructions accompany
-this repository. NewPipeExtractor, InnerTubeX and its QuackJS transform library are GPL-3.0. Excor, Haze, Kotlin,
+this repository. NewPipeExtractor, InnerTubeX and its QuackJS transform library are GPL-3.0. Haze, Kotlin,
 Compose and AndroidX retain their Apache-2.0 notices. See third_party_licenses/
 and docs/cleanroom/DEPENDENCY_AUDIT.md for the dependency inventory.
 
 Rynx does not bundle Apple SF Symbols artwork, proprietary fonts or reference
 screenshots. Its Android semantic icons, logo and placeholder artwork are original.
 
-QuickJS-kt 1.0.15: Copyright 2024 dokar3; retained wrapper LICENSE also
-credits Copyright 2015 Anton Lopyrev (Apache-2.0).
-Bundled QuickJS: Copyright 2017-2021 Fabrice Bellard and Charlie Gordon (MIT).
-Bundled c-vector: Copyright 2015 Evan Teran (MIT).
-Full retained licenses, including Excor and its EJS/meriyah/astring notices,
-are included in the third_party_licenses directory and Android assets.
+The active dependency license files are retained in the third_party_licenses
+directory and packaged as Android assets. eXcor and its engine-specific
+dependencies were removed from the active project at the user's request; its
+upstream repository was not modified. See docs/archive/EXCOR.md.

@@ -16,7 +16,7 @@ import dev.bxane.rynx.playback.catalog.ResolvedAudioStream
 import io.ktor.client.HttpClient
 
 /**
- * Excor fallback backed by InnerTubeX. Rynx's current Media3 path accepts ordinary HTTPS media
+ * Primary Rynx resolver backed by InnerTubeX. Rynx's current Media3 path accepts ordinary HTTPS media
  * streams only, so HLS, SABR, and bounded-range variants are deliberately declined for the next
  * provider in the chain to try.
  */

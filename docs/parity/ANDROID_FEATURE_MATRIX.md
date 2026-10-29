@@ -6,7 +6,7 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 |---|---|---|---|
 | DISC-001 | Home | incomplete | Real Apple-backed Home shelves and local service-owned Recently Played. Global/region/neighbors, editorial releases, date-filtered week, rising ranks, city/tour collections and local recommendations implemented; provider/UI tests pass; native acceptance pending. |
 | DISC-002 | Explore | incomplete | Explore renders dynamically fetched Apple genre IDs/names with original vector tiles and a genuine genre-chart drilldown; headless interaction test passes. |
-| DISC-003 | Search | incomplete | Apple metadata search through Excor with YouTube Music fallback; conservative variant/artist/duration matching before playback. Live Apple and deterministic tests pass; native stream path pending. |
+| DISC-003 | Search | incomplete | Rynx-owned Apple iTunes song search returns a real high-resolution cover URL; InnerTubeX supplies YouTube Music search/artwork fallback and conservative recording matching before playback. Apple live metadata/artwork and deterministic parser/catalog tests pass; Android rendering, YouTube live stream path and audible playback remain unverified. |
 | DISC-004 | Charts | incomplete | Actual Apple Global chart and labelled storefront snapshots; City Charts from public links/JSON-LD. Live data contract checks pass; source availability may vary. |
 | DISC-005 | Genres | incomplete | 51 actual Apple genres verified live; nested taxonomy retained; original tile artwork and real iTunes genre charts. |
 | DISC-006 | Moods | unverified | Observe permitted reference, implement, test and compare |
@@ -138,14 +138,14 @@ Requested scope inventory, not an observed Vyon inventory. No Vyon Android build
 | UTIL-008 | Error logs | unverified | Observe permitted reference, implement, test and compare |
 | UTIL-009 | Updates | unverified | Observe permitted reference, implement, test and compare |
 | UTIL-010 | Diagnostics | unverified | Observe permitted reference, implement, test and compare |
-| PROV-001 | Excor | incomplete | Android/JVM adapter implements shared KMP catalog/stream contracts; deterministic tests and release builds pass. Live YouTube request was refused by the environment before provider response; device playback is unverified |
+| PROV-001 | InnerTubeX | incomplete | Shared KMP adapter now handles YouTube Music catalog search/paging and is the primary Android audio resolver. Direct HTTPS audio only; deterministic tests/build are pending on this revision; live extraction/device playback unverified. |
 | PROV-002 | Spotify | unverified | Observe permitted reference, implement, test and compare |
 | PROV-003 | Local files | incomplete | Android host code present; actual-device validation and reference comparison pending |
 | PROV-004 | SMB | unverified | Observe permitted reference, implement, test and compare |
 | PROV-005 | WebDAV | unverified | Observe permitted reference, implement, test and compare |
 | PROV-006 | External modules | unverified | Observe permitted reference, implement, test and compare |
 | PROV-007 | NewPipeExtractor fallback | incomplete | Pinned Android last-resort fallback implements the shared KMP resolver contract and compiles. Live fallback and device acceptance remain pending |
-| PROV-008 | InnerTubeX fallback | incomplete | Pinned v0.11.2 library is integrated through a shared KMP adapter between Excor and NewPipe. Direct HTTPS audio mapping, unsupported transport rejection, policy refusals, and provider order are tested; live resolution and device playback remain unverified |
+| PROV-008 | YouTube.js | blocked | The inspected npm `youtubei.js` library is JavaScript-only. No Android/Kotlin host or active dependency is present; it is not claimed as an Android provider. |
 | SPOT-001 | Login | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-002 | Account linking | unverified | Observe permitted reference, implement, test and compare |
 | SPOT-003 | Token persistence | unverified | Observe permitted reference, implement, test and compare |

@@ -1,4 +1,7 @@
-# eXcor integration
+# Archived eXcor integration record
+
+**Superseded on 2026-10-29 at the user's request.** This file preserves implementation/test history only. eXcor is not part of the active Rynx build; the upstream repository was not changed. The current Android providers are InnerTubeX → NewPipeExtractor. See [`EXCOR.md`](EXCOR.md).
+
 Pinned commit: deb51bafc219645133f3f9145a68719cade7165e. Excor is the primary YouTube engine. The Android stream resolution order is Excor → InnerTubeX → NewPipeExtractor. InnerTubeX v0.11.2 is used through its published KMP API; NewPipeExtractor remains Android-only. Rynx writes adapters and provider orchestration only, not extractor internals.
 Integration: `dependencies/eXcor` is included as a Gradle composite build and `com.bxane.excor:excor:1.0.0` is substituted with the pinned checkout. `providers:excor` shares its public-API adapter between JVM and Android; the host uses OkHttp, a logged-out session, and a disabled/no-op Excor config store. Android search calls Excor Music search and continuation paging. Android stream resolution asks Excor first, then InnerTubeX for ordinary direct HTTPS audio, then NewPipe; cancellation and explicit provider refusals propagate immediately, so the chain does not bypass age, sign-in, region or availability restrictions.
 

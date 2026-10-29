@@ -134,9 +134,11 @@ class NavigationDeviceTest {
         eventually("Android back must return to the tab that opened Search") { findVisibleText("Your music, right here") != null }
 
         click("Search")
+        var restoredQuery:String? = null
         eventually("Search query was lost while returning from the prior tab") {
-            findEditableField()?.text?.toString() == query
+            restoredQuery = findEditableField()?.text?.toString()
+            restoredQuery == query
         }
-        assertEquals(query, findEditableField()?.text?.toString())
+        assertEquals(query, restoredQuery)
     }
 }

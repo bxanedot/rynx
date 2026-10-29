@@ -1,5 +1,7 @@
 # Rynx next milestones
 
+> Historical plan; provider details were superseded on 2026-10-29 when eXcor was archived by request. Use `docs/parity/PROVIDER_UPDATES.md` for current provider policy.
+
 **Goal:** Continue the existing Rynx app toward a reliable Android-first release while keeping application logic and reusable UI in Kotlin Multiplatform for a later iOS port. Use Apple Music on iOS as the visual and interaction reference. This plan extends the current repository; it does not restart it.
 
 **Current baseline:** `feature/shared-playback-preparation` is one commit ahead of merged `main` (`c38ac0d`) with local playback-preparation commit `e971132`. Navigation and brand PRs #1 and #2 are merged. A post-rebase offline build stopped before compilation because `components-resources:1.12.1` is not in the local Gradle cache. Local API 36 emulator boot previously failed. Playback preparation, provider live behavior, and audible Android playback have not yet been verified on this branch/device. See `docs/IMPLEMENTATION_STATUS.md` for the detailed evidence inventory.

@@ -6,7 +6,7 @@
 | Wear OS | Not configured | Not tested | unverified | Phone sync, reconnection, supported playback |
 | Windows | Desktop sources configured, not built on Windows | Not tested | unverified | Native shell/JVM package verification pending |
 | macOS | Desktop sources configured, not built on macOS | Not tested | unverified | Native shell/JVM package verification pending |
-| Linux | Desktop uber-JAR built with JDK 27; provider runtime linked | Current Java 26+ package not launched; Excor live search and audible playback unverified | Partial adaptive views, no fidelity comparison | Java Sound baseline; system media integration pending |
+| Linux | Desktop target uses JDK 27 and shared InnerTubeX/Apple catalog modules | Current Java 26+ package not launched; live search and audible playback unverified | Partial adaptive views, no fidelity comparison | Java Sound baseline; system media integration pending |
 | iOS/iPadOS | Shared design, playback, library and UI Kotlin/Native targets declared; no iOS host app, Apple build or runtime test | Not tested | iOS Apple Music is the design direction; runtime parity unverified | After the Android gate, add the host app and verify Apple-only renderers/native audio and system adapters on macOS |
 
 The foundation's commonMain is platform-neutral Kotlin. A JVM test target is not a delivered desktop app or proof of other platform support.

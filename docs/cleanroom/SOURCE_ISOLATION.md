@@ -2,7 +2,7 @@
 Established 2026-10-27 in /workspace/rynx, a fresh Git repository with no remote.
 No Vyon, BitChord, Convx or Vivi Music repository was cloned, searched, read or decompiled.
 Initial workspace check searched filenames for reference media and AGENTS.md; no application source content was read.
-Only explicitly approved Excor and GlyphStudio repositories are retained as pinned submodules in the Rynx workspace. NewPipeExtractor and InnerTubeX are pinned binary dependencies independently approved by the user for fallback resolution. Their public APIs, documentation, type contracts and licenses were used for integration. InnertubeX is consumed through shared KMP code; no upstream sample-app flow or extractor implementation was copied into Rynx.
+Only the approved GlyphStudio repository is retained as a pinned source submodule. eXcor was removed from the active workspace on 2026-10-29 by user request; its upstream repository was not modified. NewPipeExtractor and InnerTubeX are pinned binary dependencies authorized by the user. Their public APIs, documentation, type contracts and licenses were used for integration. InnerTubeX is consumed through shared KMP code; no upstream sample-app flow or extractor implementation was copied into Rynx.
 The boundary is enforced by agent instructions, explicit repository allowlisting and provenance review. This is procedural isolation, not an OS security boundary: the process retains unrestricted filesystem/network access.
 Do not mount prohibited repositories in future implementation sessions. Do not accept implementation specifications derived from them.
 

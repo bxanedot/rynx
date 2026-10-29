@@ -1,6 +1,6 @@
 # UI reference change
 
-2026-10-27 — User explicitly stated no Vyon reference exists and authorized Apple Music across all platforms as the visual reference. This supersedes the original Vyon-only/no-Apple-Music-clone visual constraint. The technical scope, rynx branding, bxane credit, clean-room isolation, primary Excor extraction with the subsequently authorized NewPipe fallback and Spotify requirements remain.
+2026-10-27 — User explicitly stated no Vyon reference exists and authorized Apple Music across all platforms as the visual reference. This supersedes the original Vyon-only/no-Apple-Music-clone visual constraint. The technical scope, rynx branding, bxane credit, clean-room isolation, Android InnerTubeX → NewPipeExtractor provider chain, and Spotify requirements remain. eXcor was later archived at the user's request; see `../archive/EXCOR.md`.
 
 Apple public guides/screenshots are now the evidence source. Exact Apple motion timings are unmeasured. No Apple artwork, trademarks or proprietary font files will be shipped. Linux, Android TV and Wear OS need platform adaptations rather than claims of native Apple Music parity.
 

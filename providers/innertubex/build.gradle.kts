@@ -23,8 +23,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":shared:playback"))
+            api(project(":providers:apple"))
             implementation("com.github.MetrolistGroup.innertubex:innertubex:v0.11.2")
             implementation("io.ktor:ktor-client-core:3.6.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

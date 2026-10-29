@@ -19,7 +19,7 @@ object ApplePayloads {
             val id=r.text("id")?.takeIf {it.all(Char::isDigit)}?:return@mapIndexedNotNull null
             val title=r.text("name")?.takeIf {it.isNotBlank()}?:return@mapIndexedNotNull null
             val genres=r.array("genres").mapNotNull {it as? JsonObject}.filter {it.text("genreId")!="34"}
-            MusicMetadata("apple:$id",title,r.text("artistName").orEmpty(),genreIds=genres.mapNotNull {it.text("genreId")},
+            MusicMetadata("apple:$id",title,r.text("artistName").orEmpty(),artworkUrl=artwork(r.text("artworkUrl100")),genreIds=genres.mapNotNull {it.text("genreId")},
                 genreNames=genres.mapNotNull {it.text("name")},releaseDate=r.text("releaseDate"),sourceUrl=r.text("url"),chartRank=index+1)
         }
         return ChartCollection("storefront:$region",feed.text("title")?:"Top Songs",tracks,
@@ -30,10 +30,11 @@ object ApplePayloads {
         if(r.text("kind")!="song")return@mapNotNull null
         val id=r.text("trackId")?:return@mapNotNull null
         val title=r.text("trackName")?.takeIf {it.isNotBlank()}?:return@mapNotNull null
-        MusicMetadata("apple:$id",title,r.text("artistName").orEmpty(),album=r.text("collectionName"),artworkUrl=r.text("artworkUrl100"),
+        MusicMetadata("apple:$id",title,r.text("artistName").orEmpty(),album=r.text("collectionName"),artworkUrl=artwork(r.text("artworkUrl100")),
             genreNames=listOfNotNull(r.text("primaryGenreName")),releaseDate=r.text("releaseDate"),
             durationMillis=r["trackTimeMillis"]?.jsonPrimitive?.longOrNull,sourceUrl=r.text("trackViewUrl"))
     }
+    fun search(body:String):List<MusicMetadata> = lookup(body)
     fun genreFeed(body:String,region:String,genre:MusicGenre):ChartCollection {
         val feed=json.parseToJsonElement(body).jsonObject.obj("feed")
         val tracks=feed.array("entry").mapIndexedNotNull {index,value->
@@ -41,7 +42,8 @@ object ApplePayloads {
             val id=r.obj("id").obj("attributes").text("im:id")?:return@mapIndexedNotNull null
             val title=r.obj("im:name").text("label")?:return@mapIndexedNotNull null
             val url=r.array("link").mapNotNull {it as? JsonObject}.map {it.obj("attributes")}.firstOrNull {it.text("rel")=="alternate"}?.text("href")
-            MusicMetadata("apple:$id",title,r.obj("im:artist").text("label").orEmpty(),album=r.obj("im:collection").obj("im:name").text("label"),
+            val art=r.array("im:image").mapNotNull {it as? JsonObject}.maxByOrNull {it.obj("attributes").text("height")?.toIntOrNull()?:0}?.text("label")
+            MusicMetadata("apple:$id",title,r.obj("im:artist").text("label").orEmpty(),album=r.obj("im:collection").obj("im:name").text("label"),artworkUrl=artwork(art),
                 genreIds=listOf(genre.id),genreNames=listOf(genre.name),releaseDate=r.obj("im:releaseDate").text("label"),sourceUrl=url,chartRank=index+1)
         }
         return ChartCollection("genre:${genre.id}",genre.name,tracks,"https://music.apple.com/$region/room/6456176470",feed.obj("updated").text("label"))
@@ -98,4 +100,6 @@ object ApplePayloads {
         MusicGenre("curator:$id",title,browseUrl=url)
     }.distinctBy {it.id}
     private fun decode(value:String)=value.replace("&amp;","&").replace("&quot;","\"").replace("&#39;","'").replace("&apos;","'").replace("&lt;","<").replace("&gt;",">").replace("&nbsp;"," ")
+    private fun artwork(value:String?):String? = value?.takeIf {it.startsWith("https://")}
+        ?.replace(Regex("/\\d{2,4}x\\d{2,4}bb(?=\\.)"),"/1200x1200bb")
 }

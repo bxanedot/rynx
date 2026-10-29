@@ -2,7 +2,7 @@
 
 An independently authored Kotlin Multiplatform music application by **bxane**. Android phones are the active target; the existing desktop target also provides the headless Compose test harness.
 
-The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, YouTube Music search through eXcor, and ordered audio resolution through eXcor → InnerTubeX → NewPipeExtractor. InnerTubeX is integrated through a shared KMP adapter; NewPipeExtractor is the Android-only final fallback. The app also includes favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
+The Android app includes local audio import with embedded titles, artists and covers, Media3 playback and background controls, Apple metadata/search with real cover artwork, and YouTube Music search through the InnerTubeX public API. Android audio resolution runs InnerTubeX first and NewPipeExtractor as fallback. Apple cover URLs are normalized to high-resolution image variants when available. eXcor has been removed from the active build; see [the archive note](docs/archive/EXCOR.md). The app also includes favorites/history, an editable shuffled queue, and user-imported timed lyrics. Its shared interface provides Liquid Glass, Solid and True AMOLED materials, live appearance settings, and a single fluid player with coordinated navigation.
 
 This is a development build. Dark appearance is the clean-install default. Settings uses compact grouped rows inspired by Apple Music's iOS Music settings page. Spotify, downloads/offline management, advanced DSP/DJ, recognition, social/backend features and complete reference screen/motion parity are not finished. No production readiness, audible audio quality, benchmark or 95% visual-parity result is claimed. Apple discovery includes real genres, global/regional/city charts, release/tour collections and original local recommendations; see [discovery sources](docs/parity/APPLE_DISCOVERY.md).
 
@@ -14,7 +14,7 @@ Use JDK 27, Android SDK 37/build tools, and the approved dependency submodules. 
 
 ```sh
 git submodule update --init
-./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:excor:jvmTest :providers:innertubex:jvmTest :providers:apple:jvmTest :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
+./gradlew :apps:android:assembleDebug :apps:android:assembleRelease :apps:android:assembleDebugAndroidTest :apps:android:lintDebug :apps:android:testDebugUnitTest :apps:desktop:jvmTest :providers:innertubex:jvmTest :providers:apple:jvmTest :providers:newpipe:compileAndroidMain :shared:playback:jvmTest :shared:design:jvmTest :shared:ui:jvmTest
 ./gradlew :apps:android:connectedDebugAndroidTest
 ```
 
@@ -24,7 +24,7 @@ The minified release output, `android-release-unsigned.apk`, is **not installabl
 
 Liquid Glass uses the Apache-2.0 Haze renderer through an original shared Rynx material/interaction layer. Solid and AMOLED bypass backdrop effects. Preferences update live and persist on Android; the quality fallback retains the selected material. [Material behavior and limits](docs/parity/INTERFACE_MATERIALS.md).
 
-The independently versioned [eXcor engine](https://github.com/bxanedot/eXcor) is primary. The hourly workflow fetches stable main, checks the candidate, then adopts a passing pin. A failed candidate leaves the default pin intact and opens a compatibility proposal. Runtime provider availability is a separate check.
+Android currently uses InnerTubeX and NewPipeExtractor. YouTube.js (`youtubei.js`) is a JavaScript library and has no Android/Kotlin adapter in this project; it is not presented as an active Android fallback. Provider runtime availability and audible playback remain unverified on a device.
 
 Rynx application code and original vectors use **GPL-3.0-or-later**, compatible with the requested NewPipeExtractor fallback. Retained dependency licenses and notices ship in the Android assets. The semantic icon registry uses bxanedot's [GlyphStudio `:sfsymbols` KMP library](https://github.com/bxanedot/GlyphStudio) from shared `commonMain`; original Rynx vector fallbacks remain for glyph names absent from the catalog. Apple's SF Symbols artwork terms still need release review. Shared iOS target declarations are present for the future port, but there is no iOS host app or Apple-platform build verification yet. Original SVG masters are in [assets/brand](assets/brand).
 

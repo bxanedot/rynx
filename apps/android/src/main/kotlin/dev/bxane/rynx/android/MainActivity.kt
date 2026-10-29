@@ -53,16 +53,17 @@ import dev.bxane.rynx.playback.catalog.AudioResolutionChain
 import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogProvider
+import dev.bxane.rynx.playback.catalog.MusicPlaybackCatalog
 import dev.bxane.rynx.playback.toggleFavoriteId
 import dev.bxane.rynx.playback.discovery.*
 import dev.bxane.rynx.playback.audio.AudioDspSettings
 import dev.bxane.rynx.playback.audio.AudioSignalInfo
 import dev.bxane.rynx.library.PlaylistArchive
 import dev.bxane.rynx.ui.*
-import dev.bxane.rynx.excor.ExcorMusicCatalog
-import dev.bxane.rynx.excor.createLoggedOutExcorMusicCatalog
+import dev.bxane.rynx.apple.AppleMetadataClient
 import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
 import dev.bxane.rynx.innertubex.InnerTubeXFallbackAudioResolver
+import dev.bxane.rynx.innertubex.createInnerTubeXMusicPlaybackCatalog
 import dev.bxane.rynx.innertubex.createInnerTubeXFallbackAudioResolver
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -78,6 +79,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -91,7 +93,7 @@ class MainActivity : ComponentActivity() {
         playlistBackupAvailable=true))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
-    private lateinit var catalog: ExcorMusicCatalog
+    private lateinit var catalog: MusicPlaybackCatalog
     private lateinit var audioResolver: AudioResolutionChain
     private var innertubexHttpClient: HttpClient? = null
     private var innertubexResolver: InnerTubeXFallbackAudioResolver? = null
@@ -191,12 +193,15 @@ class MainActivity : ComponentActivity() {
         state.update {it.copy(appearance=appearanceStore.load())}
         state.update {it.copy(audioDspSettings=audioDspStore.load())}
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
-        catalog = createLoggedOutExcorMusicCatalog()
         val innertubexClient = HttpClient(OkHttp)
         val innertubex = createInnerTubeXFallbackAudioResolver(innertubexClient)
+        catalog = createInnerTubeXMusicPlaybackCatalog(
+            innertubexClient,
+            AppleMetadataClient(HttpClient(OkHttp),DiskAppleCache(File(cacheDir,"apple-catalog-metadata"))),
+        )
         innertubexHttpClient = innertubexClient
         innertubexResolver = innertubex
-        audioResolver = AudioResolutionChain(catalog, innertubex, NewPipeFallbackAudioResolver)
+        audioResolver = AudioResolutionChain(innertubex, NewPipeFallbackAudioResolver)
         playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver) { state.value.discovery.region }
         catalogReady = lifecycleScope.async(Dispatchers.IO) {
             try {
@@ -367,7 +372,7 @@ class MainActivity : ComponentActivity() {
                     title=track.title,
                     artist=track.subtitle,
                     artworkUrl=track.artworkUrl,
-                    source=if(track.id.startsWith("yt:")) "excor" else "local",
+                    source=if(track.id.startsWith("yt:")) "youtube-music" else "local",
                     localUri=localUri,
                 )
                 launchLibraryMutation("Song could not be added to the playlist.") { playlistRepository.addEntry(playlistId,draft) }

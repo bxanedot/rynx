@@ -8,7 +8,7 @@ Audit updated 2026-10-29 against the existing repository and the latest Android 
 - Current implementation branch: `feature/android-audio-excor`, starting revision `a7ceffb`; PR [#4](https://github.com/bxanedot/rynx/pull/4) is open against `main`. Merged PRs #1–#3 supply the original navigation motion, brand vectors, and eXcor naming.
 - PR #4 Verify and Android phone workflows passed on `a7ceffb`; this new queue-restoration slice has only local compile/test evidence until its hosted run finishes. Neither result replaces physical-phone audio, provider-network, artwork/legal, or release-signing validation.
 - A separate local worktree, `feature/shared-playback-preparation`, has uncommitted changes. Treat it as in-progress, do not count its extra files as delivered, and do not merge or discard them without reviewing and testing them against this branch.
-- Clean-room boundary and dependency pins are recorded in `AGENTS.md` and `docs/cleanroom/`. Approved provider surfaces are eXcor, InnerTubeX, NewPipeExtractor, Apple public catalog data, and GlyphStudio under the recorded license conditions.
+- Clean-room boundary and dependency pins are recorded in `AGENTS.md` and `docs/cleanroom/`. Active provider surfaces are InnerTubeX, NewPipeExtractor, Apple's public metadata endpoints, and GlyphStudio under the recorded license conditions. eXcor is archived at the user's request.
 
 ## Implementation inventory
 
@@ -16,7 +16,7 @@ Audit updated 2026-10-29 against the existing repository and the latest Android 
 |---|---|---|
 | Shared domain and provider contracts | Working and covered by common/JVM tests | Preserve and add regression coverage with each vertical slice |
 | Discovery | Apple public-catalog metadata, Explore genres, charts, regional and neighboring charts, New Music Daily, city/tour collections, recent plays, and original local ranking are implemented | Add missing detail flows and verify failure/offline states on Android; do not represent the local ranker as Apple’s private algorithm |
-| Search and playback preparation | eXcor is primary; the KMP InnerTubeX resolver and Android NewPipe fallback are ordered after it; matching, refusal, and cancellation have deterministic tests | Run authorized live search-to-audio playback on a device/network and test provider recovery |
+| Search and playback preparation | Apple public metadata/artwork plus InnerTubeX catalog search and primary KMP resolver; Android NewPipe fallback | Build and test the new catalog/artwork mapping, then run authorized live search-to-audio playback and provider recovery |
 | Android playback | Media3 service/session, local files, transport, seek, repeat/shuffle, editable queue, notifications/session hooks, and shared PCM DSP integration exist | Verify audible playback, focus/interruption, routes, underruns, and long sessions on physical hardware |
 | Queue restoration | Versioned KMP resume snapshot and Android Media3 service restoration now retain eligible local content URIs, position, repeat, and shuffle order while restoring paused | Run the new generated-PCM MediaStore instrumentation on hosted API 36; verify permission revocation and forced process death; remote/provider playback deliberately is not persisted |
 | Player and design system | Shared Compose navigation, search transition, player morph, queue, lyrics, glass/solid/AMOLED modes, splash motion, and vector brand are implemented with headless/UI tests | Measure against Apple Music iOS references; complete Android accessibility and device rendering checks |
@@ -30,7 +30,7 @@ No feature is marked complete solely because a contract, screen, or settings con
 
 ## Delivery sequence
 
-1. **Close Android playback acceptance.** Run the new queue-restore instrumentation on hosted API 36 and verify current branch on a physical phone: local and authorized remote playback, background service, MediaSession controls, focus/headset changes, output routing, and recovery. Exercise Excor → InnerTubeX → NewPipe behavior without logging signed URLs, cookies, or headers. A hosted emulator pass is useful evidence but not a physical audio result.
+1. **Close Android playback acceptance.** Run queue-restore instrumentation on hosted API 36 and verify the current branch on a physical phone: local and authorized remote playback, background service, MediaSession controls, focus/headset changes, output routing, and recovery. Exercise InnerTubeX → NewPipe behavior without logging signed URLs, cookies, or headers. A hosted emulator pass is useful evidence but not a physical audio result.
 2. **Finish discovery and core catalog journeys.** Implement real artist/album detail and navigation using authorized Apple metadata, keep playable media resolution distinct from catalog artwork, and test loading, empty, unavailable, and offline states.
 3. **Complete library workflows.** Test persistence after process restart and finish sorting/filtering/import/export. Build a permitted download pipeline only after the provider’s access rules and available API explicitly support the requested media; invoke `DownloadBrandingMetadata` from the real completion path.
 4. **Complete supported Spotify integration.** Resolve official credentials, callbacks, account access, and actual supported playback capabilities before enabling UI. Do not simulate blocked capabilities.

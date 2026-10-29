@@ -20,9 +20,9 @@
     "name": "Search",
     "status": "partial",
     "reference": "REQ-001; Apple reference adaptation; complete parity unverified",
-    "acceptance": "Desktop local filtering plus Excor YouTube Music search/pagination; UI, query trimming, paging and provider-error handling tested. Live network, visual parity and other platforms unverified.",
+    "acceptance": "Rynx KMP uses Apple iTunes song search with real Apple cover URLs; empty/error results fall back to InnerTubeX YouTube Music metadata and thumbnails. Conservative recording matching precedes stream resolution. Deterministic tests and local Android build pass; one Apple metadata/image request passed. YouTube live playback, visual parity, artwork usage rights and other platforms remain unverified.",
     "tests": [
-      "YouTubeSearchUiTest and DesktopCatalogSearchTest pass; live network, visual parity and other platforms unverified"
+      "Apple and InnerTubeX provider tests pass; the Android debug/release/instrumentation APKs build. Live Apple search returned a 1200x1200 cover whose JPEG fetched successfully. No current device rendering or YouTube playback result."
     ]
   },
   {
@@ -1097,12 +1097,12 @@
   },
   {
     "id": "PROV-001",
-    "name": "Excor",
+    "name": "InnerTubeX primary catalog/resolver",
     "status": "partial",
-    "reference": "Approved public API; no live provider observation",
-    "acceptance": "JVM adapter maps search and playlist pages, holds resolved audio URLs in memory with redacted string rendering, forwards refusal/session changes, and classifies failures. Desktop search uses the composite-linked engine. Live search/stream/download and native playback remain unverified.",
+    "reference": "User-authorized pinned KMP provider; no live provider observation",
+    "acceptance": "InnerTubeX public APIs provide YouTube Music search/pagination and primary audio resolution. Current Media3 accepts direct HTTPS audio only; explicit access refusals stop provider fallback.",
     "tests": [
-      "ExcorMapperTest passes; live provider network and extraction are not verified"
+      "Resolver and catalog parser tests pass and Android provider integration compiles. Live search, extraction and device playback remain unverified."
     ]
   },
   {
@@ -1152,19 +1152,19 @@
     "name": "NewPipeExtractor fallback",
     "status": "partial",
     "reference": "User-authorized Android fallback provider; no reference-engine internals used",
-    "acceptance": "Android resolver order is Excor, InnerTubeX, then NewPipeExtractor. NewPipe is last in the chain and runs only when prior providers return no stream or a fallback-eligible error.",
+    "acceptance": "Android resolver order is InnerTubeX followed by NewPipeExtractor. NewPipe runs only after a missing stream or fallback-eligible failure; explicit access refusals and cancellation stop the chain.",
     "tests": [
-      "Android provider compiles; end-to-end live fallback and device playback remain unverified"
+      "Android adapter compilation and live/device fallback tests remain pending on this revision."
     ]
   },
   {
     "id": "PROV-008",
-    "name": "InnerTubeX fallback",
-    "status": "partial",
-    "reference": "User-authorized KMP fallback provider; pinned public library API",
-    "acceptance": "Shared KMP adapter requests only direct HTTPS audio accepted by the current player; it rejects HLS, SABR and bounded-range modes. Explicit provider refusals and cancellation stop the chain.",
+    "name": "YouTube.js",
+    "status": "blocked",
+    "reference": "User requested YouTube.js; public npm package inspected",
+    "acceptance": "The official youtubei.js package is JavaScript-only and is not included in Rynx. No tested Android/Kotlin host exists, so it is not an Android provider.",
     "tests": [
-      "4 InnerTubeX adapter JVM tests pass; live extraction and audible Android playback remain unverified"
+      "No Rynx integration; require a supported JS runtime and host before implementation."
     ]
   },
   {

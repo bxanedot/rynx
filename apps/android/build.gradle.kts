@@ -53,7 +53,6 @@ dependencies {
     implementation(project(":shared:ui"))
     implementation(project(":shared:playback"))
     implementation(project(":shared:library"))
-    implementation(project(":providers:excor"))
     implementation(project(":providers:apple"))
     implementation(project(":providers:newpipe"))
     implementation(project(":providers:innertubex"))

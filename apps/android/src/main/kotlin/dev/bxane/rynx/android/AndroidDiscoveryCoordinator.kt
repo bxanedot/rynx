@@ -109,7 +109,7 @@ internal class AndroidDiscoveryCoordinator(
     }
     fun close(){job?.cancel();selectionJob?.cancel();preferences.unregisterOnSharedPreferenceChangeListener(signalListener);AndroidResourceCloser.close {client.close()}}
 }
-private class DiskAppleCache(private val directory:File):AppleDocumentCache {
+internal class DiskAppleCache(private val directory:File):AppleDocumentCache {
     private fun file(url:String)=File(directory,MessageDigest.getInstance("SHA-256").digest(url.toByteArray()).joinToString(""){"%02x".format(it)})
     override fun read(url:String):CachedAppleDocument?=runCatching {val f=file(url);val value=JSONObject(f.readText());CachedAppleDocument(value.getString("body"),value.getLong("saved"),value.optLong("max-age",Long.MAX_VALUE),value.optBoolean("revalidate",false))}.getOrNull()
     @Synchronized override fun write(url:String,value:CachedAppleDocument) {

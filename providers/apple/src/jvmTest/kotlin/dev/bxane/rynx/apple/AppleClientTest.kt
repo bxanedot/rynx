@@ -23,6 +23,22 @@ class AppleClientTest {
         val client=AppleMetadataClient(HttpClient(MockEngine {respond("""{"results":[{"kind":"song","trackId":2,"trackName":"Two","artistName":"B"},{"kind":"song","trackId":1,"trackName":"One","artistName":"A"}]}""",headers=headersOf(HttpHeaders.ContentType,"application/json"))}))
         try {assertEquals(setOf("apple:1","apple:2"),client.lookup(listOf("1","2"),"us").map {it.id}.toSet())} finally {client.close()}
     }
+    @Test fun songSearchUsesApplePublicEndpointAndKeepsRealArtwork()=runBlocking {
+        var url:Url?=null
+        val client=AppleMetadataClient(HttpClient(MockEngine {request->
+            url=request.url
+            respond("""{"results":[{"kind":"song","trackId":4,"trackName":"Blue","artistName":"Artist","artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/a/100x100bb.jpg"}]}""",headers=headersOf(HttpHeaders.ContentType,"application/json"))
+        }))
+        try {
+            val result=client.searchSongs("blue & gold","gb",55).single()
+            assertEquals("itunes.apple.com",url?.host)
+            assertEquals("blue & gold",url?.parameters?.get("term"))
+            assertEquals("song",url?.parameters?.get("entity"))
+            assertEquals("gb",url?.parameters?.get("country"))
+            assertEquals("55",url?.parameters?.get("limit"))
+            assertEquals("https://is1-ssl.mzstatic.com/image/thumb/a/1200x1200bb.jpg",result.artworkUrl)
+        } finally {client.close()}
+    }
     @Test fun mustRevalidateAndNoStoreAreRespected()=runBlocking {
         var written:CachedAppleDocument?=null
         val cache=object:AppleDocumentCache {

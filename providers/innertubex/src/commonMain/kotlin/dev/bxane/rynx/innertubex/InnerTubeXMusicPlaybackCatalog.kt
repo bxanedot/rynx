@@ -37,6 +37,12 @@ class InnerTubeXMusicPlaybackCatalog internal constructor(
         return page
     }
 
+    /** Unauthenticated, actual YouTube Music Home feed, not a synthetic search result. */
+    suspend fun browseHome(): List<dev.bxane.rynx.playback.discovery.HomeSection> {
+        val response = innerTube.browse(YouTubeClient.WEB_REMIX, browseId = "FEmusic_home", setLogin = false)
+        return InnerTubeXHomePayloads.parse(response.bodyAsText())
+    }
+
     override suspend fun searchMore(continuation: String): CatalogPage {
         require(continuation.isNotBlank()) { "Search continuation must not be empty" }
         val response = innerTube.search(YouTubeClient.WEB_REMIX, continuation = continuation, setLogin = false)

@@ -8,7 +8,6 @@ import dev.bxane.rynx.playback.catalog.CatalogPage
 import dev.bxane.rynx.playback.catalog.CatalogProvider
 import dev.bxane.rynx.playback.catalog.ResolvedAudioStream
 import dev.bxane.rynx.playback.runSuspend
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -19,13 +18,7 @@ import kotlin.test.assertTrue
 class MusicPlaybackPreparationTest {
     private class FakeCatalog : MusicPlaybackCatalog {
         var searchResults = CatalogPage(emptyList(), null)
-        var appleMatches = emptyList<MusicMetadata>()
-        var appleSong: MusicMetadata? = null
-        var appleSearchFailure: Exception? = null
-        var appleSongFailure: Exception? = null
         var searchCalls = 0
-        var appleSearchCalls = 0
-        var appleSongCalls = 0
 
         override suspend fun searchMusic(query: String): CatalogPage {
             searchCalls++
@@ -33,18 +26,6 @@ class MusicPlaybackPreparationTest {
         }
 
         override suspend fun searchMore(continuation: String) = CatalogPage(emptyList(), null)
-
-        override suspend fun searchAppleMusic(query: String, country: String?, limit: Int): List<MusicMetadata> {
-            appleSearchCalls++
-            appleSearchFailure?.let { throw it }
-            return appleMatches
-        }
-
-        override suspend fun appleSong(id: Long, country: String?): MusicMetadata? {
-            appleSongCalls++
-            appleSongFailure?.let { throw it }
-            return appleSong
-        }
     }
 
     private class FakeResolver(
@@ -73,26 +54,6 @@ class MusicPlaybackPreparationTest {
     )
 
     @Test
-    fun appleSelectionEnrichesMetadataMatchesAndResolvesTheChosenRecording() = runSuspend {
-        val catalog = FakeCatalog().apply {
-            searchResults = CatalogPage(listOf(track()), null)
-            appleSong = MusicMetadata("apple:42", "Moonlight", "bxane", artworkUrl = "https://art.example/cover")
-        }
-        val resolver = FakeResolver(stream("video-id"))
-        val selection = MusicMetadata("apple:42", "Moonlight", "bxane", durationMillis = 180_000)
-
-        val prepared = MusicPlaybackPreparer(catalog, resolver) { "us" }.prepareDiscovery(selection)
-
-        assertEquals("apple:42", prepared.metadata?.id)
-        assertEquals("https://art.example/cover", prepared.metadata?.artworkUrl)
-        assertSame(catalog.searchResults.items.single(), prepared.item)
-        assertEquals(listOf("video-id"), resolver.resolvedIds)
-        assertEquals(1, catalog.appleSongCalls)
-        assertTrue(prepared.stream?.toString()?.contains("private-header") == false)
-        assertTrue(prepared.stream.toString().contains("sig=private") == false)
-    }
-
-    @Test
     fun youtubeMusicMetadataUsesItsPlaybackIdWithoutSearchingAgain() = runSuspend {
         val catalog = FakeCatalog()
         val resolver = FakeResolver(stream("youtube-id"))
@@ -101,7 +62,7 @@ class MusicPlaybackPreparationTest {
             source = MetadataSource.YouTubeMusic, playbackId = "youtube-id",
         )
 
-        val prepared = MusicPlaybackPreparer(catalog, resolver) { "us" }.prepareDiscovery(selection)
+        val prepared = MusicPlaybackPreparer(catalog, resolver).prepareDiscovery(selection)
 
         assertEquals("youtube-id", prepared.item.mediaId)
         assertEquals(0, catalog.searchCalls)
@@ -109,57 +70,42 @@ class MusicPlaybackPreparationTest {
     }
 
     @Test
-    fun unmatchedAppleRecordingFailsBeforeStreamResolution() = runSuspend {
+    fun discoveryWithoutPlaybackIdSearchesAndMatchesChosenRecording() = runSuspend {
+        val catalog = FakeCatalog().apply {
+            searchResults = CatalogPage(listOf(track()), null)
+        }
+        val resolver = FakeResolver(stream("video-id"))
+        val selection = MusicMetadata("yt:search-track", "Moonlight", "bxane")
+
+        val prepared = MusicPlaybackPreparer(catalog, resolver).prepareDiscovery(selection)
+
+        assertSame(catalog.searchResults.items.single(), prepared.item)
+        assertEquals(listOf("video-id"), resolver.resolvedIds)
+        assertEquals(1, catalog.searchCalls)
+    }
+
+    @Test
+    fun unmatchedRecordingFailsBeforeStreamResolution() = runSuspend {
         val catalog = FakeCatalog().apply { searchResults = CatalogPage(listOf(track(title = "Moonlight cover")), null) }
         val resolver = FakeResolver(stream("must-not-play"))
 
         assertFailsWith<NoMatchingRecordingException> {
-            MusicPlaybackPreparer(catalog, resolver) { "us" }
-                .prepareDiscovery(MusicMetadata("apple:42", "Moonlight", "bxane"))
+            MusicPlaybackPreparer(catalog, resolver)
+                .prepareDiscovery(MusicMetadata("yt:42", "Moonlight", "bxane"))
         }
 
         assertTrue(resolver.resolvedIds.isEmpty())
     }
 
     @Test
-    fun catalogMetadataFailureDoesNotPreventStreamPreparation() = runSuspend {
-        val catalog = FakeCatalog().apply { appleSearchFailure = IllegalStateException("offline") }
+    fun prepareCatalogResolvesStreamDirectly() = runSuspend {
+        val catalog = FakeCatalog()
         val resolver = FakeResolver(stream("video-id"))
 
-        val prepared = MusicPlaybackPreparer(catalog, resolver) { "gb" }.prepareCatalog(track())
+        val prepared = MusicPlaybackPreparer(catalog, resolver).prepareCatalog(track())
 
         assertNull(prepared.metadata)
         assertEquals("video-id", prepared.stream?.videoId)
-        assertEquals(1, catalog.appleSearchCalls)
         assertEquals(listOf("video-id"), resolver.resolvedIds)
-    }
-
-    @Test
-    fun appleSongEnrichmentFailureKeepsOriginalMetadataAndContinuesMatching() = runSuspend {
-        val catalog = FakeCatalog().apply {
-            searchResults = CatalogPage(listOf(track()), null)
-            appleSongFailure = IllegalStateException("offline")
-        }
-        val selection = MusicMetadata("apple:42", "Moonlight", "bxane")
-
-        val prepared = MusicPlaybackPreparer(catalog, FakeResolver(stream("video-id"))) { "us" }
-            .prepareDiscovery(selection)
-
-        assertEquals(selection, prepared.metadata)
-    }
-
-    @Test
-    fun appleSearchCancellationPropagatesWithoutResolvingAudio() = runSuspend {
-        val catalog = FakeCatalog().apply {
-            appleSearchFailure = CancellationException("selection cancelled")
-        }
-        val resolver = FakeResolver(stream("must-not-play"))
-
-        assertFailsWith<CancellationException> {
-            MusicPlaybackPreparer(catalog, resolver) { "us" }
-                .prepareCatalog(track())
-        }
-
-        assertTrue(resolver.resolvedIds.isEmpty())
     }
 }

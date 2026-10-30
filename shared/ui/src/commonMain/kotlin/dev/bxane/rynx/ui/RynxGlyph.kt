@@ -23,9 +23,9 @@ import com.composables.sfsymbols.SfWeight
 internal enum class Glyph(val symbolName: String) {
     Play("play.fill"), Pause("pause.fill"), Next("forward.end.fill"), Previous("backward.end.fill"),
     MoveUp("arrow.up"), MoveDown("arrow.down"), Search("magnifyingglass"), Add("plus"), Edit("pencil"),
-    Library("books.vertical"), Queue("list.bullet"), Close("xmark"), Note("music.note"),
+    Library("square.stack.fill"), Queue("list.bullet"), Close("xmark"), Note("music.note"),
     Sun("sun.max.fill"), Moon("moon.fill"), Repeat("repeat"), Heart("heart"), HeartFill("heart.fill"),
-    Home("house"), Browse("safari"), Radio("dot.radiowaves.left.and.right"), Star("star"), StarFill("star.fill"),
+    Home("play.circle.fill"), Browse("square.grid.2x2.fill"), Radio("dot.radiowaves.left.and.right"), Star("star"), StarFill("star.fill"),
     More("ellipsis"), SpeakerQuiet("speaker"), SpeakerLoud("speaker.wave.2.fill"), Output("airplayaudio"),
     Lyrics("quote.bubble"), Shuffle("shuffle"), Reorder("line.3.horizontal"), Equalizer("slider.horizontal.3"),
     Infinity("infinity"), AutoMix("waveform"), Appearance("gearshape"), ChevronRight("chevron.right"),

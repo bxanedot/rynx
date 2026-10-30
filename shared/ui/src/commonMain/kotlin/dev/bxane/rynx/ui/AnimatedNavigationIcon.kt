@@ -60,7 +60,7 @@ internal fun AnimatedNavigationIcon(
     val morphScale = .94f + .06f * morphProgress.coerceIn(0f, 1f)
     Box(modifier.graphicsLayer { scaleX = appearance.value * morphScale; scaleY = appearance.value * morphScale }) {
         val glyphEffect = remember(glyph, selected, reducedMotion) {
-            if (glyph == Glyph.Library && selected && !reducedMotion) {
+            if (selected && !reducedMotion) {
                 SfSymbolEffect.Bounce(direction = SfBounceDirection.Up, scope = SfEffectScope.ByLayer)
             } else null
         }

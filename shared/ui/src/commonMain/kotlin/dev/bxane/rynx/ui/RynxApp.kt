@@ -810,8 +810,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             item { Label("No matching songs in your library",14,p.secondary,modifier=Modifier.padding(vertical=12.dp)) }
         }
         if(catalog.metadataItems.isNotEmpty()) {
-            item {SectionHeading("Apple Music", "Metadata · playback via YouTube Music")}
-            items(catalog.metadataItems,key={"apple-search:${it.id}"}) {track->DiscoveryTrackRow(track,actions)}
+            item {SectionHeading("YouTube Music", null)}
+            items(catalog.metadataItems,key={"ytm-search:${it.id}"}) {track->DiscoveryTrackRow(track,actions)}
         }
         if(state.catalogSearchEnabled && catalog.metadataItems.isEmpty()) {
             item { SectionHeading("YouTube Music", null) }

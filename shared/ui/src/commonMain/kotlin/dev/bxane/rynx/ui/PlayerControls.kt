@@ -53,8 +53,16 @@ internal val PlayerWhite=Color(0xFFF8FAFB)
         .clickable(enabled=enabled,role=Role.Button,interactionSource=interaction,indication=null,onClick=onClick)
         .semantics { contentDescription=label;this.selected=selected;if(!enabled) disabled() },contentAlignment=Alignment.Center) {
         val tint=PlayerWhite.copy(alpha=if(enabled)1f else .3f)
+        val glyphEffect = remember(selected, reduceMotion) {
+            if (selected && !reduceMotion) {
+                com.composables.sfsymbols.SfSymbolEffect.Bounce(
+                    direction = com.composables.sfsymbols.SfBounceDirection.Up,
+                    scope = com.composables.sfsymbols.SfEffectScope.ByLayer
+                )
+            } else null
+        }
         if(glyph==Glyph.Play || glyph==Glyph.Pause) PlayPauseSymbol(glyph==Glyph.Pause,tint,Modifier.size(iconSize),reduceMotion)
-        else RynxGlyph(glyph,tint,Modifier.size(iconSize))
+        else RynxGlyph(glyph,tint,Modifier.size(iconSize),effect=glyphEffect,trigger=selected,active=selected)
     }
 }
 

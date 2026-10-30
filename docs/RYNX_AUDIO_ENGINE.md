@@ -64,6 +64,14 @@ When unavailable, data remains unknown instead of inferring physical DAC precisi
 | `app/android/src/main/kotlin/dev/bxane/rynx/android/MainActivity.kt` | Reads the current PCM diagnostics |
 | `shared/ui/src/commonMain/kotlin/dev/bxane/rynx/ui/AudioDspSheet.kt` | Functional dither toggle and reported PCM format |
 
+## Android playback reliability work in this branch
+
+- **Live effect changes:** the PCM processor crossfades the actual previous filter output into the newly configured output for a short transition. Returning to flat sound also blends rather than jumping to dry PCM. All working buffers are retained across blocks; no scratch arrays are constructed in `queueInput`. Pure Mode explicitly bypasses processing.
+- **Parametric EQ editing:** the previous normalized-settings method padded every parametric filter list to 12 bands; the Add Filter button could never add a filter. Parametric lists now permit one to twelve filters, while 10-/31-band layouts keep their fixed counts.
+- **Output routing:** the Audio Output action uses Android's native `MediaRouter2.showSystemOutputSwitcher()` on API 34+ and falls back to Android volume/sound settings when the switcher is unavailable. This deliberately leaves actual routing with Android rather than inventing an independent device engine.
+- **Skip long silences:** an off-by-default toggle uses ExoPlayer's built-in, real silence-skipping AudioProcessor, not a simulated DSP. It persists via the same settings store and automatically yields to Pure Mode. The Media3 default thresholds are currently used; no custom quiet-music protection or threshold UI is claimed.
+- **Headless UI test reliability:** navigation semantics lookups retry with the virtual Compose frame clock to avoid transient asynchronous availability under software rendering.
+
 ## Verification checklist
 
 **Tests added; execution status must come from actual CI or device results, not from source inspection alone.**

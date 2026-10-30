@@ -139,6 +139,27 @@ class RynxMedia3AudioProcessorTest {
         processor.reset()
     }
 
+    @Test fun liveGainUpdateFadesFromActualPreviousDspOutputRatherThanDryAudio() {
+        val processor=RynxMedia3AudioProcessor(AudioDspSettings(preampDb=-18f,autoHeadroom=false))
+        processor.configure(AudioProcessor.AudioFormat(48_000,1,C.ENCODING_PCM_16BIT))
+        fun constantBlock(frames:Int):ByteBuffer=ByteBuffer.allocateDirect(frames*2).order(ByteOrder.LITTLE_ENDIAN).apply {
+            repeat(frames) { putShort(16_384) }
+            flip()
+        }
+        processor.queueInput(constantBlock(4_096))
+        processor.output // drain the preceding audio and settle the initial filter ramp
+        processor.updateSettings(AudioDspSettings(preampDb=-6f,autoHeadroom=false))
+        processor.queueInput(constantBlock(2_048))
+        val output=processor.output.order(ByteOrder.LITTLE_ENDIAN)
+        val first=output.short/32768.0
+        // -18 dB on 0.5 PCM is about 0.063; starting at the dry 0.5 would click.
+        assertTrue("Transition started at dry PCM instead of the prior processed output: $first",first in .05..075)
+        output.position((2_000)*2)
+        val settled=output.short/32768.0
+        assertTrue("New gain did not settle to its -6 dB target: $settled",settled in .24..26)
+        processor.reset()
+    }
+
     private fun put24(buffer:ByteBuffer,value:Int) {
         val encoded=value and 0x00ffffff
         buffer.put((encoded and 0xff).toByte())

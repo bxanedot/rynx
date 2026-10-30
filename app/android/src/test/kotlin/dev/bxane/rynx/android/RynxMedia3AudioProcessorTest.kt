@@ -153,10 +153,10 @@ class RynxMedia3AudioProcessorTest {
         val output=processor.output.order(ByteOrder.LITTLE_ENDIAN)
         val first=output.short/32768.0
         // -18 dB on 0.5 PCM is about 0.063; starting at the dry 0.5 would click.
-        assertTrue("Transition started at dry PCM instead of the prior processed output: $first",first in .05..075)
+        assertTrue("Transition started at dry PCM instead of the prior processed output: $first",first in 0.05..0.075)
         output.position((2_000)*2)
         val settled=output.short/32768.0
-        assertTrue("New gain did not settle to its -6 dB target: $settled",settled in .24..26)
+        assertTrue("New gain did not settle to its -6 dB target: $settled",settled in 0.24..0.26)
         processor.reset()
     }
 
@@ -173,7 +173,7 @@ class RynxMedia3AudioProcessorTest {
         processor.queueInput(input())
         val output=processor.output.order(ByteOrder.LITTLE_ENDIAN)
         val first=output.short/32768.0
-        assertTrue("Disabling DSP must start from the prior processed signal",first in .05..075)
+        assertTrue("Disabling DSP must start from the prior processed signal",first in 0.05..0.075)
         output.position(3_500*2)
         val settled=output.short/32768.0
         assertEquals(.5,settled,.0001)

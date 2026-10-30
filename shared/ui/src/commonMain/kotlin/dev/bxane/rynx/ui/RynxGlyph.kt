@@ -140,6 +140,9 @@ internal fun RynxGlyph(
                     drawCircle(tint,1.5f,Offset(12f,12f))
                     line(9f,4f,19f,4f)
                 }
+                // These three names are validated against the pinned GlyphStudio registry.
+                // They intentionally have no hand-drawn substitute artwork.
+                Glyph.Artists, Glyph.Albums, Glyph.Playlists -> Unit
             }
         }
     }

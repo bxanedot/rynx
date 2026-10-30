@@ -50,6 +50,9 @@ data class AudioDspSettings(
     /** Media3's native silence skipping; off by default and suppressed while Pure Mode is active. */
     val skipSilenceEnabled: Boolean = false,
 ) {
+    /** Silent-region removal must never alter Pure Mode's playback timeline. */
+    fun effectiveSkipSilence(): Boolean = skipSilenceEnabled && !pureMode
+
     fun normalized(): AudioDspSettings {
         val count = when (equalizerLayout) {
             AudioEqualizerLayout.TEN_BAND -> 10

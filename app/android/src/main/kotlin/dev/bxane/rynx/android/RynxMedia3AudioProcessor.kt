@@ -93,7 +93,8 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         val previousRuntime = transitionFrom.get()
         val appliedSettings = settings.get()
         val shouldDither = !appliedSettings.pureMode && appliedSettings.ditherEnabled
-        if (appliedSettings.pureMode || activeRuntime == null || (activeRuntime.isBypass && !shouldDither)) {
+        if (appliedSettings.pureMode || activeRuntime == null ||
+            (activeRuntime.isBypass && !shouldDither && previousRuntime == null)) {
             val originalLimit=inputBuffer.limit()
             inputBuffer.limit(inputBuffer.position()+consumedBytes)
             outputStorage.put(inputBuffer)

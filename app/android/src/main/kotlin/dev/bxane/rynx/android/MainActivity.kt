@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Build
 import android.media.AudioManager
+import android.media.MediaRouter2
 import android.media.AudioTrack
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
@@ -326,8 +327,17 @@ class MainActivity : ComponentActivity() {
                 publish()
             }
             override fun showAudioOutput() {
-                val action=if(Build.VERSION.SDK_INT>=29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS
-                startActivity(Intent(action))
+                AudioOutputRouteRequest.launch(
+                    sdk=Build.VERSION.SDK_INT,
+                    showNative={
+                        if(Build.VERSION.SDK_INT>=34) MediaRouter2.getInstance(this@MainActivity).showSystemOutputSwitcher()
+                        else false
+                    },
+                    showFallback={
+                        val action=if(Build.VERSION.SDK_INT>=29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS
+                        startActivity(Intent(action))
+                    },
+                )
             }
             override fun updateAudioDsp(settings:AudioDspSettings) {
                 val safe=settings.normalized()

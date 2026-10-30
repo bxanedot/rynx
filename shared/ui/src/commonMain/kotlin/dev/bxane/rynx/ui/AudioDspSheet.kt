@@ -126,6 +126,8 @@ import kotlin.math.pow
                         if(settings.limiterEnabled) DspSlider("Limiter ceiling",settings.limiterCeiling,.5f..1f,"${(settings.limiterCeiling*100).toInt()}%",!disabled){update(settings.copy(limiterCeiling=it))}
                         RynxGlassSwitch("TPDF output dither",settings.ditherEnabled,enabled=!disabled) {enabled->update(settings.copy(ditherEnabled=enabled))}
                         BasicText("Optional low-level dither when Rynx converts processed PCM to 8-, 16- or 24-bit integer samples. Disabled in Pure Mode. It does not upgrade the original track or DAC precision.",style=TextStyle(color=muted,fontSize=13.sp))
+                        RynxGlassSwitch("Skip long silences",settings.skipSilenceEnabled,enabled=!disabled) {enabled->update(settings.copy(skipSilenceEnabled=enabled))}
+                        BasicText("Uses Media3 silence detection to shorten quiet passages during Android playback. Off by default to preserve musical pauses, and automatically bypassed in Pure Mode.",style=TextStyle(color=muted,fontSize=13.sp))
                         Presets(settings,ink,disabled,update)
 
                         BasicText("Signal and output",style=TextStyle(color=ink,fontSize=19.sp,fontWeight=FontWeight.SemiBold))

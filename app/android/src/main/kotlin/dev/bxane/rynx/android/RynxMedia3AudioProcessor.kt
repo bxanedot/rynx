@@ -29,13 +29,17 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
     private var dryScratch = FloatArray(MAX_WORKING_SAMPLES)
     private var inputEnded = false
     private var bigEndian = false
+    // Audio-thread-owned xorshift state: no allocations or random-service calls during PCM conversion.
+    private var ditherState = 0x6A09E667
 
     fun updateSettings(value: AudioDspSettings) {
         val safe = value.normalized()
         settings.set(safe)
         val currentFormat = inputFormat
         if (currentFormat != AudioProcessor.AudioFormat.NOT_SET && isSupported(currentFormat.encoding)) {
-            runtime.set(newRuntime(safe, currentFormat))
+            val updatedRuntime = newRuntime(safe, currentFormat)
+            runtime.set(updatedRuntime)
+            AudioEngineDiagnostics.recordPcmFormat(currentFormat, !safe.pureMode && (!updatedRuntime.isBypass || safe.ditherEnabled))
             requestedFadeFrames.set((currentFormat.sampleRate / 40).coerceAtLeast(1))
         }
     }
@@ -47,6 +51,7 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         if (inputAudioFormat.sampleRate <= 0 || inputAudioFormat.channelCount <= 0 || !isSupported(inputAudioFormat.encoding)) {
             outputFormat = AudioProcessor.AudioFormat.NOT_SET
             runtime.set(null)
+            AudioEngineDiagnostics.recordPcmFormat(null, false)
             return outputFormat
         }
         bigEndian = inputAudioFormat.encoding in BIG_ENDIAN_ENCODINGS
@@ -55,8 +60,11 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         if(outputStorage.capacity()<oneSecondCapacity)
             outputStorage=ByteBuffer.allocateDirect(oneSecondCapacity).order(ByteOrder.LITTLE_ENDIAN)
         outputFormat = inputAudioFormat
-        runtime.set(newRuntime(settings.get(), inputAudioFormat))
-        val initialFade = if (settings.get().pureMode) 0 else (inputAudioFormat.sampleRate / 40).coerceAtLeast(1)
+        val configuredSettings = settings.get()
+        val configuredRuntime = newRuntime(configuredSettings, inputAudioFormat)
+        runtime.set(configuredRuntime)
+        AudioEngineDiagnostics.recordPcmFormat(inputAudioFormat, !configuredSettings.pureMode && (!configuredRuntime.isBypass || configuredSettings.ditherEnabled))
+        val initialFade = if (configuredSettings.pureMode) 0 else (inputAudioFormat.sampleRate / 40).coerceAtLeast(1)
         requestedFadeFrames.set(initialFade)
         return outputFormat
     }
@@ -75,7 +83,9 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         ensureOutputCapacity(consumedBytes)
         outputStorage.clear()
         val activeRuntime = runtime.get()
-        if (settings.get().pureMode || activeRuntime == null || activeRuntime.isBypass) {
+        val appliedSettings = settings.get()
+        val shouldDither = !appliedSettings.pureMode && appliedSettings.ditherEnabled
+        if (appliedSettings.pureMode || activeRuntime == null || (activeRuntime.isBypass && !shouldDither)) {
             val originalLimit=inputBuffer.limit()
             inputBuffer.limit(inputBuffer.position()+consumedBytes)
             outputStorage.put(inputBuffer)
@@ -112,7 +122,7 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
                     val processed = if (startFade > 0 && frame < startFade) {
                         dryScratch[index] + (floatScratch[index] - dryScratch[index]) * mix
                     } else floatScratch[index]
-                    writeSample(outputStorage, processed)
+                    writeSample(outputStorage, processed, shouldDither)
                 }
                 if (fadeRemainingFrames > 0) fadeRemainingFrames--
             }
@@ -147,6 +157,7 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         inputFormat = AudioProcessor.AudioFormat.NOT_SET
         outputFormat = AudioProcessor.AudioFormat.NOT_SET
         runtime.set(null)
+        AudioEngineDiagnostics.recordPcmFormat(null, false)
         floatScratch = FloatArray(0)
         dryScratch = FloatArray(0)
         outputStorage = ByteBuffer.allocateDirect(0)
@@ -173,17 +184,30 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         else -> 0f
     }
 
-    private fun writeSample(output: ByteBuffer, source: Float) {
+    private fun writeSample(output: ByteBuffer, source: Float, dither: Boolean) {
         val sample = if (source.isFinite()) source else 0f
         if (sample < -1f || sample > 1f) AudioEngineDiagnostics.recordClip()
         val safe = sample.coerceIn(-1f, 1f)
         when (baseEncoding(outputFormat.encoding)) {
-            C.ENCODING_PCM_8BIT -> output.put((safe * 128f).roundToInt().coerceIn(-128, 127).plus(128).toByte())
-            C.ENCODING_PCM_16BIT -> output.putShort((safe * 32768f).roundToInt().coerceIn(-32768, 32767).toShort())
-            C.ENCODING_PCM_24BIT -> writePcm24(output, (safe * 8_388_608f).roundToInt().coerceIn(-8_388_608, 8_388_607))
+            // TPDF dither is applied in units of the target integer format's least significant bit.
+            // Float PCM and 32-bit integer PCM are not dithered, avoiding needless noise there.
+            C.ENCODING_PCM_8BIT -> output.put((safe * 128f + if (dither) tpdfLsb() else 0f).roundToInt().coerceIn(-128, 127).plus(128).toByte())
+            C.ENCODING_PCM_16BIT -> output.putShort((safe * 32768f + if (dither) tpdfLsb() else 0f).roundToInt().coerceIn(-32768, 32767).toShort())
+            C.ENCODING_PCM_24BIT -> writePcm24(output, (safe * 8_388_608f + if (dither) tpdfLsb() else 0f).roundToInt().coerceIn(-8_388_608, 8_388_607))
             C.ENCODING_PCM_32BIT -> output.putInt((safe.toDouble() * 2_147_483_648.0).toLong().coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt())
             C.ENCODING_PCM_FLOAT -> output.putFloat(safe)
         }
+    }
+
+    private fun tpdfLsb(): Float = nextUniform() - nextUniform()
+
+    private fun nextUniform(): Float {
+        var value = ditherState
+        value = value xor (value shl 13)
+        value = value xor (value ushr 17)
+        value = value xor (value shl 5)
+        ditherState = value
+        return (value ushr 8) / 16_777_216f
     }
 
     private fun readPcm24(input: ByteBuffer): Int {
@@ -223,8 +247,20 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
     }
 }
 
+internal data class ActiveDspPcmFormat(
+    val sampleRateHz: Int,
+    val channelCount: Int,
+    val encoding: Int,
+    val processingEnabled: Boolean,
+)
+
 internal object AudioEngineDiagnostics {
     private val clipped = AtomicLong(0)
+    private val pcm = AtomicReference<ActiveDspPcmFormat?>(null)
     val clippingCount: Long get() = clipped.get()
+    val pcmFormat: ActiveDspPcmFormat? get() = pcm.get()
     fun recordClip() { clipped.incrementAndGet() }
+    fun recordPcmFormat(format: AudioProcessor.AudioFormat?, processingEnabled: Boolean) {
+        pcm.set(format?.let { ActiveDspPcmFormat(it.sampleRate, it.channelCount, it.encoding, processingEnabled) })
+    }
 }

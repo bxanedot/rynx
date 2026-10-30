@@ -71,7 +71,7 @@ class PlaybackService : MediaSessionService() {
             processor.updateSettings(next)
             // Called by the existing device-local preferences observer on the UI thread.
             // The same ExoPlayer owns the Media3 silence skipper and Rynx PCM DSP chain.
-            player?.skipSilenceEnabled=next.skipSilenceEnabled && !next.pureMode
+            player?.skipSilenceEnabled=next.effectiveSkipSilence()
         }
         val player = ExoPlayer.Builder(this)
             .setRenderersFactory(RynxAudioRenderersFactory(this,processor))
@@ -79,7 +79,7 @@ class PlaybackService : MediaSessionService() {
             .build().apply {
                 setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true)
                 setHandleAudioBecomingNoisy(true)
-                skipSilenceEnabled=initialAudioSettings.skipSilenceEnabled && !initialAudioSettings.pureMode
+                skipSilenceEnabled=initialAudioSettings.effectiveSkipSilence()
             }
         val store=AndroidPlaybackResumeStore(applicationContext)
         this.player=player

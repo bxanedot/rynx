@@ -14,6 +14,7 @@ internal class AndroidDiscoveryCoordinator(
     private val onFeed: (DiscoveryState) -> Unit,
     private val onSelection: (HomeSection?, Boolean) -> Unit,
     private val ytmSearch: suspend (String) -> List<MusicMetadata>,
+    private val ytmHome: suspend () -> List<HomeSection> = { emptyList() },
 ) {
     private val prefs = context.getSharedPreferences("discovery", Context.MODE_PRIVATE)
     private var job: Job? = null
@@ -52,6 +53,24 @@ internal class AndroidDiscoveryCoordinator(
         onFeed(current)
         job = scope.launch {
             try {
+                // Genuine InnerTubeX Home shelves take precedence; search is an
+                // explicitly named fallback for provider responses without a usable feed.
+                val home = try {
+                    withContext(Dispatchers.IO) { ytmHome() }
+                } catch(cancelled: CancellationException) {
+                    throw cancelled
+                } catch(_: Exception) {
+                    emptyList()
+                }
+                ensureActive()
+                if(home.any { it.tracks.isNotEmpty() }) {
+                    current=current.copy(
+                        loading=false, sections=home.filter { it.tracks.isNotEmpty() },
+                        updatedMillis=System.currentTimeMillis(), stale=false, error=null,
+                    )
+                    onFeed(current)
+                    return@launch
+                }
                 val shelves = listOf(
                     "new music" to "New & Noteworthy",
                     "popular songs" to "Popular Right Now",

@@ -160,6 +160,26 @@ class RynxMedia3AudioProcessorTest {
         processor.reset()
     }
 
+    @Test fun disablingDspFadesBackToDryInsteadOfJumpingInstantly() {
+        val processor=RynxMedia3AudioProcessor(AudioDspSettings(preampDb=-18f,autoHeadroom=false))
+        processor.configure(AudioProcessor.AudioFormat(48_000,1,C.ENCODING_PCM_16BIT))
+        fun input():ByteBuffer=ByteBuffer.allocateDirect(8_192).order(ByteOrder.LITTLE_ENDIAN).apply {
+            repeat(4_096) { putShort(16_384) }
+            flip()
+        }
+        processor.queueInput(input())
+        processor.output
+        processor.updateSettings(AudioDspSettings())
+        processor.queueInput(input())
+        val output=processor.output.order(ByteOrder.LITTLE_ENDIAN)
+        val first=output.short/32768.0
+        assertTrue("Disabling DSP must start from the prior processed signal",first in .05..075)
+        output.position(3_500*2)
+        val settled=output.short/32768.0
+        assertEquals(.5,settled,.0001)
+        processor.reset()
+    }
+
     private fun put24(buffer:ByteBuffer,value:Int) {
         val encoded=value and 0x00ffffff
         buffer.put((encoded and 0xff).toByte())

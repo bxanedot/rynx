@@ -391,6 +391,27 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                 LibraryAlbumRow(album) { openAlbum(album) }
             }
         }
+    } else if(librarySection == "songs") {
+        LibraryCollectionIndex("Songs",state.tracks.size,modifier,::backFromCollection) {
+            items(state.tracks,key={"collection-song:"+it.id}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},
+                    track.id in state.favoriteIds,{actions.toggleFavorite(track.id)},
+                    onAddToPlaylist={addTrack=track})
+            }
+        }
+    } else if(librarySection == "favorites") {
+        LibraryCollectionIndex("Favorites",favorites.size,modifier,::backFromCollection) {
+            items(favorites,key={"collection-favorite:"+it.id}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,{actions.play(track.id)},
+                    true,{actions.toggleFavorite(track.id)},onAddToPlaylist={addTrack=track})
+            }
+        }
+    } else if(librarySection == "playlists") {
+        LibraryCollectionIndex("Playlists",state.playlists.size,modifier,::backFromCollection) {
+            items(state.playlists,key={"collection-playlist:"+it.id}) { playlist ->
+                LibraryPlaylistRow(playlist) { selectedPlaylistId=playlist.id; librarySection="home" }
+            }
+        }
     } else if(selectedPlaylist!=null) {
         Column(modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
@@ -438,6 +459,16 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         }
     } else LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
         item {
+            LibraryCategoryGrid(
+                artistCount=artists.size,
+                albumCount=albums.size,
+                playlistCount=state.playlists.size,
+                songCount=state.tracks.size,
+                favoriteCount=favorites.size,
+                onNavigate={librarySection=it},
+            )
+        }
+        item {
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Label("Playlists",20,bold=true)
@@ -469,16 +500,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             }
         }
         items(state.playlists,key={"user-playlist:${it.id}"}) { playlist ->
-            Row(Modifier.fillMaxWidth().rynxMaterial(12.dp,amount=.25f).clickable(role=Role.Button){selectedPlaylistId=playlist.id}
-                .semantics{contentDescription="Open playlist ${playlist.name}"}.padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
-                Artwork(48.dp,artworkUrl=playlist.entries.firstOrNull()?.artworkUrl)
-                Column(Modifier.weight(1f).padding(horizontal=14.dp)) {
-                    Label(playlist.name,bold=true)
-                    Spacer(Modifier.height(3.dp))
-                    Label("Playlist · ${playlist.entries.size} songs",12,p.secondary)
-                }
-                RynxGlyph(Glyph.Previous,p.secondary,Modifier.graphicsLayer{rotationZ=180f})
-            }
+            LibraryPlaylistRow(playlist) { selectedPlaylistId=playlist.id }
         }
         if(favorites.isNotEmpty()) {
             item { SectionHeading("Favorites", "${favorites.size} songs") }
@@ -511,6 +533,77 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             onSelect={playlistId->actions.addTrackToPlaylist(playlistId,track);addTrack=null},
             onCreatePlaylist={createPlaylistOpen=true},
         )
+    }
+}
+
+@Composable private fun LibraryCategoryGrid(
+    artistCount:Int,
+    albumCount:Int,
+    playlistCount:Int,
+    songCount:Int,
+    favoriteCount:Int,
+    onNavigate:(String)->Unit,
+) {
+    Column(Modifier.fillMaxWidth().padding(bottom=18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+        Label("Your Library",25,bold=true,modifier=Modifier.padding(bottom=5.dp))
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+            LibraryCategoryShortcut("Playlists",Glyph.Playlists,playlistCount,Modifier.weight(1f)) {onNavigate("playlists")}
+            LibraryCategoryShortcut("Artists",Glyph.Artists,artistCount,Modifier.weight(1f)) {onNavigate("artists")}
+        }
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+            LibraryCategoryShortcut("Albums",Glyph.Albums,albumCount,Modifier.weight(1f)) {onNavigate("albums")}
+            LibraryCategoryShortcut("Songs",Glyph.Note,songCount,Modifier.weight(1f)) {onNavigate("songs")}
+        }
+        LibraryCategoryShortcut("Favorites",Glyph.HeartFill,favoriteCount,Modifier.fillMaxWidth()) {onNavigate("favorites")}
+    }
+}
+
+@Composable private fun LibraryCategoryShortcut(
+    title:String,
+    glyph:Glyph,
+    count:Int,
+    modifier:Modifier=Modifier,
+    onClick:()->Unit,
+) {
+    val p=LocalPalette.current
+    val interaction=remember { MutableInteractionSource() }
+    Row(
+        modifier.heightIn(min=70.dp)
+            .rynxMaterial(17.dp,amount=.42f,interaction=interaction)
+            .rynxPressFeedback(interaction)
+            .clickable(role=Role.Button,interactionSource=interaction,indication=null,onClick=onClick)
+            .semantics { contentDescription="Browse "+title },
+        verticalAlignment=Alignment.CenterVertically,
+    ) {
+        Box(Modifier.padding(start=13.dp).size(34.dp)
+            .clip(RoundedCornerShape(11.dp))
+            .background(Accent.copy(alpha=.12f)),contentAlignment=Alignment.Center) {
+            RynxGlyph(glyph,Accent,Modifier.size(24.dp))
+        }
+        Column(Modifier.weight(1f).padding(horizontal=10.dp)) {
+            Label(title,14,bold=true)
+            Label(count.toString(),12,p.secondary)
+        }
+    }
+}
+
+@Composable private fun LibraryPlaylistRow(
+    playlist:dev.bxane.rynx.library.Playlist,
+    onOpen:()->Unit,
+) {
+    val p=LocalPalette.current
+    Row(Modifier.fillMaxWidth().padding(vertical=3.dp)
+        .rynxMaterial(12.dp,amount=.25f)
+        .clickable(role=Role.Button,onClick=onOpen)
+        .semantics { contentDescription="Open playlist "+playlist.name }
+        .padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        Artwork(48.dp,artworkUrl=playlist.entries.firstOrNull()?.artworkUrl)
+        Column(Modifier.weight(1f).padding(horizontal=14.dp)) {
+            Label(playlist.name,bold=true)
+            Spacer(Modifier.height(3.dp))
+            Label("Playlist · "+playlist.entries.size+" songs",12,p.secondary)
+        }
+        RynxGlyph(Glyph.ChevronRight,p.secondary)
     }
 }
 

@@ -54,6 +54,11 @@ data class PlayerUiState(
     val audioSignalInfo: AudioSignalInfo = AudioSignalInfo(),
     val audioClipCount: Long = 0,
     val audioSettingsOpen: Boolean = false,
+    /** Host-supplied app/build facts for About. Never infer these from the audio format. */
+    val appVersionName: String? = null,
+    val appBuildNumber: String? = null,
+    val appPlatform: String? = null,
+    val appAudioBackend: String? = null,
     val shuffleEnabled: Boolean = false,
     val shuffleAvailable: Boolean = false,
     val queueEditingAvailable: Boolean = false,

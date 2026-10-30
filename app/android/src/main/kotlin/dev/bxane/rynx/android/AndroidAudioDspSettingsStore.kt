@@ -57,6 +57,7 @@ internal class AndroidAudioDspSettingsStore(context: Context) {
             .put("limiterEnabled", settings.limiterEnabled)
             .put("limiterCeiling", settings.limiterCeiling.toDouble())
             .put("ditherEnabled", settings.ditherEnabled)
+            .put("skipSilenceEnabled", settings.skipSilenceEnabled)
             .toString()
     }
 
@@ -101,6 +102,7 @@ internal class AndroidAudioDspSettingsStore(context: Context) {
                 limiterEnabled = json.optBoolean("limiterEnabled", false),
                 limiterCeiling = json.optDouble("limiterCeiling", .98).toFloat(),
                 ditherEnabled = json.optBoolean("ditherEnabled", false),
+                skipSilenceEnabled = json.optBoolean("skipSilenceEnabled", false),
             ).normalized()
         }.getOrDefault(AudioDspSettings())
     }

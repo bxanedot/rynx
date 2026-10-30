@@ -207,7 +207,15 @@ class MainActivity : ComponentActivity() {
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
         override fun onPlayerError(error: PlaybackException) {
-            state.update { it.copy(error="Playback failed. Check the file and your audio output, then try again.",playing=false,busy=false) }
+            val message=when(error.errorCode) {
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
+                    "The music provider rejected this audio URL. Try another song or refresh the search."
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+                    "The audio connection failed. Check your network and retry."
+                else -> "Audio playback failed. The provider may not support this track or format."
+            }
+            state.update { it.copy(error=message,playing=false,busy=false) }
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -706,7 +714,7 @@ class MainActivity : ComponentActivity() {
         playbackRequests.start(load=load,commit={prepared->
             val stream=prepared.stream;val item=prepared.item
             val output=controller
-            if(stream==null)state.update {it.copy(error="This track could not be played right now.")}
+            if(stream==null)state.update {it.copy(error="InnerTubeX and NewPipe did not provide a compatible audio stream for this song. Try another result.")}
             else if(output==null)state.update {it.copy(error="The player is reconnecting. Try this track again shortly.")}
             else {
                 StreamRequestHeaderStore.register(stream.url,stream.headers)

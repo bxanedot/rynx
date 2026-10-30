@@ -375,6 +375,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val p=LocalPalette.current
     val libraryTracks=(state.tracks+state.favoriteTracks+listOfNotNull(state.current)).distinctBy { it.id }
     val favorites=libraryTracks.filter { it.id in state.favoriteIds }
+    val pinnedTracks=(favorites+state.recentTracks+state.tracks)
+        .distinctBy(TrackItem::id).filter { !it.artworkUrl.isNullOrBlank() }.take(6)
     val artists=remember(state.tracks) { libraryArtists(state.tracks) }
     val albums=remember(state.tracks) { libraryAlbums(state.tracks) }
     var librarySection by rememberSaveable { mutableStateOf("home") }
@@ -494,6 +496,11 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             Action("Import playlist backup",actions::importPlaylistBackup)
         }
     } else LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
+        if(pinnedTracks.isNotEmpty()) {
+            item {
+                LibraryArtworkGrid(pinnedTracks) { actions.play(it.id) }
+            }
+        }
         item {
             LibraryCategoryGrid(
                 artistCount=artists.size,
@@ -572,6 +579,27 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     }
 }
 
+/** Top artwork grid mirrors the reference composition using only actual owned tracks. */
+@Composable private fun LibraryArtworkGrid(tracks:List<TrackItem>,onPlay:(TrackItem)->Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(bottom=20.dp)) {
+        val tile=(maxWidth-20.dp)/3
+        Column(verticalArrangement=Arrangement.spacedBy(14.dp)) {
+            tracks.chunked(3).forEach { row ->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    row.forEach {track ->
+                        Column(Modifier.width(tile).clickable(role=Role.Button,onClick={onPlay(track)})
+                            .semantics {contentDescription="Play pinned "+track.title}) {
+                            Artwork(tile,artworkUrl=track.artworkUrl)
+                            Spacer(Modifier.height(5.dp))
+                            Label(track.title,12,bold=true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable private fun LibraryCategoryGrid(
     artistCount:Int,
     albumCount:Int,
@@ -580,17 +608,13 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     favoriteCount:Int,
     onNavigate:(String)->Unit,
 ) {
-    Column(Modifier.fillMaxWidth().padding(bottom=18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        Label("Your Library",25,bold=true,modifier=Modifier.padding(bottom=5.dp))
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            LibraryCategoryShortcut("Playlists",Glyph.Playlists,playlistCount,Modifier.weight(1f)) {onNavigate("playlists")}
-            LibraryCategoryShortcut("Artists",Glyph.Artists,artistCount,Modifier.weight(1f)) {onNavigate("artists")}
-        }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            LibraryCategoryShortcut("Albums",Glyph.Albums,albumCount,Modifier.weight(1f)) {onNavigate("albums")}
-            LibraryCategoryShortcut("Songs",Glyph.Note,songCount,Modifier.weight(1f)) {onNavigate("songs")}
-        }
-        LibraryCategoryShortcut("Favorites",Glyph.HeartFill,favoriteCount,Modifier.fillMaxWidth()) {onNavigate("favorites")}
+    // Simple inset grouped rows keep artwork the focus, as in the iOS references.
+    Column(Modifier.fillMaxWidth().padding(bottom=18.dp)) {
+        LibraryCategoryShortcut("Playlists",Glyph.Playlists,playlistCount) {onNavigate("playlists")}
+        LibraryCategoryShortcut("Artists",Glyph.Artists,artistCount) {onNavigate("artists")}
+        LibraryCategoryShortcut("Albums",Glyph.Albums,albumCount) {onNavigate("albums")}
+        LibraryCategoryShortcut("Songs",Glyph.Note,songCount) {onNavigate("songs")}
+        LibraryCategoryShortcut("Favorites",Glyph.HeartFill,favoriteCount) {onNavigate("favorites")}
     }
 }
 
@@ -598,28 +622,22 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     title:String,
     glyph:Glyph,
     count:Int,
-    modifier:Modifier=Modifier,
     onClick:()->Unit,
 ) {
     val p=LocalPalette.current
-    val interaction=remember { MutableInteractionSource() }
-    Row(
-        modifier.heightIn(min=70.dp)
-            .rynxMaterial(17.dp,amount=.42f,interaction=interaction)
+    val interaction=remember {MutableInteractionSource()}
+    Column {
+        Row(Modifier.fillMaxWidth().heightIn(min=58.dp)
             .rynxPressFeedback(interaction)
             .clickable(role=Role.Button,interactionSource=interaction,indication=null,onClick=onClick)
-            .semantics { contentDescription="Browse "+title },
-        verticalAlignment=Alignment.CenterVertically,
-    ) {
-        Box(Modifier.padding(start=13.dp).size(34.dp)
-            .clip(RoundedCornerShape(11.dp))
-            .background(Accent.copy(alpha=.12f)),contentAlignment=Alignment.Center) {
+            .semantics {contentDescription="Browse "+title}
+            .padding(horizontal=3.dp),verticalAlignment=Alignment.CenterVertically) {
             RynxGlyph(glyph,Accent,Modifier.size(24.dp))
+            Label(title,16,modifier=Modifier.weight(1f).padding(start=15.dp))
+            Label(count.toString(),13,p.secondary,modifier=Modifier.padding(end=8.dp))
+            RynxGlyph(Glyph.ChevronRight,p.secondary,Modifier.size(15.dp))
         }
-        Column(Modifier.weight(1f).padding(horizontal=10.dp)) {
-            Label(title,14,bold=true)
-            Label(count.toString(),12,p.secondary)
-        }
+        Spacer(Modifier.fillMaxWidth().padding(start=42.dp).height(.6.dp).background(p.line))
     }
 }
 

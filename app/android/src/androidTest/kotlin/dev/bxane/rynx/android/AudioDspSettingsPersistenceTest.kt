@@ -14,7 +14,7 @@ class AudioDspSettingsPersistenceTest {
         val store = AndroidAudioDspSettingsStore(context)
         val original = store.load()
         try {
-            val withDither = original.copy(ditherEnabled = true, pureMode = false)
+            val withDither = original.copy(ditherEnabled = true, skipSilenceEnabled = true, pureMode = false)
             store.save(withDither)
             assertEquals(withDither.normalized(), AndroidAudioDspSettingsStore(context).load())
 

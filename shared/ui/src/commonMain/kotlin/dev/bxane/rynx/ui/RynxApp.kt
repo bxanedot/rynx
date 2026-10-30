@@ -294,7 +294,10 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                             Label("Play or favorite a track to fill For You.",13,p.secondary)
                         }
                     }
-                    Action("Find your first song",onSearch)
+                    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                        Action("Find music",onSearch)
+                        RynxButton("Add files",actions::importFiles)
+                    }
                 }
             }
         }

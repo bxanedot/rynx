@@ -62,17 +62,17 @@ class MaterialUiTest {
             capture(scene,"phone-amoled-home")
         } finally {scene.close()}
     }
-    @Test fun settingsPageShowsOnlyImplementedControlsAndDarkModeIsTheDefault() {
+    @Test fun settingsPageDefaultsToLightAndProvidesDarkAppearanceToggle() {
         val actions=Actions();val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(),actions)}
         try {
-            assertTrue(RynxAppearance().darkTheme)
+            assertFalse(RynxAppearance().darkTheme)
             click(scene,"Settings")
             capture(scene,"settings-page-dark")
             for(label in listOf("Sound & EQ","Audio Output","Dark Appearance","Interface & Motion","Import Music","Manage Library","About Rynx")) {
                 assertNotNull(find(scene,label))
             }
             click(scene,"Dark Appearance")
-            assertEquals(false,actions.appearance!!.darkTheme)
+            assertEquals(true,actions.appearance!!.darkTheme)
         } finally {scene.close()}
     }
     @Test fun aboutRynxHasVersionProjectLicensesAndNavigatesBackToSettings() {

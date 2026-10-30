@@ -260,6 +260,7 @@ internal object AudioEngineDiagnostics {
     val clippingCount: Long get() = clipped.get()
     val pcmFormat: ActiveDspPcmFormat? get() = pcm.get()
     fun recordClip() { clipped.incrementAndGet() }
+    @androidx.annotation.OptIn(markerClass = [UnstableApi::class])
     fun recordPcmFormat(format: AudioProcessor.AudioFormat?, processingEnabled: Boolean) {
         pcm.set(format?.let { ActiveDspPcmFormat(it.sampleRate, it.channelCount, it.encoding, processingEnabled) })
     }

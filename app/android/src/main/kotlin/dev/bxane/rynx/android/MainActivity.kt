@@ -259,7 +259,8 @@ class MainActivity : ComponentActivity() {
                 },
             )}},
             onSelection={section,loading->state.update {it.copy(discoverySelection=section,discoverySelectionLoading=loading)}},
-            ytmSearch={query->catalogReady.await();catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
+            ytmHome={if(!catalogReady.await()) error("Music catalog could not initialize");catalog.browseHome()},
+            ytmSearch={query->if(!catalogReady.await()) error("Music catalog could not initialize");catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
                 MusicMetadata("yt:${item.mediaId}",item.title,item.artist.orEmpty(),artworkUrl=item.artworkUrl,durationMillis=item.durationSeconds?.times(1000),playbackId=item.mediaId)
             }})
         discovery.load()

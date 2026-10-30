@@ -25,6 +25,7 @@ internal object TrackMetadataStorage {
                         title = title,
                         subtitle = subtitle,
                         artworkUrl = artworkUrl,
+                        albumTitle=item.optString("albumTitle").trim().takeIf(String::isNotBlank),
                         metadataSourceUrl=item.optString("metadataSourceUrl").takeIf {it.startsWith("https://music.apple.com/") || it.startsWith("https://itunes.apple.com/")},
                     ))
                 }
@@ -39,6 +40,7 @@ internal object TrackMetadataStorage {
                 .put("title", track.title)
                 .put("subtitle", track.subtitle)
                 .put("artworkUrl", track.artworkUrl ?: JSONObject.NULL)
+                .put("albumTitle", track.albumTitle ?: JSONObject.NULL)
                 .put("metadataSourceUrl",track.metadataSourceUrl?:JSONObject.NULL))
         }
     }.toString()

@@ -356,16 +356,17 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
         }
     }
     fun openAlbum(album:LibraryAlbum) { selectedAlbumArtist=album.artist; selectedAlbumTitle=album.title }
-    RynxPlatformBackHandler(
-        enabled = selectedAlbumTitle != null || selectedArtistName != null || librarySection != "home",
-        onBack = ::backFromCollection,
-    )
     var selectedPlaylistId by rememberSaveable { mutableStateOf<Long?>(null) }
     var renamePlaylistId by rememberSaveable { mutableStateOf<Long?>(null) }
     var createPlaylistOpen by rememberSaveable { mutableStateOf(false) }
     var addTrack by remember { mutableStateOf<TrackItem?>(null) }
     val selectedPlaylist=state.playlists.firstOrNull { it.id==selectedPlaylistId }
     val renameTarget=state.playlists.firstOrNull { it.id==renamePlaylistId }
+    RynxPlatformBackHandler(
+        enabled = selectedPlaylistId != null || selectedAlbumTitle != null ||
+            selectedArtistName != null || librarySection != "home",
+        onBack = { if(selectedPlaylistId != null) selectedPlaylistId=null else backFromCollection() },
+    )
     if(selectedPlaylistId!=null && selectedPlaylist==null) selectedPlaylistId=null
     if(renamePlaylistId!=null && renameTarget==null) renamePlaylistId=null
     LaunchedEffect(activeArtist, selectedArtistName) {

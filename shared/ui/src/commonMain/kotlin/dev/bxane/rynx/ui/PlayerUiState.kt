@@ -61,6 +61,9 @@ data class PlayerUiState(
     val appBuildNumber: String? = null,
     val appPlatform: String? = null,
     val appAudioBackend: String? = null,
+    /** Source/provider identity and catalog-search reachability, not a claim of playable audio. */
+    val appCatalogProvider: String? = null,
+    val catalogSearchStatus: String = "Not checked",
     val shuffleEnabled: Boolean = false,
     val shuffleAvailable: Boolean = false,
     val queueEditingAvailable: Boolean = false,

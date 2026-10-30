@@ -88,6 +88,21 @@ class AudioDspTest {
         assertEquals(beforeRatio,afterLeft/rms(right,2_000),.02,"Stereo-linked detection should preserve image balance")
     }
 
+    @Test fun parametricBandCountRemainsEditableFromOneToTwelve() {
+        val settings = AudioDspSettings().withLayout(AudioEqualizerLayout.PARAMETRIC).normalized()
+        assertEquals(4, settings.equalizerBands.size)
+        val one = settings.copy(equalizerBands = listOf(AudioEqualizerBand(750f, 3f))).normalized()
+        assertEquals(1, one.equalizerBands.size)
+        assertEquals(750f, one.equalizerBands.first().frequencyHz)
+        val two = one.copy(equalizerBands = one.equalizerBands + AudioEqualizerBand(3_000f, -2f)).normalized()
+        assertEquals(2, two.equalizerBands.size)
+        val twelve = two.copy(equalizerBands = List(20) { AudioEqualizerBand(100f + 100f * it) }).normalized()
+        assertEquals(12, twelve.equalizerBands.size)
+        val reset = one.copy(equalizerBands = emptyList()).normalized()
+        assertEquals(4, reset.equalizerBands.size)
+        assertEquals(10, one.withLayout(AudioEqualizerLayout.TEN_BAND).normalized().equalizerBands.size)
+    }
+
     private fun sine(frequency:Double,sampleRate:Int,count:Int)=FloatArray(count){index->
         sin(2.0*PI*frequency*index/sampleRate).toFloat()*.4f
     }

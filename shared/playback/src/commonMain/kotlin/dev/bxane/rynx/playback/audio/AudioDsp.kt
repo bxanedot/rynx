@@ -45,6 +45,8 @@ data class AudioDspSettings(
     val compressorReleaseMs: Float = 120f,
     val limiterEnabled: Boolean = false,
     val limiterCeiling: Float = .98f,
+    /** Optional triangular dither for the integer PCM conversion after DSP; Pure Mode bypasses it. */
+    val ditherEnabled: Boolean = false,
 ) {
     fun normalized(): AudioDspSettings {
         val count = when (equalizerLayout) {

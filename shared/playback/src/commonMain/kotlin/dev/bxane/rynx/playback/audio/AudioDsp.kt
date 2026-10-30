@@ -47,6 +47,8 @@ data class AudioDspSettings(
     val limiterCeiling: Float = .98f,
     /** Optional triangular dither for the integer PCM conversion after DSP; Pure Mode bypasses it. */
     val ditherEnabled: Boolean = false,
+    /** Media3's native silence skipping; off by default and suppressed while Pure Mode is active. */
+    val skipSilenceEnabled: Boolean = false,
 ) {
     fun normalized(): AudioDspSettings {
         val count = when (equalizerLayout) {

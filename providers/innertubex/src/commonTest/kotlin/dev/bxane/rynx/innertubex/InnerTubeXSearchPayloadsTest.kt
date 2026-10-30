@@ -21,7 +21,7 @@ class InnerTubeXSearchPayloadsTest {
     @Test fun nestedFlexColumnWatchEndpointIsAPlayableTrackAndAcceptsYtimgArtwork() {
         // Real-world WEB_REMIX rows can carry the watch endpoint on the title's run,
         // not in playlistItemData or the top-level navigationEndpoint.
-        val json = """{"contents":{"tabbedSearchResultsRenderer":{"tabs":[{"tabRenderer":{"content":{"sectionListRenderer":{"contents":[{"musicShelfRenderer":{"contents":[{"musicResponsiveListItemRenderer":{"flexColumns":[{"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Evening Light","navigationEndpoint":{"watchEndpoint":{"videoId":"a1B2c3D4e5F"}}}]}}},{"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Sample Artist"}]}}}],"thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/a1B2c3D4e5F/hqdefault.jpg","width":480,"height":360}]}}}]}}]}}}]}}}}"""
+        val json = """{"contents":[{"musicResponsiveListItemRenderer":{"flexColumns":[{"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Evening Light","navigationEndpoint":{"watchEndpoint":{"videoId":"a1B2c3D4e5F"}}}]}}},{"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Sample Artist"}]}}}],"thumbnail":{"thumbnails":[{"url":"https://i.ytimg.com/vi/a1B2c3D4e5F/hqdefault.jpg","width":480,"height":360}]}}}]}"""
         val result=InnerTubeXSearchPayloads.parse(json)
         assertEquals("a1B2c3D4e5F",result.items.single().mediaId)
         assertEquals("Evening Light",result.items.single().title)

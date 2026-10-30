@@ -97,7 +97,11 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     private val state = MutableStateFlow(PlayerUiState(catalogSearchEnabled=true,catalogPlaybackEnabled=true,
         volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true,
-        playlistBackupAvailable=true))
+        playlistBackupAvailable=true,
+        appVersionName=BuildConfig.VERSION_NAME,
+        appBuildNumber=BuildConfig.VERSION_CODE.toString(),
+        appPlatform="Android",
+        appAudioBackend="Media3 ExoPlayer"))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: MusicPlaybackCatalog

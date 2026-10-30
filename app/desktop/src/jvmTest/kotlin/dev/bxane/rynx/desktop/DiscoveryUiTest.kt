@@ -11,10 +11,11 @@ import kotlin.test.*
 
 class DiscoveryUiTest {
     private class Actions:PlayerActions {
-        var genre:MusicGenre?=null;var selected:MusicMetadata?=null;var section:String?=null
+        var genre:MusicGenre?=null;var selected:MusicMetadata?=null;var section:String?=null;var openedUrl:String?=null
         override fun openDiscoverySection(id:String){section=id}
         override fun openGenre(genre:MusicGenre){this.genre=genre}
         override fun playDiscovery(track:MusicMetadata){selected=track}
+        override fun openMusicSource(url:String){openedUrl=url}
         override fun importFiles(){};override fun play(id:String){};override fun toggle(){};override fun previous(){};override fun next(){}
         override fun seek(fraction:Float){};override fun cycleRepeat(){};override fun removeFromQueue(id:String){};override fun dismissError(){}
         override fun searchYouTubeMusic(query:String){};override fun loadMoreYouTubeMusic(){}
@@ -36,10 +37,17 @@ class DiscoveryUiTest {
             click(scene,"Explore Pop");assertEquals(pop,actions.genre)
         } finally {scene.close()}
     }
-    @Test fun appleMetadataResultHasSourceLinkAndPlaybackIdentityAction() {
-        val actions=Actions();val song=MusicMetadata("apple:1","Moonlight","bxane",sourceUrl="https://music.apple.com/us/song/moonlight/1")
+    @Test fun youtubeMusicMetadataResultHasWorkingSourceLinkAndPlaybackAction() {
+        val actions=Actions();val source="https://music.youtube.com/watch?v=moonlight"
+        val song=MusicMetadata("yt:moonlight","Moonlight","bxane",sourceUrl=source,playbackId="moonlight")
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(PlayerUiState(reduceMotion=true,appearance=RynxAppearance(material=RynxMaterialMode.Solid),discovery=DiscoveryState(enabled=true),catalogSearch=CatalogSearchState(metadataItems=listOf(song))),actions)}
-        try {click(scene,"Search");click(scene,"Play discovery Moonlight");assertEquals(song,actions.selected);assertNotNull(find(scene,"Open Moonlight in Apple Music"))} finally {scene.close()}
+        try {
+            click(scene,"Search")
+            click(scene,"Play discovery Moonlight")
+            assertEquals(song,actions.selected)
+            click(scene,"Open Moonlight")
+            assertEquals(source,actions.openedUrl)
+        } finally {scene.close()}
     }
     @Test fun homeOffersARealChartDrilldownAndRendersGenreTiles() {
         val actions=Actions();val song=MusicMetadata("apple:1","Moonlight","bxane",chartRank=1)

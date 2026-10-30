@@ -66,13 +66,35 @@ class MaterialUiTest {
             assertTrue(RynxAppearance().darkTheme)
             click(scene,"Settings")
             capture(scene,"settings-page-dark")
-            for(label in listOf("Sound & EQ","Audio Output","Dark Appearance","Interface & Motion","Import Music","Manage Library","Application","Developer")) {
+            for(label in listOf("Sound & EQ","Audio Output","Dark Appearance","Interface & Motion","Import Music","Manage Library","About Rynx")) {
                 assertNotNull(find(scene,label))
             }
             click(scene,"Dark Appearance")
             assertEquals(false,actions.appearance!!.darkTheme)
         } finally {scene.close()}
     }
+    @Test fun aboutRynxHasVersionProjectLicensesAndNavigatesBackToSettings() {
+        val state = PlayerUiState(
+            appVersionName = "0.1.0-dev",
+            appBuildNumber = "12",
+            appPlatform = "Android",
+            appAudioBackend = "Media3 ExoPlayer",
+        )
+        val scene = ImageComposeScene(390, 844, Density(1f)) { RynxApp(state, Actions()) }
+        try {
+            click(scene, "Settings")
+            click(scene, "About Rynx")
+            for (label in listOf("Version", "Build", "Platform", "Audio engine", "Source code",
+                    "Report a problem", "Open-source license", "Notices and acknowledgements",
+                    "Third-party licenses", "Local playback", "Bit-perfect DAC output")) {
+                assertNotNull(find(scene, label))
+            }
+            capture(scene, "phone-about-rynx")
+            click(scene, "Back to Settings")
+            assertNotNull(find(scene, "Dark Appearance"))
+        } finally { scene.close() }
+    }
+
     @Test fun compactPlayerHidesNavigationAndAnExpandedPlayerRestoresItWithoutOverlap() {
         val track=TrackItem("a","Evening walk","bxane")
         val state=PlayerUiState(tracks=listOf(track),queue=listOf(track),currentId="a",appearance=RynxAppearance(material=RynxMaterialMode.Solid),reduceMotion=true)

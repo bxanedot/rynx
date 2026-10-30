@@ -14,6 +14,8 @@ import kotlin.test.*
 class MaterialUiTest {
     private class Actions:PlayerActions {
         var appearance:RynxAppearance?=null
+        var playedCollection:List<String> = emptyList()
+        override fun playCollection(tracks:List<TrackItem>) { playedCollection=tracks.map(TrackItem::id) }
         override fun updateAppearance(appearance:RynxAppearance){this.appearance=appearance}
         override fun importFiles(){};override fun play(id:String){};override fun toggle(){}
         override fun previous(){};override fun next(){};override fun seek(fraction:Float){}
@@ -93,6 +95,30 @@ class MaterialUiTest {
             click(scene, "Back to Settings")
             assertNotNull(find(scene, "Dark Appearance"))
         } finally { scene.close() }
+    }
+
+    @Test fun importedAlbumsOpenArtistAndAlbumDetailsWithRealQueueAction() {
+        val actions=Actions()
+        val tracks=listOf(
+            TrackItem("content://library/a","Opening","Nights",albumTitle="Night Drive"),
+            TrackItem("content://library/b","Ending","Nights",albumTitle="Night Drive"),
+            TrackItem("content://library/c","Daylight","Mornings",albumTitle="Sunrise"),
+        )
+        val scene=ImageComposeScene(390,844,Density(1f)) { RynxApp(PlayerUiState(tracks=tracks),actions) }
+        try {
+            click(scene,"Library")
+            click(scene,"Open artist Nights")
+            assertNotNull(find(scene,"Play artist"))
+            click(scene,"Open album Night Drive by Nights")
+            assertNotNull(find(scene,"Play album"))
+            capture(scene,"phone-library-album-detail")
+            click(scene,"Play album")
+            assertEquals(listOf("content://library/a","content://library/b"),actions.playedCollection)
+            click(scene,"Back to Library")
+            assertNotNull(find(scene,"Play artist"))
+            click(scene,"Back to Library")
+            assertNotNull(find(scene,"Open artist Nights"))
+        } finally {scene.close()}
     }
 
     @Test fun compactPlayerHidesNavigationAndAnExpandedPlayerRestoresItWithoutOverlap() {

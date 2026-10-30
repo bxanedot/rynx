@@ -91,6 +91,54 @@ class RynxMedia3AudioProcessorTest {
         processor.reset()
     }
 
+    @Test fun optionalTpdfDitherChangesOnlyLeastSignificantPcm16Bits() {
+        val processor=RynxMedia3AudioProcessor(AudioDspSettings(ditherEnabled=true))
+        processor.configure(AudioProcessor.AudioFormat(48_000,1,C.ENCODING_PCM_16BIT))
+        val input=ByteBuffer.allocateDirect(16_384).order(ByteOrder.LITTLE_ENDIAN)
+        repeat(8_192) { input.putShort(0) }
+        input.flip()
+        processor.queueInput(input)
+        val output=processor.output.order(ByteOrder.LITTLE_ENDIAN)
+        var nonzero=0
+        while(output.remaining()>=2) {
+            val sample=output.short.toInt()
+            assertTrue("TPDF must remain within one integer LSB at digital silence",sample in -1..1)
+            if(sample!=0) nonzero++
+        }
+        assertTrue("Dither should modify quantization rather than act as an inert setting",nonzero>500)
+        assertEquals(0,input.remaining())
+        processor.reset()
+    }
+
+    @Test fun pureModeSuppressesDitherAndReportsBypassedDsp() {
+        val processor=RynxMedia3AudioProcessor(AudioDspSettings(pureMode=true,ditherEnabled=true))
+        processor.configure(AudioProcessor.AudioFormat(44_100,2,C.ENCODING_PCM_16BIT))
+        val info=AudioEngineDiagnostics.pcmFormat
+        assertEquals(44_100,info?.sampleRateHz)
+        assertEquals(2,info?.channelCount)
+        assertEquals(C.ENCODING_PCM_16BIT,info?.encoding)
+        assertEquals(false,info?.processingEnabled)
+        val input=ByteBuffer.allocateDirect(8_192).order(ByteOrder.LITTLE_ENDIAN)
+        repeat(4_096) { input.putShort(0) }
+        input.flip()
+        processor.queueInput(input)
+        val output=processor.output
+        while(output.hasRemaining()) assertEquals(0,output.get().toInt())
+        processor.reset()
+        assertNull(AudioEngineDiagnostics.pcmFormat)
+    }
+
+    @Test fun changingSettingsUpdatesRealPcmDiagnostics() {
+        val processor=RynxMedia3AudioProcessor(AudioDspSettings())
+        processor.configure(AudioProcessor.AudioFormat(48_000,2,C.ENCODING_PCM_16BIT))
+        assertEquals(false,AudioEngineDiagnostics.pcmFormat?.processingEnabled)
+        processor.updateSettings(AudioDspSettings(ditherEnabled=true))
+        assertEquals(true,AudioEngineDiagnostics.pcmFormat?.processingEnabled)
+        processor.updateSettings(AudioDspSettings(pureMode=true,ditherEnabled=true))
+        assertEquals(false,AudioEngineDiagnostics.pcmFormat?.processingEnabled)
+        processor.reset()
+    }
+
     private fun put24(buffer:ByteBuffer,value:Int) {
         val encoded=value and 0x00ffffff
         buffer.put((encoded and 0xff).toByte())

@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -55,7 +57,8 @@ internal fun SettingsPage(
     onExportPlaylistBackup: () -> Unit,
     onClose: () -> Unit,
 ) {
-    PlayerBackHandler(true, onClose)
+    var aboutOpen by rememberSaveable { mutableStateOf(false) }
+    PlayerBackHandler(true) { if (aboutOpen) aboutOpen = false else onClose() }
     val dark = appearance.darkTheme || appearance.material == RynxMaterialMode.Amoled
     val background = if (dark) Color.Black else Color(0xFFF2F2F7)
     val card = if (dark) Color(0xFF1C1C1E) else Color.White
@@ -63,6 +66,11 @@ internal fun SettingsPage(
     val secondary = if (dark) Color(0xFF98989E) else Color(0xFF6D6D72)
     val divider = if (dark) Color(0xFF38383A) else Color(0xFFE1E1E5)
     var listenBrainzToken by remember { mutableStateOf("") }
+
+    if (aboutOpen) {
+        AboutRynxPage(state, background, card, ink, secondary, divider, onBack = { aboutOpen = false })
+        return
+    }
 
     Column(
         Modifier.fillMaxSize()
@@ -258,14 +266,140 @@ internal fun SettingsPage(
             }
 
             SettingsGroup("ABOUT", card, secondary, divider) {
-                SettingsInfoRow("Application", "rynx", ink, secondary)
-                SettingsDivider(divider)
-                SettingsInfoRow("Developer", "bxane", ink, secondary)
+                SettingsRow(
+                    title = "About Rynx",
+                    value = state.appVersionName ?: "Development",
+                    ink = ink,
+                    secondary = secondary,
+                    onClick = { aboutOpen = true },
+                )
             }
 
             BasicText(
                 "Settings apply immediately and are saved on this device.",
                 Modifier.padding(start = 4.dp, end = 4.dp, bottom = 22.dp),
+                style = TextStyle(color = secondary, fontSize = 12.sp),
+            )
+        }
+    }
+}
+
+/**
+ * Rynx's own About screen, presented as the last grouped Settings destination.
+ * Uses the same material, navigation, typography and accessibility conventions as Settings.
+ * External links are opened only after an explicit user tap.
+ */
+@Composable
+private fun AboutRynxPage(
+    state: PlayerUiState,
+    background: Color,
+    card: Color,
+    ink: Color,
+    secondary: Color,
+    divider: Color,
+    onBack: () -> Unit,
+) {
+    val uri = LocalUriHandler.current
+    Column(
+        Modifier.fillMaxSize()
+            .background(background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .semantics { paneTitle = "About Rynx" },
+    ) {
+        Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 16.dp)) {
+            Box(
+                Modifier.align(Alignment.CenterStart)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button, onClick = onBack)
+                    .semantics { contentDescription = "Back to Settings" }
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RynxGlyph(Glyph.Previous, Color(0xFFFA2D48), Modifier.size(20.dp))
+                    Spacer(Modifier.width(4.dp))
+                    BasicText("Settings", style = TextStyle(color = Color(0xFFFA2D48), fontSize = 16.sp))
+                }
+            }
+            BasicText(
+                "About",
+                Modifier.align(Alignment.Center),
+                style = TextStyle(color = ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold),
+            )
+        }
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(22.dp),
+        ) {
+            Column(
+                Modifier.fillMaxWidth().padding(top = 25.dp, bottom = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier.size(104.dp).clip(RoundedCornerShape(25.dp))
+                        .background(card),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    RynxBrandMark(Modifier.size(82.dp))
+                }
+                Spacer(Modifier.height(14.dp))
+                BasicText("rynx", style = TextStyle(color = ink, fontSize = 30.sp, fontWeight = FontWeight.Bold))
+                Spacer(Modifier.height(4.dp))
+                BasicText(
+                    "Pure Sound. Original Engineering.",
+                    style = TextStyle(color = secondary, fontSize = 14.sp),
+                )
+                Spacer(Modifier.height(6.dp))
+                BasicText(
+                    "An independent music player by bxane",
+                    style = TextStyle(color = secondary, fontSize = 13.sp),
+                )
+            }
+            SettingsGroup("APPLICATION", card, secondary, divider) {
+                SettingsInfoRow("Version", state.appVersionName ?: "Development build", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("Build", state.appBuildNumber ?: "Not reported", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("Platform", state.appPlatform ?: "Kotlin Multiplatform", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("Audio engine", state.appAudioBackend ?: "Not reported", ink, secondary)
+            }
+            SettingsGroup("PROJECT", card, secondary, divider) {
+                SettingsInfoRow("Developer", "bxane", ink, secondary)
+                SettingsDivider(divider)
+                SettingsRow("Source code", ink = ink, secondary = secondary) {
+                    uri.openUri("https://github.com/bxanedot/rynx")
+                }
+                SettingsDivider(divider)
+                SettingsRow("Report a problem", ink = ink, secondary = secondary) {
+                    uri.openUri("https://github.com/bxanedot/rynx/issues")
+                }
+            }
+            SettingsGroup("LEGAL", card, secondary, divider) {
+                SettingsRow("Open-source license", ink = ink, secondary = secondary) {
+                    uri.openUri("https://github.com/bxanedot/rynx/blob/main/LICENSE")
+                }
+                SettingsDivider(divider)
+                SettingsRow("Notices and acknowledgements", ink = ink, secondary = secondary) {
+                    uri.openUri("https://github.com/bxanedot/rynx/blob/main/NOTICE")
+                }
+                SettingsDivider(divider)
+                SettingsRow("Third-party licenses", ink = ink, secondary = secondary) {
+                    uri.openUri("https://github.com/bxanedot/rynx/tree/main/third_party_licenses")
+                }
+            }
+            SettingsGroup("PLAYBACK AND PRIVACY", card, secondary, divider) {
+                SettingsInfoRow("Local playback", "No Rynx account", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("DSP processing", "On-device", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("Bit-perfect DAC output", "Not verified", ink, secondary)
+            }
+            BasicText(
+                "Rynx is independently developed and is not affiliated with Apple Music. " +
+                    "Audio format support and routing depend on the device and active source.",
+                Modifier.padding(start = 5.dp, end = 5.dp, bottom = 28.dp),
                 style = TextStyle(color = secondary, fontSize = 12.sp),
             )
         }

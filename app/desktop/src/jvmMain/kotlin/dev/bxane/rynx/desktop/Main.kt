@@ -4,7 +4,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import dev.bxane.rynx.ui.*
-import dev.bxane.rynx.apple.AppleMetadataClient
 import dev.bxane.rynx.innertubex.createInnerTubeXMusicPlaybackCatalog
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -13,7 +12,7 @@ import javax.swing.SwingUtilities
 
 fun main() = application {
     val player=remember {
-        DesktopPlayer(catalogSearch=createInnerTubeXMusicPlaybackCatalog(HttpClient(CIO),AppleMetadataClient(HttpClient(CIO))))
+        DesktopPlayer(catalogSearch=createInnerTubeXMusicPlaybackCatalog(HttpClient(CIO)))
     }
     DisposableEffect(player) { onDispose { player.close() } }
     val state by player.state.collectAsState()

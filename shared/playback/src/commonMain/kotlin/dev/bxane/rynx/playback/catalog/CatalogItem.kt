@@ -1,7 +1,5 @@
 package dev.bxane.rynx.playback.catalog
 
-import dev.bxane.rynx.playback.discovery.MusicMetadata
-
 enum class CatalogProvider { YouTubeMusic }
 enum class CatalogItemType { Track, Playlist, Album, Artist, Channel }
 
@@ -32,7 +30,4 @@ interface CatalogSearchRepository {
 }
 
 /** Catalog capabilities needed by the shared music-selection and playback-preparation flow. */
-interface MusicPlaybackCatalog : CatalogSearchRepository {
-    suspend fun searchAppleMusic(query: String, country: String?, limit: Int = 30): List<MusicMetadata>
-    suspend fun appleSong(id: Long, country: String?): MusicMetadata?
-}
+interface MusicPlaybackCatalog : CatalogSearchRepository

@@ -30,7 +30,7 @@ private val DiscoveryAccent=Color(0xFFFA2D48)
 @Composable internal fun DiscoveryHeader(feed:DiscoveryState,actions:PlayerActions) {
     Column(Modifier.padding(bottom=12.dp)) {
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {Text("Find your next favorite",23,true);Text(if(feed.stale)"Saved discovery · reconnect to refresh" else "Apple catalog. Your Rynx mix.",12,muted=true)}
+            Column(Modifier.weight(1f)) {Text("Find your next favorite",23,true);Text(if(feed.stale)"Saved · reconnect to refresh" else "YouTube Music. Your Rynx mix.",12,muted=true)}
             RynxButton(if(feed.loading)"Updating…" else "Refresh",actions::refreshDiscovery,enabled=!feed.loading)
         }
         Spacer(Modifier.height(12.dp))
@@ -58,7 +58,7 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
                     Column(Modifier.width(190.dp).clip(RoundedCornerShape(16.dp)).rynxMaterial(16.dp)
                         .discoveryPress("Open ${collection.title}"){actions.openDiscoveryCollection(collection)}.padding(14.dp)) {
                         GenreDecoration(collection.id,Modifier.fillMaxWidth().height(100.dp))
-                        Text(collection.title,18,true,modifier=Modifier.padding(top=12.dp));Text("Apple Music",12,muted=true)
+                        Text(collection.title,18,true,modifier=Modifier.padding(top=12.dp));Text("YouTube Music",12,muted=true)
                     }
                 }
             }
@@ -75,7 +75,7 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
             }
             Text(track.title,14,true,modifier=Modifier.padding(top=8.dp),maxLines=1);Text(track.artist,12,muted=true,maxLines=1)
         }
-        track.sourceUrl?.let {url->RynxButton("Apple Music",{actions.openMusicSource(url)},Modifier.padding(top=6.dp).semantics {contentDescription="Open ${track.title} in Apple Music"})}
+        track.sourceUrl?.let {url->RynxButton("Open",{actions.openMusicSource(url)},Modifier.padding(top=6.dp).semantics {contentDescription="Open ${track.title}"})}
     }
 }
 @Composable internal fun AppleExploreContent(feed:DiscoveryState,actions:PlayerActions,modifier:Modifier) {
@@ -83,7 +83,7 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
     LazyColumn(modifier.padding(horizontal=24.dp),contentPadding=PaddingValues(bottom=24.dp)) {
         item {Text("Browse by Genre",18,true,modifier=Modifier.padding(top=12.dp,bottom=16.dp))}
         if(genres.isEmpty())item {
-            Text(if(feed.loading)"Loading Apple genres…" else "Genres could not load. Refresh when connected.",14,muted=true)
+            Text(if(feed.loading)"Loading genres…" else "Genres could not load. Refresh when connected.",14,muted=true)
             RynxButton("Refresh genres",actions::refreshDiscovery,Modifier.padding(top=12.dp),enabled=!feed.loading)
         }
         items(genres.chunked(2),key={row->row.joinToString {it.id}}) {row->
@@ -100,7 +100,6 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
                 if(row.size==1)Spacer(Modifier.weight(1f))
             }
         }
-        item {RynxButton("Browse genres in Apple Music",{actions.openMusicSource("https://music.apple.com/${feed.region}/room/6456176470")})}
     }
 }
 /** Original geometric artwork; category names and hierarchy are obtained from Apple, not hard-coded. */
@@ -121,7 +120,7 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
             Artwork(48.dp,artworkUrl=track.artworkUrl)
             Column(Modifier.padding(start=12.dp).weight(1f)) {Text(track.title,14,true);Text(track.artist,12,muted=true)}
         }
-        track.sourceUrl?.let {url->RynxButton("Apple Music",{actions.openMusicSource(url)},Modifier.semantics {contentDescription="Open ${track.title} in Apple Music"})}
+        track.sourceUrl?.let {url->RynxButton("Open",{actions.openMusicSource(url)},Modifier.semantics {contentDescription="Open ${track.title}"})}
     }
 }
 @Composable internal fun DiscoveryDetail(state:PlayerUiState,actions:PlayerActions) {
@@ -144,7 +143,7 @@ internal fun LazyListScope.homeDiscoverySections(feed:DiscoveryState,actions:Pla
             items(section.collections,key={it.id}) {collection->
                 RynxButton(collection.title,{actions.openDiscoveryCollection(collection)},Modifier.fillMaxWidth().padding(vertical=5.dp))
             }
-            section.sourceUrl?.let {url->item {RynxButton("Open in Apple Music",{actions.openMusicSource(url)},Modifier.padding(top=18.dp))}}
+            section.sourceUrl?.let {url->item {RynxButton("Open",{actions.openMusicSource(url)},Modifier.padding(top=18.dp))}}
         }
     }
 }

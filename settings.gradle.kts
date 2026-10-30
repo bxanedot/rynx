@@ -20,6 +20,6 @@ include(":shared:ui", ":app:desktop")
 include(":providers:newpipe")
 include(":providers:innertubex")
 include(":app:android")
-include(":providers:apple")
+// :providers:apple archived
 include(":glyphstudioSfsymbols")
 project(":glyphstudioSfsymbols").projectDir = file("dependencies/GlyphStudio/sfsymbols")

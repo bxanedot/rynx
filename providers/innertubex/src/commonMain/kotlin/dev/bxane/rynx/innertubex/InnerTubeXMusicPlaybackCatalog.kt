@@ -2,13 +2,11 @@ package dev.bxane.rynx.innertubex
 
 import com.metrolist.innertubex.InnerTube
 import com.metrolist.innertubex.models.YouTubeClient
-import dev.bxane.rynx.apple.AppleMetadataClient
 import dev.bxane.rynx.playback.catalog.CatalogItem
 import dev.bxane.rynx.playback.catalog.CatalogItemType
 import dev.bxane.rynx.playback.catalog.CatalogPage
 import dev.bxane.rynx.playback.catalog.CatalogProvider
 import dev.bxane.rynx.playback.catalog.MusicPlaybackCatalog
-import dev.bxane.rynx.playback.discovery.MusicMetadata
 import io.ktor.client.HttpClient
 import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
@@ -22,13 +20,9 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-/**
- * Public-catalog composition for Rynx: Apple supplies metadata and artwork first; InnerTubeX
- * supplies YouTube Music search and stream resolution. The supplied HTTP client remains caller-owned.
- */
+/** YouTube Music catalog via InnerTubeX. HTTP client is caller-owned. */
 class InnerTubeXMusicPlaybackCatalog internal constructor(
     private val innerTube: InnerTube,
-    private val apple: AppleMetadataClient,
 ) : MusicPlaybackCatalog {
     override suspend fun searchMusic(query: String): CatalogPage {
         require(query.isNotBlank()) { "Music search query must not be empty" }
@@ -42,21 +36,11 @@ class InnerTubeXMusicPlaybackCatalog internal constructor(
         return InnerTubeXSearchPayloads.parse(response.bodyAsText())
     }
 
-    override suspend fun searchAppleMusic(query: String, country: String?, limit: Int): List<MusicMetadata> =
-        apple.searchSongs(query, country ?: "us", limit)
-
-    override suspend fun appleSong(id: Long, country: String?): MusicMetadata? =
-        apple.lookup(listOf(id.toString()), country ?: "us").firstOrNull()
-
-    override fun close() {
-        innerTube.close()
-        apple.close()
-    }
+    override fun close() { innerTube.close() }
 }
 
-/** The HTTP client is shared with the stream resolver and remains owned by the caller. */
-fun createInnerTubeXMusicPlaybackCatalog(httpClient: HttpClient, apple: AppleMetadataClient): InnerTubeXMusicPlaybackCatalog =
-    InnerTubeXMusicPlaybackCatalog(InnerTube(httpClient), apple)
+fun createInnerTubeXMusicPlaybackCatalog(httpClient: HttpClient): InnerTubeXMusicPlaybackCatalog =
+    InnerTubeXMusicPlaybackCatalog(InnerTube(httpClient))
 
 internal object InnerTubeXSearchPayloads {
     private val json = Json { ignoreUnknownKeys = true }

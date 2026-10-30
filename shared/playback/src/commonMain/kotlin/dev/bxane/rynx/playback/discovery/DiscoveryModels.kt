@@ -1,11 +1,11 @@
 package dev.bxane.rynx.playback.discovery
 
 /** Factual catalog metadata; playback identity remains separate from its metadata provider. */
-enum class MetadataSource { AppleMusic, YouTubeMusic }
+enum class MetadataSource { YouTubeMusic }
 data class MusicGenre(val id:String,val name:String,val children:List<MusicGenre> = emptyList(),val browseUrl:String?=null)
 data class MusicMetadata(
     val id:String,val title:String,val artist:String,
-    val source:MetadataSource=MetadataSource.AppleMusic,
+    val source:MetadataSource=MetadataSource.YouTubeMusic,
     val album:String?=null,val artworkUrl:String?=null,val genreIds:List<String> = emptyList(),
     val genreNames:List<String> = emptyList(),val releaseDate:String?=null,val durationMillis:Long?=null,
     val sourceUrl:String?=null,val chartRank:Int?=null,val playbackId:String?=null,
@@ -24,7 +24,7 @@ data class DiscoveryState(
 data class ListeningSignal(val trackId:String,val artist:String,val genreIds:List<String>,val playedAtMillis:Long,val skipped:Boolean=false)
 data class RecommendedTrack(val track:MusicMetadata,val score:Double,val reason:String)
 
-fun ChartCollection.coverageNote():String? = if(tracks.size<expectedTrackCount)"${tracks.size} of $expectedTrackCount recordings available in this storefront" else null
+fun ChartCollection.coverageNote():String? = if(tracks.size<expectedTrackCount)"${tracks.size} of $expectedTrackCount recordings available" else null
 
 /** UTC daily snapshots refresh while visible; failures retry with a five-minute backoff. */
 fun shouldRefreshDiscovery(feed:DiscoveryState,lastAttemptMillis:Long?,nowMillis:Long):Boolean {

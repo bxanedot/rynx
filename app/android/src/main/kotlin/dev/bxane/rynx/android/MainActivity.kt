@@ -65,7 +65,6 @@ import dev.bxane.rynx.playback.scrobble.ListenBrainzClient
 import dev.bxane.rynx.playback.scrobble.ScrobbleProvider
 import dev.bxane.rynx.library.PlaylistArchive
 import dev.bxane.rynx.ui.*
-import dev.bxane.rynx.apple.AppleMetadataClient
 import dev.bxane.rynx.newpipe.NewPipeFallbackAudioResolver
 import dev.bxane.rynx.innertubex.InnerTubeXFallbackAudioResolver
 import dev.bxane.rynx.innertubex.createInnerTubeXMusicPlaybackCatalog
@@ -223,14 +222,11 @@ class MainActivity : ComponentActivity() {
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
         val innertubexClient = HttpClient(OkHttp)
         val innertubex = createInnerTubeXFallbackAudioResolver(innertubexClient)
-        catalog = createInnerTubeXMusicPlaybackCatalog(
-            innertubexClient,
-            AppleMetadataClient(HttpClient(OkHttp),DiskAppleCache(File(cacheDir,"apple-catalog-metadata"))),
-        )
+        catalog = createInnerTubeXMusicPlaybackCatalog(innertubexClient)
         innertubexHttpClient = innertubexClient
         innertubexResolver = innertubex
         audioResolver = AudioResolutionChain(innertubex, NewPipeFallbackAudioResolver)
-        playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver) { state.value.discovery.region }
+        playbackPreparer = MusicPlaybackPreparer(catalog, audioResolver)
         catalogReady = lifecycleScope.async(Dispatchers.IO) {
             try {
                 catalog.initialize()
@@ -249,8 +245,8 @@ class MainActivity : ComponentActivity() {
         discovery=AndroidDiscoveryCoordinator(applicationContext,lifecycleScope,
             onFeed={feed->state.update {it.copy(discovery=feed)}},
             onSelection={section,loading->state.update {it.copy(discoverySelection=section,discoverySelectionLoading=loading)}},
-            fallbackSearch={query->catalogReady.await();catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
-                MusicMetadata("yt:${item.mediaId}",item.title,item.artist.orEmpty(),source=MetadataSource.YouTubeMusic,artworkUrl=item.artworkUrl,durationMillis=item.durationSeconds?.times(1000),playbackId=item.mediaId)
+            ytmSearch={query->catalogReady.await();catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
+                MusicMetadata("yt:${item.mediaId}",item.title,item.artist.orEmpty(),artworkUrl=item.artworkUrl,durationMillis=item.durationSeconds?.times(1000),playbackId=item.mediaId)
             }})
         discovery.load()
         lifecycleScope.launch {
@@ -268,9 +264,9 @@ class MainActivity : ComponentActivity() {
             override fun playDiscovery(track:MusicMetadata)=playDiscoveryTrack(track)
             override fun openMusicSource(url:String) {
                 val uri=url.toUri()
-                if(uri.scheme=="https" && uri.host in setOf("music.apple.com","itunes.apple.com"))
+                if(uri.scheme=="https")
                     runCatching {startActivity(Intent(Intent.ACTION_VIEW,uri))}
-                        .onFailure {state.update {it.copy(error="No application can open this music link.")}}
+                        .onFailure {state.update {it.copy(error="No application can open this link.")}}
             }
             override fun importFiles() = picker.launch(arrayOf("audio/*"))
             override fun play(id: String) {
@@ -588,12 +584,6 @@ class MainActivity : ComponentActivity() {
         searchJob=lifecycleScope.launch {
             try {
                 if(!catalogReady.await()) error("YouTube Music is unavailable")
-                val apple=try {withContext(Dispatchers.IO){catalog.searchAppleMusic(normalized,state.value.discovery.region)}}
-                    catch(cancelled:CancellationException){throw cancelled} catch(_:Exception){emptyList()}
-                if(apple.isNotEmpty()) {
-                    state.update {it.copy(catalogSearch=CatalogSearchState(query=normalized,metadataItems=apple))}
-                    return@launch
-                }
                 val page=withContext(Dispatchers.IO) { catalog.searchMusic(normalized) }
                 state.update { it.copy(catalogSearch=CatalogSearchState(
                     query=normalized,
@@ -654,21 +644,20 @@ class MainActivity : ComponentActivity() {
     private fun startMusicRequest(load:suspend ()->PreparedMusic) {
         state.update {it.copy(error=null)}
         playbackRequests.start(load=load,commit={prepared->
-            val stream=prepared.stream;val item=prepared.item;val apple=prepared.metadata
+            val stream=prepared.stream;val item=prepared.item
             val output=controller
             if(stream==null)state.update {it.copy(error="This track could not be played right now.")}
             else if(output==null)state.update {it.copy(error="The player is reconnecting. Try this track again shortly.")}
             else {
                 StreamRequestHeaderStore.register(stream.url,stream.headers)
-                val metadata=MediaMetadata.Builder().setTitle(apple?.title?:item.title).setArtist(apple?.artist?:item.artist?:"YouTube Music")
-                    .setExtras(Bundle().apply {apple?.sourceUrl?.let {putString("rynx.metadata-source",it)};apple?.let {putString("rynx.metadata-id",it.id);putStringArrayList("rynx.metadata-genres",ArrayList(it.genreIds))}})
-                    .apply {(apple?.artworkUrl?:item.artworkUrl)?.let {setArtworkUri(it.toUri())}}.build()
+                val metadata=MediaMetadata.Builder().setTitle(item.title).setArtist(item.artist?:"YouTube Music")
+                    .apply {item.artworkUrl?.let {setArtworkUri(it.toUri())}}.build()
                 val id="yt:${item.mediaId}"
                 val media=MediaItem.Builder().setMediaId(id).setUri(stream.url).setMimeType(stream.mimeType).setMediaMetadata(metadata).build()
                 output.setMediaItem(media);output.prepare();output.play();discovery.closeSelection();publish()
             }
         },onFailure={failure->state.update {it.copy(error=when(failure) {
-            is NoMatchingRecordingException -> "No matching recording was found on YouTube Music. Try a search result or open this song in Apple Music."
+            is NoMatchingRecordingException -> "No matching recording was found on YouTube Music. Try searching for it directly."
             is ProviderAccessRefusalException -> "The provider restricts playback of this track."
             else -> "Rynx couldn't prepare a playable stream. Check your connection and try again."
         })}})

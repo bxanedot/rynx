@@ -7,7 +7,6 @@ kotlin {
         jvmMain.dependencies {
             implementation(project(":shared:playback"))
             implementation(project(":shared:ui"))
-            implementation(project(":providers:apple"))
             implementation(project(":providers:innertubex"))
             implementation(compose.desktop.currentOs)
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")

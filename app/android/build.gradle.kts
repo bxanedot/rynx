@@ -61,7 +61,6 @@ dependencies {
     implementation(project(":shared:ui"))
     implementation(project(":shared:playback"))
     implementation(project(":shared:library"))
-    implementation(project(":providers:apple"))
     implementation(project(":providers:newpipe"))
     implementation(project(":providers:innertubex"))
     implementation("androidx.activity:activity-compose:1.13.0")

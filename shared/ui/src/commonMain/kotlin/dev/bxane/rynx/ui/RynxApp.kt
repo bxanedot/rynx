@@ -596,7 +596,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     Artwork(116.dp,artworkUrl=artist.artworkUrl)
                     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(10.dp)) {
                         Label(artist.name,23,bold=true)
-                        Action("Play artist") { actions.playCollection(artist.tracks) }
+                        Action("Play artist", { actions.playCollection(artist.tracks) })
                     }
                 }
             }
@@ -636,7 +636,7 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     Label(album.title,24,bold=true)
                     Label(album.artist,15,p.secondary)
                     Label(album.tracks.size.toString()+" songs",13,p.secondary)
-                    Action("Play album") { actions.playCollection(album.tracks) }
+                    Action("Play album", { actions.playCollection(album.tracks) })
                 }
             }
             item { SectionHeading("Songs",album.tracks.size.toString()) }

@@ -29,6 +29,7 @@ internal enum class Glyph(val symbolName: String) {
     More("ellipsis"), SpeakerQuiet("speaker"), SpeakerLoud("speaker.wave.2.fill"), Output("airplayaudio"),
     Lyrics("quote.bubble"), Shuffle("shuffle"), Reorder("line.3.horizontal"), Equalizer("slider.horizontal.3"),
     Infinity("infinity"), AutoMix("waveform"), Appearance("gearshape"), ChevronRight("chevron.right"),
+    Artists("person.crop.circle"), Albums("square.stack"), Playlists("music.note.list"),
 }
 
 @Composable

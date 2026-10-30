@@ -18,6 +18,8 @@ import kotlin.math.roundToInt
 internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : AudioProcessor {
     private val settings = AtomicReference(initialSettings.normalized())
     private val runtime = AtomicReference<RynxAudioDspRuntime?>(null)
+    // Retain the previous filter state for a short, allocation-free old->new transition.
+    private val transitionFrom = AtomicReference<RynxAudioDspRuntime?>(null)
     private val requestedFadeFrames = AtomicInteger(0)
     private var fadeRemainingFrames = 0
     private var fadeLengthFrames = 1
@@ -38,9 +40,12 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         val currentFormat = inputFormat
         if (currentFormat != AudioProcessor.AudioFormat.NOT_SET && isSupported(currentFormat.encoding)) {
             val updatedRuntime = newRuntime(safe, currentFormat)
-            runtime.set(updatedRuntime)
+            val oldRuntime = runtime.getAndSet(updatedRuntime)
+            // Pure Mode must bypass immediately; otherwise blend between the actual effects,
+            // not between dry PCM and the replacement effects.
+            transitionFrom.set(if (safe.pureMode || (oldRuntime?.isBypass == true && updatedRuntime.isBypass)) null else oldRuntime)
             AudioEngineDiagnostics.recordPcmFormat(currentFormat, !safe.pureMode && (!updatedRuntime.isBypass || safe.ditherEnabled))
-            requestedFadeFrames.set((currentFormat.sampleRate / 40).coerceAtLeast(1))
+            requestedFadeFrames.set(if (safe.pureMode) 0 else (currentFormat.sampleRate / 40).coerceAtLeast(1))
         }
     }
 
@@ -63,6 +68,8 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         val configuredSettings = settings.get()
         val configuredRuntime = newRuntime(configuredSettings, inputAudioFormat)
         runtime.set(configuredRuntime)
+        transitionFrom.set(null)
+        fadeRemainingFrames = 0
         AudioEngineDiagnostics.recordPcmFormat(inputAudioFormat, !configuredSettings.pureMode && (!configuredRuntime.isBypass || configuredSettings.ditherEnabled))
         val initialFade = if (configuredSettings.pureMode) 0 else (inputAudioFormat.sampleRate / 40).coerceAtLeast(1)
         requestedFadeFrames.set(initialFade)
@@ -83,6 +90,7 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         ensureOutputCapacity(consumedBytes)
         outputStorage.clear()
         val activeRuntime = runtime.get()
+        val previousRuntime = transitionFrom.get()
         val appliedSettings = settings.get()
         val shouldDither = !appliedSettings.pureMode && appliedSettings.ditherEnabled
         if (appliedSettings.pureMode || activeRuntime == null || (activeRuntime.isBypass && !shouldDither)) {
@@ -112,8 +120,9 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
                 floatScratch[sampleIndex] = value
                 if (fadeRemainingFrames > 0) dryScratch[sampleIndex] = value
             }
-            activeRuntime.process(floatScratch, chunkFrames)
             val startFade = fadeRemainingFrames
+            if (startFade > 0 && previousRuntime != null) previousRuntime.process(dryScratch, chunkFrames)
+            activeRuntime.process(floatScratch, chunkFrames)
             for (frame in 0 until chunkFrames) {
                 val mix = if (fadeRemainingFrames > 0) 1f - fadeRemainingFrames.toFloat() / fadeLengthFrames else 1f
                 val offset = frame * channels
@@ -133,6 +142,7 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         if (frames == availableFrames && inputBuffer.hasRemaining()) {
             while (inputBuffer.hasRemaining()) outputStorage.put(inputBuffer.get())
         }
+        if (fadeRemainingFrames == 0 && previousRuntime != null) transitionFrom.compareAndSet(previousRuntime, null)
         outputBuffer = outputStorage.apply { flip() }
     }
 
@@ -150,6 +160,9 @@ internal class RynxMedia3AudioProcessor(initialSettings: AudioDspSettings) : Aud
         outputBuffer = AudioProcessor.EMPTY_BUFFER
         inputEnded = false
         runtime.get()?.reset()
+        transitionFrom.set(null)
+        fadeRemainingFrames = 0
+        requestedFadeFrames.set(0)
     }
 
     override fun reset() {

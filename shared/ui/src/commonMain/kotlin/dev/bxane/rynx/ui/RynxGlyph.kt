@@ -29,6 +29,7 @@ internal enum class Glyph(val symbolName: String) {
     More("ellipsis"), SpeakerQuiet("speaker"), SpeakerLoud("speaker.wave.2.fill"), Output("airplayaudio"),
     Lyrics("quote.bubble"), Shuffle("shuffle"), Reorder("line.3.horizontal"), Equalizer("slider.horizontal.3"),
     Infinity("infinity"), AutoMix("waveform"), Appearance("gearshape"), ChevronRight("chevron.right"),
+    Artists("person.crop.circle"), Albums("square.stack"), Playlists("music.note.list"),
 }
 
 @Composable
@@ -139,6 +140,9 @@ internal fun RynxGlyph(
                     drawCircle(tint,1.5f,Offset(12f,12f))
                     line(9f,4f,19f,4f)
                 }
+                // These three names are validated against the pinned GlyphStudio registry.
+                // They intentionally have no hand-drawn substitute artwork.
+                Glyph.Artists, Glyph.Albums, Glyph.Playlists -> Unit
             }
         }
     }

@@ -17,17 +17,19 @@ internal class LocalAudioMetadata(private val context: Context) {
     fun read(uri: Uri, displayName: String): TrackItem {
         var title = displayName
         var artist = "Local audio"
+        var album: String? = null
         var cover: String? = null
         val retriever = MediaMetadataRetriever()
         try {
             retriever.setDataSource(context, uri)
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?.takeIf(String::isNotBlank)?.let { title = it }
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)?.takeIf(String::isNotBlank)?.let { artist = it }
+            album = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)?.trim()?.takeIf(String::isNotBlank)
             cover = retriever.embeddedPicture?.let { cacheCover(uri, it) }
         } catch (_: Exception) {
             // SAF names remain useful when a codec, tag, or revoked document cannot be read.
         } finally { retriever.release() }
-        return TrackItem(uri.toString(), title, artist, cover)
+        return TrackItem(uri.toString(), title, artist, cover, albumTitle = album)
     }
 
     private fun cacheCover(uri: Uri, bytes: ByteArray): String? {

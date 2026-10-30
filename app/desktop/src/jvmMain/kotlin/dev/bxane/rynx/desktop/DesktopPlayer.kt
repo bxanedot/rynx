@@ -20,7 +20,11 @@ internal class DesktopPlayer(
 ) : AutoCloseable {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
-    private val mutableState = MutableStateFlow(PlayerUiState())
+    private val mutableState = MutableStateFlow(PlayerUiState(
+        appVersionName = "0.1.0",
+        appPlatform = "Desktop",
+        appAudioBackend = "Java Sound",
+    ))
     val state = mutableState.asStateFlow()
     private var files = linkedMapOf<String, File>()
     private var queue = PlaybackQueue()

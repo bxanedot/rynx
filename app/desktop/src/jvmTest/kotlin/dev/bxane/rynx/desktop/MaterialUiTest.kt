@@ -14,6 +14,8 @@ import kotlin.test.*
 class MaterialUiTest {
     private class Actions:PlayerActions {
         var appearance:RynxAppearance?=null
+        var playedCollection:List<String> = emptyList()
+        override fun playCollection(tracks:List<TrackItem>) { playedCollection=tracks.map(TrackItem::id) }
         override fun updateAppearance(appearance:RynxAppearance){this.appearance=appearance}
         override fun importFiles(){};override fun play(id:String){};override fun toggle(){}
         override fun previous(){};override fun next(){};override fun seek(fraction:Float){}
@@ -66,13 +68,82 @@ class MaterialUiTest {
             assertTrue(RynxAppearance().darkTheme)
             click(scene,"Settings")
             capture(scene,"settings-page-dark")
-            for(label in listOf("Sound & EQ","Audio Output","Dark Appearance","Interface & Motion","Import Music","Manage Library","Application","Developer")) {
+            for(label in listOf("Sound & EQ","Audio Output","Dark Appearance","Interface & Motion","Import Music","Manage Library","About Rynx")) {
                 assertNotNull(find(scene,label))
             }
             click(scene,"Dark Appearance")
             assertEquals(false,actions.appearance!!.darkTheme)
         } finally {scene.close()}
     }
+    @Test fun aboutRynxHasVersionProjectLicensesAndNavigatesBackToSettings() {
+        val state = PlayerUiState(
+            appVersionName = "0.1.0-dev",
+            appBuildNumber = "12",
+            appPlatform = "Android",
+            appAudioBackend = "Media3 ExoPlayer",
+        )
+        val scene = ImageComposeScene(390, 844, Density(1f)) { RynxApp(state, Actions()) }
+        try {
+            click(scene, "Settings")
+            click(scene, "About Rynx")
+            for (label in listOf("Version", "Build", "Platform", "Audio engine", "Source code",
+                    "Report a problem", "Open-source license", "Notices and acknowledgements",
+                    "Third-party licenses", "Local playback", "Bit-perfect DAC output")) {
+                assertNotNull(find(scene, label))
+            }
+            capture(scene, "phone-about-rynx")
+            click(scene, "Back to Settings")
+            assertNotNull(find(scene, "Dark Appearance"))
+        } finally { scene.close() }
+    }
+
+    @Test fun libraryShowsGlyphStudioCategoryShortcutsAndNavigatesIntoRealSections() {
+        val tracks=listOf(
+            TrackItem("content://library/first","First Song","Nights",albumTitle="Night Drive"),
+            TrackItem("content://library/second","Second Song","Nights",albumTitle="Night Drive"),
+        )
+        val state=PlayerUiState(tracks=tracks,favoriteIds=setOf(tracks[0].id))
+        val scene=ImageComposeScene(390,844,Density(1f)) { RynxApp(state,Actions()) }
+        try {
+            click(scene,"Library")
+            for(category in listOf("Playlists","Artists","Albums","Songs","Favorites"))
+                assertNotNull(find(scene,"Browse "+category))
+            capture(scene,"phone-library-glyphstudio-categories")
+            click(scene,"Browse Albums")
+            assertNotNull(find(scene,"Open album Night Drive by Nights"))
+            click(scene,"Back to Library")
+            click(scene,"Browse Songs")
+            assertNotNull(find(scene,"Back to Library"))
+            click(scene,"Back to Library")
+            click(scene,"Browse Favorites")
+            assertNotNull(find(scene,"Back to Library"))
+        } finally { scene.close() }
+    }
+
+    @Test fun importedAlbumsOpenArtistAndAlbumDetailsWithRealQueueAction() {
+        val actions=Actions()
+        val tracks=listOf(
+            TrackItem("content://library/a","Opening","Nights",albumTitle="Night Drive"),
+            TrackItem("content://library/b","Ending","Nights",albumTitle="Night Drive"),
+            TrackItem("content://library/c","Daylight","Mornings",albumTitle="Sunrise"),
+        )
+        val scene=ImageComposeScene(390,844,Density(1f)) { RynxApp(PlayerUiState(tracks=tracks),actions) }
+        try {
+            click(scene,"Library")
+            click(scene,"Open artist Nights")
+            assertNotNull(find(scene,"Play artist"))
+            click(scene,"Open album Night Drive by Nights")
+            assertNotNull(find(scene,"Play album"))
+            capture(scene,"phone-library-album-detail")
+            click(scene,"Play album")
+            assertEquals(listOf("content://library/a","content://library/b"),actions.playedCollection)
+            click(scene,"Back to Library")
+            assertNotNull(find(scene,"Play artist"))
+            click(scene,"Back to Library")
+            assertNotNull(find(scene,"Open artist Nights"))
+        } finally {scene.close()}
+    }
+
     @Test fun compactPlayerHidesNavigationAndAnExpandedPlayerRestoresItWithoutOverlap() {
         val track=TrackItem("a","Evening walk","bxane")
         val state=PlayerUiState(tracks=listOf(track),queue=listOf(track),currentId="a",appearance=RynxAppearance(material=RynxMaterialMode.Solid),reduceMotion=true)

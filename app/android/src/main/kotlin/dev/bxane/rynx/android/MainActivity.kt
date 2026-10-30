@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Build
 import android.media.AudioManager
+import android.media.MediaRouter2
 import android.media.AudioTrack
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
@@ -96,7 +97,11 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     private val state = MutableStateFlow(PlayerUiState(catalogSearchEnabled=true,catalogPlaybackEnabled=true,
         volumeControlAvailable=true,audioOutputAvailable=true,shuffleAvailable=true,queueEditingAvailable=true,lyricsImportAvailable=true,
-        playlistBackupAvailable=true))
+        playlistBackupAvailable=true,
+        appVersionName=BuildConfig.VERSION_NAME,
+        appBuildNumber=BuildConfig.VERSION_CODE.toString(),
+        appPlatform="Android",
+        appAudioBackend="Media3 ExoPlayer"))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: MusicPlaybackCatalog
@@ -306,10 +311,40 @@ class MainActivity : ComponentActivity() {
                     output.setMediaItems(tracks.map { track ->
                         MediaItem.Builder().setMediaId(track.id).setUri(track.id)
                             .setMediaMetadata(MediaMetadata.Builder().setTitle(track.title).setArtist(track.subtitle)
-                                .apply { track.artworkUrl?.let { setArtworkUri(it.toUri()) } }.build()).build()
+                                .apply {
+                                    track.albumTitle?.let(::setAlbumTitle)
+                                    track.artworkUrl?.let { setArtworkUri(it.toUri()) }
+                                }.build()).build()
                     },selected,0)
                 }
                 output.prepare(); output.play()
+            }
+            override fun playCollection(tracks:List<TrackItem>) {
+                val collection=tracks.distinctBy(TrackItem::id)
+                if(collection.isEmpty()) return
+                // Only authorized imported local audio may be enqueued directly. Remote streams
+                // must go through the existing provider resolver and access-policy checks.
+                val imported=state.value.tracks.map(TrackItem::id).toSet()
+                if(collection.any { it.id !in imported || !it.id.startsWith("content://") }) {
+                    play(collection.first().id)
+                    return
+                }
+                playbackRequests.cancel()
+                val output=controller ?: return
+                val media=collection.map { track ->
+                    MediaItem.Builder().setMediaId(track.id).setUri(track.id)
+                        .setMediaMetadata(MediaMetadata.Builder()
+                            .setTitle(track.title).setArtist(track.subtitle)
+                            .apply {
+                                track.albumTitle?.let(::setAlbumTitle)
+                                track.artworkUrl?.let { setArtworkUri(it.toUri()) }
+                            }.build())
+                        .build()
+                }
+                output.setMediaItems(media,0,0)
+                output.prepare()
+                output.play()
+                publish()
             }
             override fun toggle() { playbackRequests.cancel();controller?.let { if(it.isPlaying) it.pause() else { it.prepare(); it.play() } } }
             override fun previous() { playbackRequests.cancel();controller?.seekToPrevious() }
@@ -326,8 +361,17 @@ class MainActivity : ComponentActivity() {
                 publish()
             }
             override fun showAudioOutput() {
-                val action=if(Build.VERSION.SDK_INT>=29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS
-                startActivity(Intent(action))
+                AudioOutputRouteRequest.launch(
+                    sdk=Build.VERSION.SDK_INT,
+                    showNative={
+                        if(Build.VERSION.SDK_INT>=34) MediaRouter2.getInstance(this@MainActivity).showSystemOutputSwitcher()
+                        else false
+                    },
+                    showFallback={
+                        val action=if(Build.VERSION.SDK_INT>=29) Settings.Panel.ACTION_VOLUME else Settings.ACTION_SOUND_SETTINGS
+                        startActivity(Intent(action))
+                    },
+                )
             }
             override fun updateAudioDsp(settings:AudioDspSettings) {
                 val safe=settings.normalized()
@@ -744,12 +788,24 @@ class MainActivity : ComponentActivity() {
             else->null
         }
         val nativeRate=AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC).takeIf {it>0}
+        val dsp=AudioEngineDiagnostics.pcmFormat
+        val dspDepth=when(dsp?.encoding) {
+            C.ENCODING_PCM_8BIT->8
+            C.ENCODING_PCM_16BIT,C.ENCODING_PCM_16BIT_BIG_ENDIAN->16
+            C.ENCODING_PCM_24BIT,C.ENCODING_PCM_24BIT_BIG_ENDIAN->24
+            C.ENCODING_PCM_32BIT,C.ENCODING_PCM_32BIT_BIG_ENDIAN,C.ENCODING_PCM_FLOAT,C.ENCODING_PCM_FLOAT_BIG_ENDIAN->32
+            else->null
+        }
         return AudioSignalInfo(
             sourceSampleRateHz=format?.sampleRate?.takeIf {it>0},
             sourceBitDepth=bitDepth,
             sourceEncoding=format?.sampleMimeType,
             primaryOutputNativeRateHz=nativeRate,
             availableOutputRoutes=availableAudioRoutes,
+            dspInputSampleRateHz=dsp?.sampleRateHz,
+            dspInputBitDepth=dspDepth,
+            dspInputChannelCount=dsp?.channelCount,
+            dspProcessingActive=dsp?.processingEnabled,
         )
     }
     private fun refreshAvailableAudioRoutes() {
@@ -763,6 +819,7 @@ class MainActivity : ComponentActivity() {
             subtitle=item.mediaMetadata.artist?.toString()?.takeIf(String::isNotBlank) ?: "Unknown artist",
             artworkUrl=item.mediaMetadata.artworkUri?.toString(),
             metadataSourceUrl=item.mediaMetadata.extras?.getString("rynx.metadata-source"),
+            albumTitle=item.mediaMetadata.albumTitle?.toString(),
         )
 
     private fun launchLibraryMutation(fallback:String,operation:suspend ()->Any?) {

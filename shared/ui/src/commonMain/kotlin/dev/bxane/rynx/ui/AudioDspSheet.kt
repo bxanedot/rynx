@@ -124,6 +124,10 @@ import kotlin.math.pow
                         DspSlider("Headphone crossfeed",settings.crossfeed,0f..1f,"${(settings.crossfeed*100).toInt()}%",!disabled){update(settings.copy(crossfeed=it))}
                         RynxGlassSwitch("Inter-sample peak limiter",settings.limiterEnabled,enabled=!disabled) {enabled->update(settings.copy(limiterEnabled=enabled))}
                         if(settings.limiterEnabled) DspSlider("Limiter ceiling",settings.limiterCeiling,.5f..1f,"${(settings.limiterCeiling*100).toInt()}%",!disabled){update(settings.copy(limiterCeiling=it))}
+                        RynxGlassSwitch("TPDF output dither",settings.ditherEnabled,enabled=!disabled) {enabled->update(settings.copy(ditherEnabled=enabled))}
+                        BasicText("Optional low-level dither when Rynx converts processed PCM to 8-, 16- or 24-bit integer samples. Disabled in Pure Mode. It does not upgrade the original track or DAC precision.",style=TextStyle(color=muted,fontSize=13.sp))
+                        RynxGlassSwitch("Skip long silences",settings.skipSilenceEnabled,enabled=!disabled) {enabled->update(settings.copy(skipSilenceEnabled=enabled))}
+                        BasicText("Uses Media3 silence detection to shorten quiet passages during Android playback. Off by default to preserve musical pauses, and automatically bypassed in Pure Mode.",style=TextStyle(color=muted,fontSize=13.sp))
                         Presets(settings,ink,disabled,update)
 
                         BasicText("Signal and output",style=TextStyle(color=ink,fontSize=19.sp,fontWeight=FontWeight.SemiBold))
@@ -131,6 +135,12 @@ import kotlin.math.pow
                         val sourceDepth=signalInfo.sourceBitDepth?.let {"$it-bit PCM"} ?: "Codec-managed / not exposed"
                         val sourceCodec=signalInfo.sourceEncoding ?: "Media3 decoded format"
                         BasicText("Media3 selected track format: $sourceRate · $sourceDepth · $sourceCodec",style=TextStyle(color=muted,fontSize=13.sp))
+                        val dspRate=signalInfo.dspInputSampleRateHz?.let {"${it/1000f} kHz"} ?: "Not configured"
+                        val dspDepth=signalInfo.dspInputBitDepth?.let {"$it-bit PCM"} ?: "Not reported"
+                        val dspChannels=signalInfo.dspInputChannelCount?.let {"$it channel(s)"} ?: "Unknown channels"
+                        val dspState=when(signalInfo.dspProcessingActive) {true->"Processing";false->"Bypassed";null->"Not configured"}
+                        BasicText("Rynx DSP input: $dspRate · $dspDepth · $dspChannels · $dspState",style=TextStyle(color=muted,fontSize=13.sp))
+                        BasicText("DSP input describes the PCM delivered to Rynx, not the decoded source quality or the physical audio output format.",style=TextStyle(color=muted,fontSize=13.sp))
                         val nativeRate=signalInfo.primaryOutputNativeRateHz?.let {"${it/1000f} kHz"} ?: "unavailable"
                         BasicText("Android primary output native-rate hint: $nativeRate. It may differ from the active Bluetooth or USB route.",style=TextStyle(color=muted,fontSize=13.sp))
                         if(signalInfo.availableOutputRoutes.isNotEmpty()) BasicText("Android reports these available routes: ${signalInfo.availableOutputRoutes.joinToString()}",style=TextStyle(color=muted,fontSize=13.sp))

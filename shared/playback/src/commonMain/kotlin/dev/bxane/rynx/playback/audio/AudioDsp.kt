@@ -45,7 +45,14 @@ data class AudioDspSettings(
     val compressorReleaseMs: Float = 120f,
     val limiterEnabled: Boolean = false,
     val limiterCeiling: Float = .98f,
+    /** Optional triangular dither for the integer PCM conversion after DSP; Pure Mode bypasses it. */
+    val ditherEnabled: Boolean = false,
+    /** Media3's native silence skipping; off by default and suppressed while Pure Mode is active. */
+    val skipSilenceEnabled: Boolean = false,
 ) {
+    /** Silent-region removal must never alter Pure Mode's playback timeline. */
+    fun effectiveSkipSilence(): Boolean = skipSilenceEnabled && !pureMode
+
     fun normalized(): AudioDspSettings {
         val count = when (equalizerLayout) {
             AudioEqualizerLayout.TEN_BAND -> 10
@@ -59,7 +66,11 @@ data class AudioDspSettings(
                 q = band.q.finiteOr(1f).coerceIn(.1f, 12f),
             )
         }.let { bands ->
-            if (bands.size == count) bands else bands + defaultBands(equalizerLayout).drop(bands.size)
+            // Parametric EQ is a variable-length filter bank (1..12). Do not pad it to 12:
+            // padding made the Sound sheet's Add filter action permanently disabled.
+            if (equalizerLayout == AudioEqualizerLayout.PARAMETRIC) {
+                bands.ifEmpty { defaultBands(AudioEqualizerLayout.PARAMETRIC) }
+            } else if (bands.size == count) bands else bands + defaultBands(equalizerLayout).drop(bands.size)
         }
         return copy(
             equalizerBands = normalizedBands,

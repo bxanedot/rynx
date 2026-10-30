@@ -18,7 +18,10 @@ internal class RynxAudioRenderersFactory(
         enableFloatOutput: Boolean,
         enableAudioTrackPlaybackParams: Boolean,
     ): AudioSink = DefaultAudioSink.Builder(context)
-        .setEnableFloatOutput(true)
+        // Media3's float-output branch skips the custom AudioProcessor chain for high-resolution PCM.
+        // Keep Rynx's real EQ/protection/dither attached to the PCM chain. This does not imply
+        // 24/32-bit output: Media3 may down-convert to 16-bit on this path.
+        .setEnableFloatOutput(false)
         .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
         .setAudioProcessors(arrayOf(rynxProcessor))
         .build()

@@ -16,6 +16,8 @@ data class TrackItem(
     val subtitle: String = "Local audio",
     val artworkUrl: String? = null,
     val metadataSourceUrl:String?=null,
+    /** Embedded album tag when the source reports it; never inferred from the filename. */
+    val albumTitle: String? = null,
 )
 data class CatalogSearchState(
     val query: String = "",
@@ -54,6 +56,11 @@ data class PlayerUiState(
     val audioSignalInfo: AudioSignalInfo = AudioSignalInfo(),
     val audioClipCount: Long = 0,
     val audioSettingsOpen: Boolean = false,
+    /** Host-supplied app/build facts for About. Never infer these from the audio format. */
+    val appVersionName: String? = null,
+    val appBuildNumber: String? = null,
+    val appPlatform: String? = null,
+    val appAudioBackend: String? = null,
     val shuffleEnabled: Boolean = false,
     val shuffleAvailable: Boolean = false,
     val queueEditingAvailable: Boolean = false,
@@ -84,6 +91,8 @@ interface PlayerActions {
     fun searchYouTubeMusic(query: String)
     fun loadMoreYouTubeMusic()
     fun playCatalog(item: dev.bxane.rynx.playback.catalog.CatalogItem) = Unit
+    /** Start a real local collection queue. Hosts without queue support may play its first track. */
+    fun playCollection(tracks: List<TrackItem>) { tracks.firstOrNull()?.let { play(it.id) } }
     fun toggleFavorite(id: String) = Unit
     fun setVolume(fraction: Float) = Unit
     fun showAudioOutput() = Unit

@@ -744,12 +744,24 @@ class MainActivity : ComponentActivity() {
             else->null
         }
         val nativeRate=AudioTrack.getNativeOutputSampleRate(AudioManager.STREAM_MUSIC).takeIf {it>0}
+        val dsp=AudioEngineDiagnostics.pcmFormat
+        val dspDepth=when(dsp?.encoding) {
+            C.ENCODING_PCM_8BIT->8
+            C.ENCODING_PCM_16BIT,C.ENCODING_PCM_16BIT_BIG_ENDIAN->16
+            C.ENCODING_PCM_24BIT,C.ENCODING_PCM_24BIT_BIG_ENDIAN->24
+            C.ENCODING_PCM_32BIT,C.ENCODING_PCM_32BIT_BIG_ENDIAN,C.ENCODING_PCM_FLOAT,C.ENCODING_PCM_FLOAT_BIG_ENDIAN->32
+            else->null
+        }
         return AudioSignalInfo(
             sourceSampleRateHz=format?.sampleRate?.takeIf {it>0},
             sourceBitDepth=bitDepth,
             sourceEncoding=format?.sampleMimeType,
             primaryOutputNativeRateHz=nativeRate,
             availableOutputRoutes=availableAudioRoutes,
+            dspInputSampleRateHz=dsp?.sampleRateHz,
+            dspInputBitDepth=dspDepth,
+            dspInputChannelCount=dsp?.channelCount,
+            dspProcessingActive=dsp?.processingEnabled,
         )
     }
     private fun refreshAvailableAudioRoutes() {

@@ -26,7 +26,8 @@ class AppRenderingTest {
         override fun removeFromQueue(id:String){removed=id}
         override fun play(id:String){played=id};override fun previous(){};override fun next(){}
         override fun seek(fraction:Float){};override fun cycleRepeat(){};override fun dismissError(){}
-        override fun searchYouTubeMusic(query:String){};override fun loadMoreYouTubeMusic(){}
+        var searchedQuery:String?=null
+        override fun searchYouTubeMusic(query:String){searchedQuery=query};override fun loadMoreYouTubeMusic(){}
         override fun toggleFavorite(id:String){favorite=id}
         override fun movePlaylistEntry(playlistId:Long,entryId:Long,toIndex:Int){movedEntry=entryId;movedTo=toIndex}
         override fun removePlaylistEntry(playlistId:Long,entryId:Long){removedPlaylistEntry=entryId}
@@ -94,7 +95,7 @@ class AppRenderingTest {
         val state=PlayerUiState(tracks=listOf(TrackItem("a","Evening walk")))
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(state,actions)}
         try {
-            assertSelectedTab(scene,"Listen Now")
+            assertSelectedTab(scene,"Home")
             click(scene,"Browse")
             assertSelectedTab(scene,"Browse")
             click(scene,"Radio")
@@ -110,10 +111,23 @@ class AppRenderingTest {
         val state=PlayerUiState(recentTracks=listOf(TrackItem("a","Evening walk","Artist", "https://example.test/art.jpg")))
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(state,actions)}
         try {
-            assertText(scene,"Recently Played")
-            capture(scene,"phone-home-shelf")
-            click(scene,"Play Evening walk")
+            assertText(scene,"For You")
+            capture(scene,"phone-home-for-you")
+            click(scene,"Play For You Evening walk")
             assertEquals("a",actions.played)
+        } finally {scene.close()}
+    }
+    @Test fun homeHasVisibleDiscoveryShortcutsThatRunRealCatalogSearch() {
+        val actions=Actions()
+        val scene=ImageComposeScene(390,844,Density(1f)) {
+            RynxApp(PlayerUiState(),actions)
+        }
+        try {
+            assertText(scene,"For You")
+            capture(scene,"phone-home-first-install")
+            click(scene,"Trending")
+            assertEquals("trending songs",actions.searchedQuery)
+            assertSelectedTab(scene,"Search")
         } finally {scene.close()}
     }
     @Test fun expandedPlayerCanToggleFavoriteForTheCurrentTrack() {

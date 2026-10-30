@@ -100,7 +100,8 @@ class MainActivity : ComponentActivity() {
         appVersionName=BuildConfig.VERSION_NAME,
         appBuildNumber=BuildConfig.VERSION_CODE.toString(),
         appPlatform="Android",
-        appAudioBackend="Media3 ExoPlayer"))
+        appAudioBackend="Media3 ExoPlayer",
+        appCatalogProvider="InnerTubeX · NewPipe fallback"))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: MusicPlaybackCatalog
@@ -206,7 +207,15 @@ class MainActivity : ComponentActivity() {
     private val listener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish()
         override fun onPlayerError(error: PlaybackException) {
-            state.update { it.copy(error="Playback failed. Check the file and your audio output, then try again.",playing=false,busy=false) }
+            val message=when(error.errorCode) {
+                PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
+                    "The music provider rejected this audio URL. Try another song or refresh the search."
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
+                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
+                    "The audio connection failed. Check your network and retry."
+                else -> "Audio playback failed. The provider may not support this track or format."
+            }
+            state.update { it.copy(error=message,playing=false,busy=false) }
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -227,7 +236,8 @@ class MainActivity : ComponentActivity() {
         renderingMonitor=AndroidRenderingMonitor(window){pressure->state.update {it.copy(renderingPressure=pressure)}}
         val innertubexClient = HttpClient(OkHttp)
         val innertubex = createInnerTubeXFallbackAudioResolver(innertubexClient)
-        catalog = createInnerTubeXMusicPlaybackCatalog(innertubexClient)
+        val innerTubeXCatalog = createInnerTubeXMusicPlaybackCatalog(innertubexClient)
+        catalog = innerTubeXCatalog
         innertubexHttpClient = innertubexClient
         innertubexResolver = innertubex
         audioResolver = AudioResolutionChain(innertubex, NewPipeFallbackAudioResolver)
@@ -248,9 +258,18 @@ class MainActivity : ComponentActivity() {
         state.update { it.copy(favoriteIds=favoriteIds,favoriteTracks=favoriteTracks,recentTracks=recentTracks) }
         restoreLibrary()
         discovery=AndroidDiscoveryCoordinator(applicationContext,lifecycleScope,
-            onFeed={feed->state.update {it.copy(discovery=feed)}},
+            onFeed={feed->state.update {it.copy(
+                discovery=feed,
+                catalogSearchStatus=when {
+                    feed.loading -> "Checking YouTube Music"
+                    feed.sections.any { section -> section.tracks.isNotEmpty() } -> "Search results available"
+                    feed.error != null -> "Catalog search unavailable"
+                    else -> "No catalog results"
+                },
+            )}},
             onSelection={section,loading->state.update {it.copy(discoverySelection=section,discoverySelectionLoading=loading)}},
-            ytmSearch={query->catalogReady.await();catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
+            ytmHome={if(!catalogReady.await()) error("Music catalog could not initialize");innerTubeXCatalog.browseHome()},
+            ytmSearch={query->if(!catalogReady.await()) error("Music catalog could not initialize");catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
                 MusicMetadata("yt:${item.mediaId}",item.title,item.artist.orEmpty(),artworkUrl=item.artworkUrl,durationMillis=item.durationSeconds?.times(1000),playbackId=item.mediaId)
             }})
         discovery.load()
@@ -629,18 +648,24 @@ class MainActivity : ComponentActivity() {
             try {
                 if(!catalogReady.await()) error("YouTube Music is unavailable")
                 val page=withContext(Dispatchers.IO) { catalog.searchMusic(normalized) }
-                state.update { it.copy(catalogSearch=CatalogSearchState(
-                    query=normalized,
-                    items=page.items.distinctBy { item -> item.provider to item.mediaId },
-                    continuation=page.continuation,
-                )) }
+                state.update { it.copy(
+                    catalogSearch=CatalogSearchState(
+                        query=normalized,
+                        items=page.items.distinctBy { item -> item.provider to item.mediaId },
+                        continuation=page.continuation,
+                    ),
+                    catalogSearchStatus=if(page.items.isNotEmpty()) "Search results available" else "No catalog results",
+                ) }
             } catch(cancelled: CancellationException) {
                 throw cancelled
             } catch(_: Exception) {
-                state.update { it.copy(catalogSearch=CatalogSearchState(
-                    query=normalized,
-                    error="YouTube Music search failed. Check your connection and try again.",
-                )) }
+                state.update { it.copy(
+                    catalogSearch=CatalogSearchState(
+                        query=normalized,
+                        error="InnerTubeX could not search YouTube Music. Check your connection and retry.",
+                    ),
+                    catalogSearchStatus="Catalog search unavailable",
+                ) }
             }
         }
     }
@@ -690,7 +715,7 @@ class MainActivity : ComponentActivity() {
         playbackRequests.start(load=load,commit={prepared->
             val stream=prepared.stream;val item=prepared.item
             val output=controller
-            if(stream==null)state.update {it.copy(error="This track could not be played right now.")}
+            if(stream==null)state.update {it.copy(error="InnerTubeX and NewPipe did not provide a compatible audio stream for this song. Try another result.")}
             else if(output==null)state.update {it.copy(error="The player is reconnecting. Try this track again shortly.")}
             else {
                 StreamRequestHeaderStore.register(stream.url,stream.headers)

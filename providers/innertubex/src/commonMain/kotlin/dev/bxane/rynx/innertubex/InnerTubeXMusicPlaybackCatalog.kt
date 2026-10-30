@@ -27,7 +27,20 @@ class InnerTubeXMusicPlaybackCatalog internal constructor(
     override suspend fun searchMusic(query: String): CatalogPage {
         require(query.isNotBlank()) { "Music search query must not be empty" }
         val response = innerTube.search(YouTubeClient.WEB_REMIX, query = query, setLogin = false)
-        return InnerTubeXSearchPayloads.parse(response.bodyAsText())
+        val body = response.bodyAsText()
+        val page = InnerTubeXSearchPayloads.parse(body)
+        // A nonempty provider error or unsupported payload must not look like a healthy
+        // catalog containing no songs. Keep the failure visible so users can retry.
+        if (page.items.isEmpty() && InnerTubeXSearchPayloads.hasCatalogProblem(body)) {
+            throw IllegalStateException("YouTube Music returned an unavailable or unsupported catalog response")
+        }
+        return page
+    }
+
+    /** Unauthenticated, actual YouTube Music Home feed, not a synthetic search result. */
+    suspend fun browseHome(): List<dev.bxane.rynx.playback.discovery.HomeSection> {
+        val response = innerTube.browse(YouTubeClient.WEB_REMIX, browseId = "FEmusic_home", setLogin = false)
+        return InnerTubeXHomePayloads.parse(response.bodyAsText())
     }
 
     override suspend fun searchMore(continuation: String): CatalogPage {
@@ -64,9 +77,11 @@ internal object InnerTubeXSearchPayloads {
         return CatalogPage(items, continuation(root))
     }
 
+    /** Provider responses sometimes put the watch endpoint inside a flex-column text run. */
     private fun track(renderer: JsonObject): CatalogItem? {
         val id = renderer.obj("playlistItemData").text("videoId")
             ?: renderer.obj("navigationEndpoint").obj("watchEndpoint").text("videoId")
+            ?: findWatchVideoId(renderer)
             ?: return null
         if (!id.matches(Regex("^[A-Za-z0-9_-]{11}$"))) return null
 
@@ -97,7 +112,8 @@ internal object InnerTubeXSearchPayloads {
                 is JsonArray -> element.forEach(::visit)
                 is JsonObject -> {
                     val url = element.text("url")
-                    if (url?.startsWith("https://") == true && url.contains("googleusercontent.com")) {
+                    if (url?.startsWith("https://") == true &&
+                        (url.contains("googleusercontent.com") || url.contains("ytimg.com"))) {
                         images += Triple(url, element.int("width") ?: 0, element.int("height") ?: 0)
                     }
                     element.values.forEach(::visit)
@@ -107,6 +123,30 @@ internal object InnerTubeXSearchPayloads {
         }
         renderer["thumbnail"]?.let(::visit)
         return images.maxByOrNull { it.second.toLong() * it.third }?.first
+    }
+
+    /** Accept only watch endpoints, not arbitrary browse or playlist identifiers. */
+    private fun findWatchVideoId(renderer: JsonObject): String? {
+        fun visit(element: JsonElement): String? = when(element) {
+            is JsonArray -> element.firstNotNullOfOrNull(::visit)
+            is JsonObject -> {
+                val endpoint = element["watchEndpoint"] as? JsonObject
+                endpoint?.text("videoId")
+                    ?: element.values.firstNotNullOfOrNull(::visit)
+            }
+            else -> null
+        }
+        return visit(renderer)
+    }
+
+    /** Detect a provider failure without leaking upstream response content to the UI. */
+    fun hasCatalogProblem(body: String): Boolean {
+        val root = runCatching { json.parseToJsonElement(body) }.getOrNull() as? JsonObject ?: return true
+        if(root["error"] != null || root["playabilityStatus"] != null) return true
+        // Only classify an entirely unrecognized response as failure. A valid empty
+        // search may contain a section-list renderer with no matching songs.
+        val expected = listOf("contents", "continuationContents", "onResponseReceivedCommands")
+        return expected.none { it in root }
     }
 
     private fun continuation(root: JsonElement): String? {

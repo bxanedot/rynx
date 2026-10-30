@@ -53,7 +53,7 @@ import dev.chrisbanes.haze.rememberHazeState
 
 private data class Palette(val bg: Color, val surface: Color, val text: Color, val secondary: Color, val line: Color)
 internal enum class AppTab(val title: String, val glyph: Glyph) {
-    ListenNow("Listen Now", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
+    ListenNow("Home", Glyph.Home), Browse("Browse", Glyph.Browse), Radio("Radio", Glyph.Radio),
     Library("Library", Glyph.Library), Search("Search", Glyph.Search),
 }
 private val Accent = Color(0xFFFA2D48)
@@ -173,7 +173,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                     }
                     if(state.busy) Label("Opening audio…",color=palette.secondary,modifier=Modifier.padding(24.dp))
                     when(activeTab) {
-                        AppTab.ListenNow -> ListenNowContent(state,actions,{selectTab(AppTab.Browse)},{selectTab(AppTab.Search,focusSearch=true)},Modifier.weight(1f))
+                        AppTab.ListenNow -> ListenNowContent(state,actions,{selectTab(AppTab.Browse)},{selectTab(AppTab.Search,focusSearch=true)},
+                            { term -> query=term;selectTab(AppTab.Search);actions.searchYouTubeMusic(term) },Modifier.weight(1f))
                         AppTab.Browse -> BrowseContent(state,actions,{term -> query=term;selectTab(AppTab.Search);actions.searchYouTubeMusic(term)},Modifier.weight(1f))
                         AppTab.Radio -> RadioContent({ _:String -> query="";selectTab(AppTab.Search,focusSearch=true) },Modifier.weight(1f))
                         AppTab.Library -> LibraryContent(state,actions,Modifier.weight(1f))
@@ -241,63 +242,100 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     }
 }
 
-@Composable private fun ListenNowContent(state:PlayerUiState,actions:PlayerActions,onBrowse:()->Unit,onSearch:()->Unit,modifier:Modifier) {
+/**
+ * Real, useful Home even when the remote catalog is unavailable. The For You shelf
+ * contains ONLY the listener's local favorites and recent plays, never fake songs.
+ */
+@Composable private fun ListenNowContent(
+    state:PlayerUiState,
+    actions:PlayerActions,
+    onBrowse:()->Unit,
+    onSearch:()->Unit,
+    onExploreQuery:(String)->Unit,
+    modifier:Modifier,
+) {
     val p=LocalPalette.current
-    LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=8.dp,bottom=20.dp)) {
-        if(state.discovery.enabled)item {DiscoveryHeader(state.discovery,actions)}
-        if(state.recentTracks.isEmpty() && !state.discovery.enabled) item {
-            Column(Modifier.fillMaxWidth().padding(vertical=34.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-                Artwork(144.dp)
-                Spacer(Modifier.height(24.dp))
-                Label("Your music starts here",24,bold=true)
-                Spacer(Modifier.height(8.dp))
-                Label("Search for songs or add audio files to your library.",14,p.secondary)
-                Spacer(Modifier.height(20.dp))
-                Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Action("Find music",onSearch)
-                    Action("Add files",actions::importFiles)
-                }
+    val personal=forYouTracks(state)
+    LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(top=5.dp,bottom=28.dp)) {
+        item {
+            Column(Modifier.fillMaxWidth().padding(bottom=14.dp)) {
+                Label("YOUR MUSIC, YOUR WAY",11,Accent,bold=true)
+                Spacer(Modifier.height(5.dp))
+                Label("For You",29,bold=true)
+                Spacer(Modifier.height(5.dp))
+                Label("Picked from music you love and songs you've played.",13,p.secondary)
             }
-        } else if(state.recentTracks.isNotEmpty()) {
+        }
+        if(personal.isNotEmpty()) {
             item {
-                Column {
-                    SectionHeading("Recently Played", "${state.recentTracks.size} songs")
-                    LazyRow(horizontalArrangement=Arrangement.spacedBy(14.dp),contentPadding=PaddingValues(horizontal=2.dp)) {
-                        items(state.recentTracks.take(8),key={"recent:${it.id}"}) { track ->
-                            Column(Modifier.width(152.dp).clip(RoundedCornerShape(12.dp))
-                                .clickable(role=Role.Button,onClick={actions.play(track.id)})
-                                .semantics{contentDescription="Play ${track.title}";role=Role.Button}
-                                .padding(bottom=5.dp)) {
-                                Artwork(152.dp,artworkUrl=track.artworkUrl)
-                                Spacer(Modifier.height(9.dp))
-                                Row(verticalAlignment=Alignment.CenterVertically) {
-                                    Column(Modifier.weight(1f)) { Label(track.title,14,bold=true);Label(track.subtitle,12,p.secondary) }
-                                    IconButton(if(track.id in state.favoriteIds) Glyph.HeartFill else Glyph.Heart,
-                                        if(track.id in state.favoriteIds) "Remove ${track.title} from Favorites" else "Add ${track.title} to Favorites",
-                                        tint=if(track.id in state.favoriteIds) Accent else p.secondary) { actions.toggleFavorite(track.id) }
-                                }
-                            }
+                LazyRow(horizontalArrangement=Arrangement.spacedBy(14.dp),
+                    contentPadding=PaddingValues(end=6.dp)) {
+                    items(personal,key={"for-you:"+it.id}) { track ->
+                        Column(Modifier.width(160.dp)
+                            .clickable(role=Role.Button,onClick={actions.play(track.id)})
+                            .semantics { contentDescription="Play For You "+track.title }) {
+                            Artwork(160.dp,artworkUrl=track.artworkUrl)
+                            Spacer(Modifier.height(9.dp))
+                            Label(track.title,15,bold=true)
+                            Label(track.subtitle,12,p.secondary)
                         }
                     }
                 }
             }
+        } else {
             item {
-                Column(Modifier.fillMaxWidth().padding(vertical=22.dp)) {
-                    Label("Keep discovering",22,bold=true)
-                    Spacer(Modifier.height(7.dp))
-                    Label("Search for artists, albums and playlists to add to your listening.",14,p.secondary)
-                    Spacer(Modifier.height(14.dp))
-                    Action("Browse music",onBrowse)
+                Column(Modifier.fillMaxWidth().rynxMaterial(21.dp,amount=.55f).padding(18.dp),
+                    verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {
+                        RynxBrandMark(Modifier.size(57.dp))
+                        Column(Modifier.weight(1f)) {
+                            Label("Your mix starts here",18,bold=true)
+                            Spacer(Modifier.height(5.dp))
+                            Label("Play or favorite a track to fill For You.",13,p.secondary)
+                        }
+                    }
+                    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                        Action("Find music",onSearch)
+                        RynxButton("Add files",actions::importFiles)
+                    }
                 }
             }
         }
-        if(state.discovery.enabled)homeDiscoverySections(state.discovery,actions)
-        state.current?.takeIf { current -> state.tracks.none { it.id==current.id } }?.let { current -> item {
-            Column(Modifier.fillMaxWidth().padding(top=18.dp,bottom=18.dp)) {
-                Label("Now Playing",20,bold=true)
-                TrackRow(current,true,state.playing,{actions.toggle()},current.id in state.favoriteIds,{actions.toggleFavorite(current.id)})
+        item {
+            Column(Modifier.fillMaxWidth().padding(top=22.dp,bottom=12.dp)) {
+                SectionHeading("Explore music",null)
+                Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                    RynxButton("Trending",{onExploreQuery("trending songs")},Modifier.weight(1f))
+                    RynxButton("New music",{onExploreQuery("new music")},Modifier.weight(1f))
+                    RynxButton("Chill",{onExploreQuery("chill music")},Modifier.weight(1f))
+                }
             }
-        } }
+        }
+        if(state.discovery.enabled) {
+            item { DiscoveryHeader(state.discovery,actions) }
+            homeDiscoverySections(state.discovery,actions)
+        } else {
+            item {
+                Label("YouTube Music discovery isn't connected on this platform.",14,p.secondary,
+                    modifier=Modifier.padding(vertical=16.dp))
+                Action("Search songs",onSearch)
+            }
+        }
+        if(state.recentTracks.isNotEmpty()) {
+            item {SectionHeading("Recently Played",state.recentTracks.size.toString()+" songs")}
+            items(state.recentTracks.take(6),key={"home-recent:"+it.id}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,
+                    {actions.play(track.id)},track.id in state.favoriteIds,
+                    {actions.toggleFavorite(track.id)})
+            }
+        }
+        state.current?.takeIf { current -> state.tracks.none { it.id==current.id } }?.let { current ->
+            item {
+                SectionHeading("Now Playing",null)
+                TrackRow(current,true,state.playing,{actions.toggle()},
+                    current.id in state.favoriteIds,{actions.toggleFavorite(current.id)})
+            }
+        }
     }
 }
 
@@ -340,6 +378,8 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val p=LocalPalette.current
     val libraryTracks=(state.tracks+state.favoriteTracks+listOfNotNull(state.current)).distinctBy { it.id }
     val favorites=libraryTracks.filter { it.id in state.favoriteIds }
+    val pinnedTracks=(favorites+state.recentTracks+state.tracks)
+        .distinctBy(TrackItem::id).filter { !it.artworkUrl.isNullOrBlank() }.take(6)
     val artists=remember(state.tracks) { libraryArtists(state.tracks) }
     val albums=remember(state.tracks) { libraryAlbums(state.tracks) }
     var librarySection by rememberSaveable { mutableStateOf("home") }
@@ -459,6 +499,11 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             Action("Import playlist backup",actions::importPlaylistBackup)
         }
     } else LazyColumn(modifier.padding(horizontal=20.dp),contentPadding=PaddingValues(vertical=8.dp)) {
+        if(pinnedTracks.isNotEmpty()) {
+            item {
+                LibraryArtworkGrid(pinnedTracks) { actions.play(it.id) }
+            }
+        }
         item {
             LibraryCategoryGrid(
                 artistCount=artists.size,
@@ -537,6 +582,27 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     }
 }
 
+/** Top artwork grid mirrors the reference composition using only actual owned tracks. */
+@Composable private fun LibraryArtworkGrid(tracks:List<TrackItem>,onPlay:(TrackItem)->Unit) {
+    BoxWithConstraints(Modifier.fillMaxWidth().padding(bottom=20.dp)) {
+        val tile=(maxWidth-20.dp)/3
+        Column(verticalArrangement=Arrangement.spacedBy(14.dp)) {
+            tracks.chunked(3).forEach { row ->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    row.forEach {track ->
+                        Column(Modifier.width(tile).clickable(role=Role.Button,onClick={onPlay(track)})
+                            .semantics {contentDescription="Play pinned "+track.title}) {
+                            Artwork(tile,artworkUrl=track.artworkUrl)
+                            Spacer(Modifier.height(5.dp))
+                            Label(track.title,12,bold=true)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable private fun LibraryCategoryGrid(
     artistCount:Int,
     albumCount:Int,
@@ -545,17 +611,13 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     favoriteCount:Int,
     onNavigate:(String)->Unit,
 ) {
-    Column(Modifier.fillMaxWidth().padding(bottom=18.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        Label("Your Library",25,bold=true,modifier=Modifier.padding(bottom=5.dp))
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            LibraryCategoryShortcut("Playlists",Glyph.Playlists,playlistCount,Modifier.weight(1f)) {onNavigate("playlists")}
-            LibraryCategoryShortcut("Artists",Glyph.Artists,artistCount,Modifier.weight(1f)) {onNavigate("artists")}
-        }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-            LibraryCategoryShortcut("Albums",Glyph.Albums,albumCount,Modifier.weight(1f)) {onNavigate("albums")}
-            LibraryCategoryShortcut("Songs",Glyph.Note,songCount,Modifier.weight(1f)) {onNavigate("songs")}
-        }
-        LibraryCategoryShortcut("Favorites",Glyph.HeartFill,favoriteCount,Modifier.fillMaxWidth()) {onNavigate("favorites")}
+    // Simple inset grouped rows keep artwork the focus, as in the iOS references.
+    Column(Modifier.fillMaxWidth().padding(bottom=18.dp)) {
+        LibraryCategoryShortcut("Playlists",Glyph.Playlists,playlistCount) {onNavigate("playlists")}
+        LibraryCategoryShortcut("Artists",Glyph.Artists,artistCount) {onNavigate("artists")}
+        LibraryCategoryShortcut("Albums",Glyph.Albums,albumCount) {onNavigate("albums")}
+        LibraryCategoryShortcut("Songs",Glyph.Note,songCount) {onNavigate("songs")}
+        LibraryCategoryShortcut("Favorites",Glyph.HeartFill,favoriteCount) {onNavigate("favorites")}
     }
 }
 
@@ -563,28 +625,22 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     title:String,
     glyph:Glyph,
     count:Int,
-    modifier:Modifier=Modifier,
     onClick:()->Unit,
 ) {
     val p=LocalPalette.current
-    val interaction=remember { MutableInteractionSource() }
-    Row(
-        modifier.heightIn(min=70.dp)
-            .rynxMaterial(17.dp,amount=.42f,interaction=interaction)
+    val interaction=remember {MutableInteractionSource()}
+    Column {
+        Row(Modifier.fillMaxWidth().heightIn(min=58.dp)
             .rynxPressFeedback(interaction)
             .clickable(role=Role.Button,interactionSource=interaction,indication=null,onClick=onClick)
-            .semantics { contentDescription="Browse "+title },
-        verticalAlignment=Alignment.CenterVertically,
-    ) {
-        Box(Modifier.padding(start=13.dp).size(34.dp)
-            .clip(RoundedCornerShape(11.dp))
-            .background(Accent.copy(alpha=.12f)),contentAlignment=Alignment.Center) {
+            .semantics {contentDescription="Browse "+title}
+            .padding(horizontal=3.dp),verticalAlignment=Alignment.CenterVertically) {
             RynxGlyph(glyph,Accent,Modifier.size(24.dp))
+            Label(title,16,modifier=Modifier.weight(1f).padding(start=15.dp))
+            Label(count.toString(),13,p.secondary,modifier=Modifier.padding(end=8.dp))
+            RynxGlyph(Glyph.ChevronRight,p.secondary,Modifier.size(15.dp))
         }
-        Column(Modifier.weight(1f).padding(horizontal=10.dp)) {
-            Label(title,14,bold=true)
-            Label(count.toString(),12,p.secondary)
-        }
+        Spacer(Modifier.fillMaxWidth().padding(start=42.dp).height(.6.dp).background(p.line))
     }
 }
 

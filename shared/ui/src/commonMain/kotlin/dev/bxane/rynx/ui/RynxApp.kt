@@ -340,6 +340,26 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val p=LocalPalette.current
     val libraryTracks=(state.tracks+state.favoriteTracks+listOfNotNull(state.current)).distinctBy { it.id }
     val favorites=libraryTracks.filter { it.id in state.favoriteIds }
+    val artists=remember(state.tracks) { libraryArtists(state.tracks) }
+    val albums=remember(state.tracks) { libraryAlbums(state.tracks) }
+    var librarySection by rememberSaveable { mutableStateOf("home") }
+    var selectedArtistName by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedAlbumArtist by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedAlbumTitle by rememberSaveable { mutableStateOf<String?>(null) }
+    val activeArtist=artists.firstOrNull { it.name == selectedArtistName }
+    val activeAlbum=albums.firstOrNull { it.artist == selectedAlbumArtist && it.title == selectedAlbumTitle }
+    fun backFromCollection() {
+        when {
+            selectedAlbumTitle != null -> { selectedAlbumTitle=null; selectedAlbumArtist=null }
+            selectedArtistName != null -> selectedArtistName=null
+            else -> librarySection="home"
+        }
+    }
+    fun openAlbum(album:LibraryAlbum) { selectedAlbumArtist=album.artist; selectedAlbumTitle=album.title }
+    RynxPlatformBackHandler(
+        enabled = selectedAlbumTitle != null || selectedArtistName != null || librarySection != "home",
+        onBack = ::backFromCollection,
+    )
     var selectedPlaylistId by rememberSaveable { mutableStateOf<Long?>(null) }
     var renamePlaylistId by rememberSaveable { mutableStateOf<Long?>(null) }
     var createPlaylistOpen by rememberSaveable { mutableStateOf(false) }
@@ -348,8 +368,30 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
     val renameTarget=state.playlists.firstOrNull { it.id==renamePlaylistId }
     if(selectedPlaylistId!=null && selectedPlaylist==null) selectedPlaylistId=null
     if(renamePlaylistId!=null && renameTarget==null) renamePlaylistId=null
+    LaunchedEffect(activeArtist, selectedArtistName) {
+        if(selectedArtistName != null && activeArtist == null) selectedArtistName=null
+    }
+    LaunchedEffect(activeAlbum, selectedAlbumTitle) {
+        if(selectedAlbumTitle != null && activeAlbum == null) {selectedAlbumTitle=null;selectedAlbumArtist=null}
+    }
 
-    if(selectedPlaylist!=null) {
+    if(activeAlbum != null) {
+        LibraryAlbumScreen(activeAlbum,state,actions,modifier,::backFromCollection)
+    } else if(activeArtist != null) {
+        LibraryArtistScreen(activeArtist,state,actions,modifier,::backFromCollection,::openAlbum)
+    } else if(librarySection == "artists") {
+        LibraryCollectionIndex("Artists",artists.size,modifier,::backFromCollection) {
+            items(artists,key={"artist:"+it.name}) { artist ->
+                LibraryArtistRow(artist) { selectedArtistName=artist.name }
+            }
+        }
+    } else if(librarySection == "albums") {
+        LibraryCollectionIndex("Albums",albums.size,modifier,::backFromCollection) {
+            items(albums,key={"album:"+it.artist+":"+it.title}) { album ->
+                LibraryAlbumRow(album) { openAlbum(album) }
+            }
+        }
+    } else if(selectedPlaylist!=null) {
         Column(modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(horizontal=20.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
                 IconButton(Glyph.Previous,"Back to Library",onClick={selectedPlaylistId=null})
@@ -404,6 +446,22 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
                 IconButton(Glyph.Add,"Create playlist",onClick={createPlaylistOpen=true})
             }
         }
+        if(artists.isNotEmpty()) {
+            item {
+                LibraryCollectionHeading("Artists",artists.size) { librarySection="artists" }
+            }
+            items(artists.take(3),key={"library-artist:"+it.name}) { artist ->
+                LibraryArtistRow(artist) { selectedArtistName=artist.name }
+            }
+        }
+        if(albums.isNotEmpty()) {
+            item {
+                LibraryCollectionHeading("Albums",albums.size) { librarySection="albums" }
+            }
+            items(albums.take(3),key={"library-album:"+it.artist+":"+it.title}) { album ->
+                LibraryAlbumRow(album) { openAlbum(album) }
+            }
+        }
         if(state.playlistBackupAvailable) item {
             Row(Modifier.fillMaxWidth().padding(top=10.dp,bottom=6.dp),horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                 RynxButton("Import backup",actions::importPlaylistBackup,Modifier.weight(1f))
@@ -453,6 +511,141 @@ fun RynxApp(state: PlayerUiState, actions: PlayerActions, onPlayerVisibleChanged
             onSelect={playlistId->actions.addTrackToPlaylist(playlistId,track);addTrack=null},
             onCreatePlaylist={createPlaylistOpen=true},
         )
+    }
+}
+
+@Composable private fun LibraryCollectionHeading(title:String,count:Int,onSeeAll:()->Unit) {
+    Row(Modifier.fillMaxWidth().padding(top=14.dp,bottom=6.dp),verticalAlignment=Alignment.CenterVertically) {
+        Label(title,21,bold=true,modifier=Modifier.weight(1f))
+        RynxButton("See all "+title.lowercase(),onSeeAll)
+    }
+}
+
+@Composable private fun LibraryArtistRow(artist:LibraryArtist,onOpen:()->Unit) {
+    val p=LocalPalette.current
+    Row(Modifier.fillMaxWidth().padding(vertical=4.dp).rynxMaterial(14.dp,amount=.28f)
+        .clickable(role=Role.Button,onClick=onOpen)
+        .semantics { contentDescription="Open artist "+artist.name }
+        .padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        Artwork(58.dp,artworkUrl=artist.artworkUrl)
+        Column(Modifier.padding(horizontal=13.dp).weight(1f)) {
+            Label(artist.name,17,bold=true)
+            Label(artist.tracks.size.toString()+" songs",13,p.secondary)
+        }
+        RynxGlyph(Glyph.ChevronRight,p.secondary)
+    }
+}
+
+@Composable private fun LibraryAlbumRow(album:LibraryAlbum,onOpen:()->Unit) {
+    val p=LocalPalette.current
+    Row(Modifier.fillMaxWidth().padding(vertical=4.dp).rynxMaterial(14.dp,amount=.28f)
+        .clickable(role=Role.Button,onClick=onOpen)
+        .semantics { contentDescription="Open album "+album.title+" by "+album.artist }
+        .padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+        Artwork(58.dp,artworkUrl=album.artworkUrl)
+        Column(Modifier.padding(horizontal=13.dp).weight(1f)) {
+            Label(album.title,17,bold=true)
+            Label(album.artist+" · "+album.tracks.size+" songs",13,p.secondary)
+        }
+        RynxGlyph(Glyph.ChevronRight,p.secondary)
+    }
+}
+
+@Composable private fun LibraryCollectionIndex(
+    title:String,
+    count:Int,
+    modifier:Modifier,
+    onBack:()->Unit,
+    content: androidx.compose.foundation.lazy.LazyListScope.()->Unit,
+) {
+    Column(modifier.fillMaxSize()) {
+        LibraryDetailHeader(title,count.toString()+" collections",onBack)
+        LazyColumn(Modifier.weight(1f).padding(horizontal=20.dp),
+            contentPadding=PaddingValues(vertical=10.dp),
+            content=content)
+    }
+}
+
+@Composable private fun LibraryDetailHeader(title:String,subtitle:String,onBack:()->Unit) {
+    val p=LocalPalette.current
+    Row(Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=10.dp),verticalAlignment=Alignment.CenterVertically) {
+        IconButton(Glyph.Previous,"Back to Library",onClick=onBack)
+        Column(Modifier.weight(1f).padding(start=12.dp)) {
+            Label(title,23,bold=true)
+            Label(subtitle,13,p.secondary)
+        }
+    }
+}
+
+@Composable private fun LibraryArtistScreen(
+    artist:LibraryArtist,
+    state:PlayerUiState,
+    actions:PlayerActions,
+    modifier:Modifier,
+    onBack:()->Unit,
+    onAlbum:(LibraryAlbum)->Unit,
+) {
+    val p=LocalPalette.current
+    Column(modifier.fillMaxSize()) {
+        LibraryDetailHeader(artist.name,artist.tracks.size.toString()+" songs",onBack)
+        LazyColumn(Modifier.weight(1f).padding(horizontal=20.dp),
+            contentPadding=PaddingValues(bottom=20.dp)) {
+            item {
+                Row(Modifier.fillMaxWidth().padding(vertical=10.dp),
+                    verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(16.dp)) {
+                    Artwork(116.dp,artworkUrl=artist.artworkUrl)
+                    Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                        Label(artist.name,23,bold=true)
+                        Action("Play artist") { actions.playCollection(artist.tracks) }
+                    }
+                }
+            }
+            if(artist.albums.isNotEmpty()) {
+                item { SectionHeading("Albums",artist.albums.size.toString()) }
+                items(artist.albums,key={"artist-album:"+it.title}) { album ->
+                    LibraryAlbumRow(album) { onAlbum(album) }
+                }
+            }
+            item { SectionHeading("Songs",artist.tracks.size.toString()) }
+            items(artist.tracks,key={"artist-song:"+it.id}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,
+                    {actions.play(track.id)},track.id in state.favoriteIds,
+                    {actions.toggleFavorite(track.id)})
+            }
+        }
+    }
+}
+
+@Composable private fun LibraryAlbumScreen(
+    album:LibraryAlbum,
+    state:PlayerUiState,
+    actions:PlayerActions,
+    modifier:Modifier,
+    onBack:()->Unit,
+) {
+    val p=LocalPalette.current
+    Column(modifier.fillMaxSize()) {
+        LibraryDetailHeader(album.title,album.artist,onBack)
+        LazyColumn(Modifier.weight(1f).padding(horizontal=20.dp),
+            contentPadding=PaddingValues(bottom=20.dp)) {
+            item {
+                Column(Modifier.fillMaxWidth().padding(vertical=16.dp),
+                    horizontalAlignment=Alignment.CenterHorizontally,
+                    verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Artwork(190.dp,artworkUrl=album.artworkUrl)
+                    Label(album.title,24,bold=true)
+                    Label(album.artist,15,p.secondary)
+                    Label(album.tracks.size.toString()+" songs",13,p.secondary)
+                    Action("Play album") { actions.playCollection(album.tracks) }
+                }
+            }
+            item { SectionHeading("Songs",album.tracks.size.toString()) }
+            items(album.tracks,key={"album-song:"+it.id}) { track ->
+                TrackRow(track,track.id==state.currentId,state.playing,
+                    {actions.play(track.id)},track.id in state.favoriteIds,
+                    {actions.toggleFavorite(track.id)})
+            }
+        }
     }
 }
 

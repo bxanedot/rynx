@@ -7,6 +7,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AudioDspTest {
+    @Test fun silenceSkippingDefaultsOffAndIsAlwaysBypassedInPureMode() {
+        assertTrue(!AudioDspSettings().effectiveSkipSilence())
+        assertTrue(AudioDspSettings(skipSilenceEnabled = true).effectiveSkipSilence())
+        assertTrue(!AudioDspSettings(skipSilenceEnabled = true, pureMode = true).effectiveSkipSilence())
+    }
+
     @Test fun flatPipelinePreservesPcmSamplesExactly() {
         val input=floatArrayOf(0f, .25f, -.5f, .999f, -1f, .125f)
         val expected=input.copyOf()

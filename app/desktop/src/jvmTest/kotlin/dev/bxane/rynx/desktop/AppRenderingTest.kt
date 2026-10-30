@@ -94,7 +94,7 @@ class AppRenderingTest {
         val state=PlayerUiState(tracks=listOf(TrackItem("a","Evening walk")))
         val scene=ImageComposeScene(390,844,Density(1f)){RynxApp(state,actions)}
         try {
-            assertSelectedTab(scene,"Listen Now")
+            assertSelectedTab(scene,"Home")
             click(scene,"Browse")
             assertSelectedTab(scene,"Browse")
             click(scene,"Radio")

@@ -12,6 +12,26 @@ data class MusicMetadata(
 )
 data class ChartCollection(val id:String,val title:String,val tracks:List<MusicMetadata>,val sourceUrl:String,val updated:String?=null,val expectedTrackCount:Int=tracks.size)
 data class DiscoveryRegion(val code:String,val name:String,val neighbors:List<String> = emptyList())
+
+object Regions {
+    val all=listOf(
+        DiscoveryRegion("us","United States",listOf("ca","mx")),DiscoveryRegion("gb","United Kingdom",listOf("ie","fr")),
+        DiscoveryRegion("de","Germany",listOf("at","fr","pl")),DiscoveryRegion("in","India",listOf("np","pk","bd")),
+        DiscoveryRegion("ca","Canada",listOf("us")),DiscoveryRegion("mx","Mexico",listOf("us","gt")),
+        DiscoveryRegion("fr","France",listOf("be","de","es")),DiscoveryRegion("es","Spain",listOf("pt","fr")),
+        DiscoveryRegion("it","Italy",listOf("fr","at","ch")),DiscoveryRegion("at","Austria",listOf("de","it","ch")),
+        DiscoveryRegion("ch","Switzerland",listOf("fr","de","it")),DiscoveryRegion("pl","Poland",listOf("de","cz","sk")),
+        DiscoveryRegion("nl","Netherlands",listOf("be","de")),DiscoveryRegion("be","Belgium",listOf("nl","fr","de")),
+        DiscoveryRegion("ie","Ireland",listOf("gb")),DiscoveryRegion("pt","Portugal",listOf("es")),
+        DiscoveryRegion("br","Brazil",listOf("ar","co","pe")),DiscoveryRegion("ar","Argentina",listOf("br","cl","uy")),
+        DiscoveryRegion("jp","Japan"),DiscoveryRegion("kr","South Korea"),DiscoveryRegion("au","Australia"),DiscoveryRegion("nz","New Zealand"),
+        DiscoveryRegion("za","South Africa",listOf("na","bw","mz")),DiscoveryRegion("ng","Nigeria",listOf("ne","cm","bj")),
+        DiscoveryRegion("se","Sweden",listOf("no","fi")),DiscoveryRegion("no","Norway",listOf("se","fi")),
+        DiscoveryRegion("fi","Finland",listOf("se","no")),DiscoveryRegion("tr","Türkiye",listOf("gr","bg","ge")),
+    )
+    private val extra=mapOf("np" to "Nepal","pk" to "Pakistan","bd" to "Bangladesh","gt" to "Guatemala","cz" to "Czechia","sk" to "Slovakia","co" to "Colombia","pe" to "Peru","cl" to "Chile","uy" to "Uruguay","na" to "Namibia","bw" to "Botswana","mz" to "Mozambique","ne" to "Niger","cm" to "Cameroon","bj" to "Benin","gr" to "Greece","bg" to "Bulgaria","ge" to "Georgia")
+    fun name(code:String)=all.firstOrNull {it.code==code}?.name?:extra[code]?:code.uppercase()
+}
 enum class HomeSectionKind { Recommendations, Daily100, NewSongs, ThisWeek, Recent, Trending, CityCharts, OnTour }
 data class HomeSection(val id:String,val title:String,val subtitle:String,val kind:HomeSectionKind,
     val tracks:List<MusicMetadata> = emptyList(),val sourceUrl:String?=null,val unavailableReason:String?=null,

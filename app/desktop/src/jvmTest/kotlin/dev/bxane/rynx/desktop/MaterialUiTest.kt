@@ -97,6 +97,29 @@ class MaterialUiTest {
         } finally { scene.close() }
     }
 
+    @Test fun libraryShowsGlyphStudioCategoryShortcutsAndNavigatesIntoRealSections() {
+        val tracks=listOf(
+            TrackItem("content://library/first","First Song","Nights",albumTitle="Night Drive"),
+            TrackItem("content://library/second","Second Song","Nights",albumTitle="Night Drive"),
+        )
+        val state=PlayerUiState(tracks=tracks,favoriteIds=setOf(tracks[0].id))
+        val scene=ImageComposeScene(390,844,Density(1f)) { RynxApp(state,Actions()) }
+        try {
+            click(scene,"Library")
+            for(category in listOf("Playlists","Artists","Albums","Songs","Favorites"))
+                assertNotNull(find(scene,"Browse "+category))
+            capture(scene,"phone-library-glyphstudio-categories")
+            click(scene,"Browse Albums")
+            assertNotNull(find(scene,"Open album Night Drive by Nights"))
+            click(scene,"Back to Library")
+            click(scene,"Browse Songs")
+            assertNotNull(find(scene,"Back to Library"))
+            click(scene,"Back to Library")
+            click(scene,"Browse Favorites")
+            assertNotNull(find(scene,"Back to Library"))
+        } finally { scene.close() }
+    }
+
     @Test fun importedAlbumsOpenArtistAndAlbumDetailsWithRealQueueAction() {
         val actions=Actions()
         val tracks=listOf(

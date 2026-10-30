@@ -364,6 +364,10 @@ private fun AboutRynxPage(
                 SettingsInfoRow("Platform", state.appPlatform ?: "Kotlin Multiplatform", ink, secondary)
                 SettingsDivider(divider)
                 SettingsInfoRow("Audio engine", state.appAudioBackend ?: "Not reported", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("Music provider", state.appCatalogProvider ?: "Not reported", ink, secondary)
+                SettingsDivider(divider)
+                SettingsInfoRow("Catalog search", state.catalogSearchStatus, ink, secondary)
             }
             SettingsGroup("PROJECT", card, secondary, divider) {
                 SettingsInfoRow("Developer", "bxane", ink, secondary)

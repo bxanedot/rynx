@@ -311,10 +311,40 @@ class MainActivity : ComponentActivity() {
                     output.setMediaItems(tracks.map { track ->
                         MediaItem.Builder().setMediaId(track.id).setUri(track.id)
                             .setMediaMetadata(MediaMetadata.Builder().setTitle(track.title).setArtist(track.subtitle)
-                                .apply { track.artworkUrl?.let { setArtworkUri(it.toUri()) } }.build()).build()
+                                .apply {
+                                    track.albumTitle?.let(::setAlbumTitle)
+                                    track.artworkUrl?.let { setArtworkUri(it.toUri()) }
+                                }.build()).build()
                     },selected,0)
                 }
                 output.prepare(); output.play()
+            }
+            override fun playCollection(tracks:List<TrackItem>) {
+                val collection=tracks.distinctBy(TrackItem::id)
+                if(collection.isEmpty()) return
+                // Only authorized imported local audio may be enqueued directly. Remote streams
+                // must go through the existing provider resolver and access-policy checks.
+                val imported=state.value.tracks.map(TrackItem::id).toSet()
+                if(collection.any { it.id !in imported || !it.id.startsWith("content://") }) {
+                    play(collection.first().id)
+                    return
+                }
+                playbackRequests.cancel()
+                val output=controller ?: return
+                val media=collection.map { track ->
+                    MediaItem.Builder().setMediaId(track.id).setUri(track.id)
+                        .setMediaMetadata(MediaMetadata.Builder()
+                            .setTitle(track.title).setArtist(track.subtitle)
+                            .apply {
+                                track.albumTitle?.let(::setAlbumTitle)
+                                track.artworkUrl?.let { setArtworkUri(it.toUri()) }
+                            }.build())
+                        .build()
+                }
+                output.setMediaItems(media,0,0)
+                output.prepare()
+                output.play()
+                publish()
             }
             override fun toggle() { playbackRequests.cancel();controller?.let { if(it.isPlaying) it.pause() else { it.prepare(); it.play() } } }
             override fun previous() { playbackRequests.cancel();controller?.seekToPrevious() }
@@ -789,6 +819,7 @@ class MainActivity : ComponentActivity() {
             subtitle=item.mediaMetadata.artist?.toString()?.takeIf(String::isNotBlank) ?: "Unknown artist",
             artworkUrl=item.mediaMetadata.artworkUri?.toString(),
             metadataSourceUrl=item.mediaMetadata.extras?.getString("rynx.metadata-source"),
+            albumTitle=item.mediaMetadata.albumTitle?.toString(),
         )
 
     private fun launchLibraryMutation(fallback:String,operation:suspend ()->Any?) {

@@ -100,7 +100,8 @@ class MainActivity : ComponentActivity() {
         appVersionName=BuildConfig.VERSION_NAME,
         appBuildNumber=BuildConfig.VERSION_CODE.toString(),
         appPlatform="Android",
-        appAudioBackend="Media3 ExoPlayer"))
+        appAudioBackend="Media3 ExoPlayer",
+        appCatalogProvider="InnerTubeX · NewPipe fallback"))
     private var controller: MediaController? = null
     private var connection: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private lateinit var catalog: MusicPlaybackCatalog
@@ -248,7 +249,15 @@ class MainActivity : ComponentActivity() {
         state.update { it.copy(favoriteIds=favoriteIds,favoriteTracks=favoriteTracks,recentTracks=recentTracks) }
         restoreLibrary()
         discovery=AndroidDiscoveryCoordinator(applicationContext,lifecycleScope,
-            onFeed={feed->state.update {it.copy(discovery=feed)}},
+            onFeed={feed->state.update {it.copy(
+                discovery=feed,
+                catalogSearchStatus=when {
+                    feed.loading -> "Checking YouTube Music"
+                    feed.sections.any { section -> section.tracks.isNotEmpty() } -> "Search results available"
+                    feed.error != null -> "Catalog search unavailable"
+                    else -> "No catalog results"
+                },
+            )}},
             onSelection={section,loading->state.update {it.copy(discoverySelection=section,discoverySelectionLoading=loading)}},
             ytmSearch={query->catalogReady.await();catalog.searchMusic(query).items.filter {it.type==CatalogItemType.Track}.map {item->
                 MusicMetadata("yt:${item.mediaId}",item.title,item.artist.orEmpty(),artworkUrl=item.artworkUrl,durationMillis=item.durationSeconds?.times(1000),playbackId=item.mediaId)
@@ -629,18 +638,24 @@ class MainActivity : ComponentActivity() {
             try {
                 if(!catalogReady.await()) error("YouTube Music is unavailable")
                 val page=withContext(Dispatchers.IO) { catalog.searchMusic(normalized) }
-                state.update { it.copy(catalogSearch=CatalogSearchState(
-                    query=normalized,
-                    items=page.items.distinctBy { item -> item.provider to item.mediaId },
-                    continuation=page.continuation,
-                )) }
+                state.update { it.copy(
+                    catalogSearch=CatalogSearchState(
+                        query=normalized,
+                        items=page.items.distinctBy { item -> item.provider to item.mediaId },
+                        continuation=page.continuation,
+                    ),
+                    catalogSearchStatus=if(page.items.isNotEmpty()) "Search results available" else "No catalog results",
+                ) }
             } catch(cancelled: CancellationException) {
                 throw cancelled
             } catch(_: Exception) {
-                state.update { it.copy(catalogSearch=CatalogSearchState(
-                    query=normalized,
-                    error="YouTube Music search failed. Check your connection and try again.",
-                )) }
+                state.update { it.copy(
+                    catalogSearch=CatalogSearchState(
+                        query=normalized,
+                        error="InnerTubeX could not search YouTube Music. Check your connection and retry.",
+                    ),
+                    catalogSearchStatus="Catalog search unavailable",
+                ) }
             }
         }
     }

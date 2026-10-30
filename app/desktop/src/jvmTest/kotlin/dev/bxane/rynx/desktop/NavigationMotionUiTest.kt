@@ -38,10 +38,16 @@ class NavigationMotionUiTest {
         else listOf(node) + node.children.flatMap(::nodes)
 
     private fun find(scene: ImageComposeScene, description: String): SemanticsNode {
-        frame(scene)
-        return scene.semanticsOwners.flatMap { nodes(it.rootSemanticsNode) }.firstOrNull {
-            it.config.getOrNull(SemanticsProperties.ContentDescription)?.any { text -> text.contains(description) } == true
-        } ?: error("Missing navigation control: $description")
+        // CI software-rendered Compose may publish semantics a few frames after a transition.
+        // Retry with the virtual frame clock rather than relying on wall-clock sleeps.
+        repeat(20) {
+            frame(scene)
+            val match = scene.semanticsOwners.flatMap { nodes(it.rootSemanticsNode) }.firstOrNull {
+                it.config.getOrNull(SemanticsProperties.ContentDescription)?.any { text -> text.contains(description) } == true
+            }
+            if (match != null) return match
+        }
+        error("Missing navigation control after 60 frames: $description")
     }
 
     private fun findTag(scene: ImageComposeScene, tag: String): SemanticsNode {

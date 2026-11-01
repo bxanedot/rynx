@@ -1,0 +1,18 @@
+// bxane
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "rynx-listen-together",
+  "main": "src/index.js",
+  // shortcut: Wrangler 4.156.0's local runtime supports dates through Oct 30, 2026; advance after upgrading it.
+  "compatibility_date": "2026-10-30",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [
+      { "name": "PARTIES", "class_name": "PartyRoom" },
+      { "name": "CREATE_LIMITER", "class_name": "CreateLimiter" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["PartyRoom", "CreateLimiter"] }
+  ]
+}
